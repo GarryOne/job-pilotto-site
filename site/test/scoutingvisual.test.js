@@ -7,7 +7,7 @@ import {readFileSync} from 'node:fs';
 import {cleanStats, load, RUNS, store} from '../src/scouting.js';
 import {page, snapshot, storeSnapshot} from '../src/scoutingadmin.js';
 import {bars, columns, shade, sparkline} from '../src/scoutingcharts.js';
-import {AIMED, FLOOR, KINDS, demandOf, heatmap, history} from '../src/scoutingvisual.js';
+import {AIMED, FLOOR, KINDS, cellsOf, demandOf, heatmap, history, tiles} from '../src/scoutingvisual.js';
 
 function d1(...migrations) {
   const db = new DatabaseSync(':memory:');
@@ -77,4 +77,10 @@ test('the page leads with the charts; the tables are folded under them', () => {
   for (const title of charts) assert.ok(html.indexOf(title) > 0 && html.indexOf(title) < html.indexOf('<details'), title);
   assert.ok(html.indexOf('class="countries"') > html.indexOf('<details'), 'the number table is folded');
   assert.match(html, /No runs recorded yet\./);
+});
+
+test('the open-jobs tile counts each employer\'s jobs once, also one hiring in several European countries (20 Oct 2026: 979,528 shown, ~334k real)', () => {
+  const feeds = [care(1), {...care(2), countries: ['pl', 'de', 'fr']}, care(3, 'us')];   // 4 + 4 in Europe; the US-only one is not
+  const html = tiles({feeds, sharing7: 0, central: null}, cellsOf(feeds), history([]));
+  assert.match(html, /<span class="tile-label">Open jobs in Europe<\/span><b>8<\/b>/);
 });
