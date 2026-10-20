@@ -1,12 +1,14 @@
 // Every admin page timer that fetches runs at most once a minute and stays quiet while the tab is hidden (11 Oct 2026: a page re-fetching every 15 s, with no hidden check, was the largest
-// D1 reader of the day). Scans site/src for timers, meta refreshes and reloads, so a new faster or always-on one fails here.
+// D1 reader of the day). Scans site/{admin,api,shared,worker} for timers, meta refreshes and reloads, so a new faster or always-on one fails here.
 import assert from 'node:assert/strict';
-import {readFileSync, readdirSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
+import {sourceFiles} from './lib/source-files.js';
 
 const MIN_MS = 60000;
-const files = readdirSync(new URL('../src/', import.meta.url)).filter(name => name.endsWith('.js'));
-const source = name => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
+const paths = new Map(sourceFiles().map(({folder, name, path}) => [`${folder}/${name}`, path]));
+const files = [...paths.keys()];
+const source = name => readFileSync(paths.get(name), 'utf8');
 
 test('no page timer fires faster than once a minute, and every file with one checks document.hidden', () => {
   const found = [];
@@ -19,7 +21,7 @@ test('no page timer fires faster than once a minute, and every file with one che
     }
     if (/http-equiv=.?refresh/.test(text)) found.push({name, delay: 0, text: 'meta refresh (cannot pause while hidden)'});
   }
-  assert.ok(found.some(item => item.name === 'applying.js') && found.some(item => item.name === 'feedback.js'), 'the scan found no timer: it is blind');
+  assert.ok(found.some(item => item.name === 'admin/applying.js') && found.some(item => item.name === 'admin/feedback.js'), 'the scan found no timer: it is blind');
   for (const item of found) {
     assert.ok(item.delay >= MIN_MS, `${item.name}: "${item.text}" fires every ${item.delay} ms (minimum ${MIN_MS})`);
     assert.match(source(item.name), /document\.hidden/, `${item.name}: a timer without a document.hidden check`);

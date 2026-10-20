@@ -1,8 +1,8 @@
-// The Ready to send runner Worker (spec docs/superpowers/specs/2026-10-17-ready-to-send.md): consumes the Queue "ready-runs" and starts one night's container per message (src/ready-consume.js has the logic), and carries the owner's
+// The Ready to send runner Worker (spec docs/superpowers/specs/2026-10-17-ready-to-send.md): consumes the Queue "ready-runs" and starts one night's container per message (api/ready-consume.js has the logic), and carries the owner's
 // morning calls to that container: the site Worker reaches it through a service binding only (workers_dev is off, there is no public route). NOT DEPLOYED: it needs a Queue and a Worker on the Cloudflare account, which the owner has not agreed to yet.
 // A separate Worker because the Container class needs @cloudflare/containers, which the site's tests cannot load.
 import {Container, getContainer} from '@cloudflare/containers';
-import {consume} from '../src/ready-consume.js';
+import {consume} from '../api/ready-consume.js';
 
 export class ReadyRunner extends Container {
   defaultPort = 8080;

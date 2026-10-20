@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Publishes the merged PRs of the last 30 days to the owner's page /admin/operations/overview (ops-overview.yml: every push to main, hourly). Only PRs the site does not hold yet are looked up
-// (GET /ops/data lists the stored ones), at most 150 a run, newest first: a PR is read once. Category and row come from site/src/ops-categories.js (guard: site/test/ops-overview.test.js).
+// (GET /ops/data lists the stored ones), at most 150 a run, newest first: a PR is read once. Category and row come from site/admin/ops-categories.js (guard: site/test/admin/ops-overview.test.js).
 // CI minutes = the wall time of each workflow run on the PR's branch, summed (not GitHub's billed minutes: parallel jobs are not multiplied).
 //   node tools/ops-overview.mjs [--dry [--out rows.json]]     needs gh with GH_TOKEN; publishing needs SELFHEAL_PUBLISH_KEY (optional OPS_URL); --dry prints the counts, --out saves the rows
 import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
-import {RULES_VERSION, prRow} from '../site/src/ops-categories.js';
+import {RULES_VERSION, prRow} from '../site/admin/ops-categories.js';
 
 const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';
 const base = process.env.OPS_URL || 'https://www.jobpilotto.top/ops/data';

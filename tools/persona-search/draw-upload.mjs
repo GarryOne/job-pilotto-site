@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {rowFromDraw} from '../../site/src/search-lab-draws.js';
+import {rowFromDraw} from '../../site/admin/search-lab-draws.js';
 
 const option = (flag, fallback) => { const at = process.argv.indexOf(flag); return at > 0 ? process.argv[at + 1] : fallback; };
 const out = process.argv[2];

@@ -8,6 +8,7 @@ Read [README.md](README.md) first, then the public repo's `docs/rules/private-si
 Nothing here may be needed by a public file, test or workflow. Never copy a private file into the public repo.
 
 ## How to work
+- **Where a file goes** (`site/README.md`): `web/` public pages, `admin/` the owner's pages and the CI uploads that feed them, `api/` what the apps call, `shared/` what both use, `worker/` the router. A new file goes in one of them, never `site/src`; `site/test/boundary.test.js` fails on a wrong import (admin and api never import each other; a page's data goes in `shared/`, its HTML in `admin/`). Tests mirror the folders.
 - **Run anything with `tools/site-run.sh <cmd>`** (public tree + this repo in `.overlay`, rebuilt hourly), e.g. `tools/site-run.sh bash -c 'cd site && npm test'`.
 - **Land with the public repo's ship tool, from your worktree here:** `~/job-pilotto/tools/ship.sh --background --body=<file>` (rebase, push, open the PR, watch it: `ship: RED/GREEN/MERGED/CONFLICT` in its log; Monitor it). Never a bare `gh pr create`.
   The body follows `~/job-pilotto/tools/pr-body-template.md` (verdict line, **Why**, **Unblocks**, impact table, bullets, Before/After, "No screenshots: <why>"); CI's step "PR description laid out" fails without it. The check to wait for is "All checks passed" (`tests.yml`).

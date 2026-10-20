@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
 
-const pub = name => readFileSync(new URL(`../public/${name}`, import.meta.url), 'utf8');
+const pub = name => readFileSync(new URL(`../web/public/${name}`, import.meta.url), 'utf8');
 
 test('no public page offers a key or sends people to Settings → License', () => {
   for (const name of ['index.html', 'friends.html']) {
