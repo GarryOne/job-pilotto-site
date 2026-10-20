@@ -19,9 +19,13 @@ class PrToolkit(unittest.TestCase):
         self.assertIn('tools/pr-body-check.py', step['body'])
 
     def test_a_session_started_here_gets_the_red_and_conflict_hook(self):
-        found = [p for p in (ROOT / '.claude' / 'settings.json', ROOT / '.private' / '.claude' / 'settings.json') if p.exists()]
-        if not found:
-            self.skipTest('the joined tree leaves .claude out; CI has this repo at .private/')
+        # in a joined tree the root .claude is the PUBLIC repo's: read this repo's own copy (CI: .private/), or the root when this repo is checked out alone
+        own = ROOT / '.private' / '.claude' / 'settings.json'
+        if not own.exists() and not (ROOT / 'tools' / 'pr-red-check.sh').exists():
+            own = ROOT / '.claude' / 'settings.json'
+        if not own.exists():
+            self.skipTest('a joined tree without .private/ leaves this repo\'s .claude out')
+        found = [own]
         hooks = json.loads(found[0].read_text(encoding='utf-8'))['hooks']
         for event in ('Stop', 'UserPromptSubmit'):
             commands = [h['command'] for group in hooks[event] for h in group['hooks']]
