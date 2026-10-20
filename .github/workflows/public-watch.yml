@@ -3,7 +3,7 @@ name: Release · Watch the public repo
 # The public repo cannot start a workflow here, so this one looks every hour: when those files changed since the last record (.public-site, .public-ready), it starts the deploy.
 on:
   schedule:
-    - cron: '7 * * * *'
+    - cron: '7 */6 * * *'
   workflow_dispatch:
 
 permissions:
