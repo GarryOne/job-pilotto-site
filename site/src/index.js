@@ -276,7 +276,7 @@ export default {
     ctx.waitUntil((env.STATS ? Promise.all([recipeLibrary.evaluateVerified(env.STATS), evaluateVerifiedAliases(env.STATS)]).then(done => done.flat()) : Promise.resolve([])).then(actions => { if (actions.length) console.log(`rolled back: ${JSON.stringify(actions)}`); })
       .catch(error => console.error(`verified watch: ${error.message}`)));
     ctx.waitUntil(purgeNets(env).catch(error => console.error(`download nets purge: ${error.message}`)));
-    ctx.waitUntil(telemetry.daily(env, dispatch).catch(error => console.error(`telemetry triage: ${error.message}`)));
+    ctx.waitUntil(telemetry.daily(env).catch(error => console.error(`telemetry cleanup: ${error.message}`)));
     ctx.waitUntil((env.STATS ? evaluateMeanings(env.STATS) : Promise.resolve([])).then(actions => { if (actions.length) console.log(`meanings: ${JSON.stringify(actions)}`); })
       .catch(error => console.error(`meanings canary: ${error.message}`)));
     ctx.waitUntil((env.STATS ? evaluateAliases(env.STATS) : Promise.resolve([])).then(actions => { if (actions.length) console.log(`aliases: ${JSON.stringify(actions)}`); })

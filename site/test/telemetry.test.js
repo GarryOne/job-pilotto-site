@@ -1,11 +1,11 @@
 // App reports (src/telemetry.js): stored scrubbed, grouped into problems across users, shown with the /stats key,
-// and the daily run sends the top problems to triage.
+// and the daily run drops old reports (problems are no longer filed as issues since 20 Oct 2026).
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
 import worker from '../src/index.js';
-import {daily, describe, useOf} from '../src/telemetry.js';
+import {daily, describe, newestBuild, useOf} from '../src/telemetry.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -41,41 +41,32 @@ test('without the key the page does not exist; junk is refused', async () => {
   assert.equal((await send(e, [{kind: 'nonsense', install: 'x'}])).status, 400);
 });
 
-test('a crash, a stuck run or a failed run goes to triage from the first install; noisy kinds wait for three installs or many times', async () => {
+test('the daily run drops reports older than 90 days and files nothing (owner, 20 Oct 2026: telemetry issues retired)', async () => {
   const e = env();
-  const today = new Date();
-  const stamp = db => db.STATS.db.prepare('UPDATE telemetry SET day = ?').run(today.toISOString().slice(0, 10));
-  const sent = [];
-  const dispatch = async (_env, inputs, workflow) => sent.push({inputs, workflow});
-  const form = (install, label = 'Salary expectation') => ({kind: 'form_issue', at: new Date().toISOString(), install, version: '0.4.1', platform: 'darwin', site: 'boards.greenhouse.io', label, reason: 'dropdown'});
-  await send(e, [form('install-aaaa'), form('install-bbbb')]);
-  stamp(e);
-  assert.equal(await daily(e, dispatch, today), 0);   // a form issue from two installs: counted, not a ticket yet
-  assert.equal(sent.length, 0);
-  await send(e, [form('install-cccc')]);
-  stamp(e);
-  assert.equal(await daily(e, dispatch, today), 1);   // three installs
-  assert.equal(sent[0].workflow, 'telemetry-triage.yml');
-  assert.equal(JSON.parse(sent[0].inputs.problems)[0].users, 3);
-  // one install failing very often counts too
-  const solo = env();
-  await send(solo, Array.from({length: 20}, (_, i) => form('install-dddd', `Question ${i % 1}`)));
-  stamp(solo);
-  assert.equal(await daily(solo, dispatch, today), 1);
-  // a single crash, and a single run the app had to stop, are enough: with a handful of users nothing else would reach an issue
-  const first = env();
-  await send(first, [crash('install-eeee'), {kind: 'run_failed', at: new Date().toISOString(), install: 'install-eeee', version: '0.4.1', platform: 'darwin', job: 'src daily', code: 124, error: 'stopped by the app: no output for 16 min'}]);
-  stamp(first);
-  assert.equal(await daily(first, dispatch, today), 2);
-  // a run that ended with warnings has to repeat (3 times) before it is a ticket
-  const warned = env();
-  const warning = install => ({kind: 'run_warning', at: new Date().toISOString(), install, version: '0.4.1', platform: 'darwin', job: 'src daily run', warning: 'AI limit reached', seconds: 60});
-  await send(warned, [warning('install-ffff'), warning('install-ffff')]);
-  stamp(warned);
-  assert.equal(await daily(warned, dispatch, today), 0);
-  await send(warned, [warning('install-ffff')]);
-  stamp(warned);
-  assert.equal(await daily(warned, dispatch, today), 1);
+  await send(e, [crash('install-aaaa'), crash('install-bbbb')]);
+  e.STATS.db.prepare("UPDATE telemetry SET day = '2026-01-01' WHERE install = 'install-aaaa'").run();
+  assert.equal(await daily(e, new Date('2026-10-20T06:00:00Z')), 0);
+  assert.deepEqual(e.STATS.db.prepare('SELECT install FROM telemetry').all().map(row => row.install), ['install-bbbb']);
+});
+
+test('an advice event is counted but is no problem row (private issue #24 was "Advice visit on strategy: taken")', async () => {
+  const e = env();
+  await send(e, [{kind: 'advice', install: 'install-aaaa', version: '0.7.10', platform: 'win32', at: new Date().toISOString(), advice: 'visit', where: 'strategy', act: 'taken'}]);
+  const html = await (await worker.fetch(new Request('https://www.jobpilotto.top/admin/app?days=30', {headers: {Cookie: 'jp_stats=k3y'}}), e, {})).text();
+  assert.ok(!/Advice visit on strategy/.test(html));
+});
+
+test('each problem says its newest build; one seen only on older builds than any install runs now is muted and last', async () => {
+  assert.deepEqual(newestBuild('0.7.12,0.7.16', [{version: '0.7.37'}, {version: '0.7.12'}]), {seen: '0.7.16', current: '0.7.37', old: true});
+  assert.deepEqual(newestBuild('0.7.37', [{version: '0.7.37'}]), {seen: '0.7.37', current: '0.7.37', old: false});
+  const e = env();
+  const failed = (install, version, error) => ({kind: 'run_failed', install, version, platform: 'darwin', at: new Date().toISOString(), job: 'src.focus remind', code: 1, error});
+  await send(e, [failed('install-aaaa', '0.7.16', 'old trouble'), crash('install-bbbb', '0.7.37')]);
+  const html = await (await worker.fetch(new Request('https://www.jobpilotto.top/admin/app?days=30', {headers: {Cookie: 'jp_stats=k3y'}}), e, {})).text();
+  assert.match(html, /<th>Newest build<\/th>/);
+  assert.match(html, /<span class="newest">on 0\.7\.37<\/span>/);
+  assert.match(html, /<tr class="old">[\s\S]*old builds only · 0\.7\.16/);
+  assert.ok(html.indexOf('on 0.7.37') < html.indexOf('old builds only'), 'current problems first');
 });
 
 test('fingerprints ignore numbers and ids but keep what differs', () => {
