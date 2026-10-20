@@ -41,6 +41,7 @@ export const readOf = read => {
   return JSON.stringify({outcome: read.outcome, ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
     ...(read.outcome === 'opened' && Object.keys(kinds).length ? {kinds} : {})});
 };
+const DEAD_OUTCOMES = ['no_feed', 'refused', 'unreachable'], OUTCOME_MIN_INSTALLS = 3;   // why a dead end has no feed; the last two are served after this many installs agree
 const MAX_FEEDS = 2000, MAX_NOFEED = 300, MAX_SITES = 300, MAX_BOARDS = 30, KEEP_DAYS = 90, PER_MINUTE = 30;   // installs share each find as it is made (owner, 6 Oct 2026): many small shares; every feed a check read (7 Oct 2026)
 // Outcome counts (src/contribute.py outcomes): only these names, only whole numbers; anything else is dropped.
 const STEPS = ['strong', 'saved', 'applied', 'interview', 'offer', 'remote'];
@@ -118,7 +119,8 @@ export async function contribute(request, env, now = new Date()) {
     const key = company.toLowerCase().replace(/\b(ag|sa|gmbh|ltd|inc|llc|plc)\b/g, '').replace(/[^a-z0-9]/g, '');
     if (!key || keys.has(key) || /^e2e/.test(key)) { if (!key || /^e2e/.test(key)) drop('nofeed'); continue; }   // test employers never enter the pool
     keys.add(key);
-    nofeed.push({key, company, host: typeof item.host === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host) ? item.host.slice(0, 100) : null});
+    nofeed.push({key, company, host: typeof item.host === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host) ? item.host.slice(0, 100) : null,
+      outcome: DEAD_OUTCOMES.includes(item.outcome) ? item.outcome : 'no_feed'});
   }
   // Facts about sites learned while reading them (src/contribute.py sites): a host, a kind from a fixed list and, for a job page, its address.
   const sites = [], facts = new Set();
@@ -162,8 +164,8 @@ export async function contribute(request, env, now = new Date()) {
     .bind(install, today, feed.ats, feed.slug, feed.company, feed.matched, feed.own, roles.join(','), regions.join(','), feed.how, feed.jobs, feed.hits,
       feed.site, feed.failed, feed.out, ...fine, aiFamily));
   for (const item of nofeed) {
-    statements.push(env.STATS.prepare('INSERT INTO nofeed (install, day, key, company, host, ai_family) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(install, key) DO UPDATE SET day = excluded.day, host = COALESCE(excluded.host, host), ai_family = excluded.ai_family WHERE day IS NOT excluded.day OR (excluded.host IS NOT NULL AND host IS NOT excluded.host) OR ai_family IS NOT excluded.ai_family')
-      .bind(install, today, item.key, item.company, item.host, aiFamily));
+    statements.push(env.STATS.prepare('INSERT INTO nofeed (install, day, key, company, host, ai_family, outcome) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(install, key) DO UPDATE SET day = excluded.day, host = COALESCE(excluded.host, host), ai_family = excluded.ai_family, outcome = excluded.outcome WHERE day IS NOT excluded.day OR (excluded.host IS NOT NULL AND host IS NOT excluded.host) OR ai_family IS NOT excluded.ai_family OR outcome IS NOT excluded.outcome')
+      .bind(install, today, item.key, item.company, item.host, aiFamily, item.outcome));
   }
   for (const item of sites) {
     statements.push(env.STATS.prepare(`INSERT INTO sitefacts (install, day, host, kind, url, body, in_places, fit70, countries, families) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -204,7 +206,11 @@ export async function aggregate(request, env) {
   const db = env.STATS, rows = async (sql, ...args) => (await db.prepare(sql).bind(...args).all()).results || [];
   const headers = {'Cache-Control': 'no-store'};
   if (part === 'nofeed') {
-    const dead = await rows('SELECT key, MAX(company) AS company, MAX(host) AS host, COUNT(*) AS installs, MAX(day) AS last FROM nofeed WHERE key > ? GROUP BY key ORDER BY key LIMIT ?', after, limit);
+    // The outcome word is the one at least OUTCOME_MIN_INSTALLS installs gave (refused, then unreachable); otherwise no_feed when anyone said so.
+    const dead = (await rows(`SELECT key, MAX(company) AS company, MAX(host) AS host, COUNT(*) AS installs, MAX(day) AS last,
+      CASE WHEN SUM(outcome = 'refused') >= ? THEN 'refused' WHEN SUM(outcome = 'unreachable') >= ? THEN 'unreachable'
+        WHEN SUM(outcome IS NULL OR outcome = 'no_feed') >= 1 THEN 'no_feed' END AS served
+      FROM nofeed WHERE key > ? GROUP BY key HAVING served IS NOT NULL ORDER BY key LIMIT ?`, OUTCOME_MIN_INSTALLS, OUTCOME_MIN_INSTALLS, after, limit)).map(({served, ...item}) => ({...item, outcome: served}));
     return Response.json({ok: true, nofeed: dead, next: dead.length === limit ? dead.at(-1).key : null}, {headers});
   }
   if (part === 'boards') return Response.json({ok: true, boards: await boardTotals(rows), next: null}, {headers});

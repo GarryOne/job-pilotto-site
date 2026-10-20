@@ -8,7 +8,7 @@ import {purge, rollup} from '../src/pool.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
-  for (const file of ['0001_stats.sql', '0002_telemetry.sql', '0003_contributions.sql', '0027_contributions_v2.sql', '0028_nofeed.sql', '0031_board_reads.sql', '0032_pool_indexes.sql', '0033_pool_outcomes.sql', '0034_pool_fine_tags.sql', '0035_pool_daily.sql', '0037_pool_sitefacts.sql', '0038_sitefacts_layout.sql', '0045_pool_ai_family.sql', '0049_host_uses.sql', '0086_discovery_candidates.sql', '0094_sitefacts_board_yield.sql']) db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
+  for (const file of ['0001_stats.sql', '0002_telemetry.sql', '0003_contributions.sql', '0027_contributions_v2.sql', '0028_nofeed.sql', '0031_board_reads.sql', '0032_pool_indexes.sql', '0033_pool_outcomes.sql', '0034_pool_fine_tags.sql', '0035_pool_daily.sql', '0037_pool_sitefacts.sql', '0038_sitefacts_layout.sql', '0045_pool_ai_family.sql', '0049_host_uses.sql', '0086_discovery_candidates.sql', '0094_sitefacts_board_yield.sql', '0100_nofeed_outcome.sql']) db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
   const statement = (sql, args = []) => ({bind: (...values) => statement(sql, values), run: async () => db.prepare(sql).run(...args),
     all: async () => ({results: db.prepare(sql).all(...args)}), first: async () => db.prepare(sql).get(...args) ?? null});
   return {db, prepare: sql => statement(sql)};
@@ -101,6 +101,16 @@ test('"no readable job site" results are kept per install, added up for the scou
   const fnac = all.nofeed.find(item => item.key === 'fnacsuisse');
   assert.deepEqual({company: fnac.company, host: fnac.host, installs: fnac.installs}, {company: 'Fnac Suisse SA', host: 'fnac.ch', installs: 2});
   assert.equal(all.nofeed.find(item => item.key === 'bad').host, null, 'a host that is not one is dropped');
+});
+
+test('a dead end says why: refused and unreachable are served after 3 installs, no feed after one (20 Oct 2026)', async () => {
+  const env = setup();
+  const share = (install, outcome) => ({...body(install, []), v: 2, nofeed: [{company: 'Shut GmbH', host: 'shut.example', outcome}, {company: 'Odd Co', outcome: 'made-up'}]});
+  for (const install of ['install-aaaa1111', 'install-bbbb2222']) assert.equal((await post(env, share(install, 'refused'))).status, 200);
+  const served = async () => Object.fromEntries((await (await read(env, {Authorization: 'Bearer k3y'}, '?part=nofeed')).json()).nofeed.map(item => [item.key, item.outcome]));
+  assert.deepEqual(await served(), {oddco: 'no_feed'}, 'two installs saying refused is not enough; an unknown word reads as no_feed');
+  assert.equal((await post(env, share('install-cccc3333', 'refused'))).status, 200);
+  assert.deepEqual(await served(), {oddco: 'no_feed', shut: 'refused'}, 'three installs: served as refused');
 });
 
 test('every feed read and every board go up; "read fine, nothing for this role" is counted; a same-day instant share keeps the check\'s match', async () => {
