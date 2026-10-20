@@ -17,6 +17,7 @@ const SYSTEMS = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 
 const MAX_BYTES = 1_000_000;          // the KV copy older app versions download (one KV value)
 const MAX_PUBLISH_BYTES = 20_000_000; // what the central scout may send: D1 holds far more feeds than one KV value
 const MAX_FEEDS = 60000;
+export const MAX_NOFEED = 10000;   // the central scout's dead ends (src/scout_index.py MAX_DEAD_ENDS); 5,000 until 20 Oct 2026, when the list was full
 const MAX_PLACES = 40;   // where a feed has roles: clients skip feeds with none in their own places
 
 const text = (status, body, headers = {}) => new Response(body, {status, headers});
@@ -246,7 +247,7 @@ async function publish(request, env) {
   // "No readable job site", checked here like everything published: a key, a name, a host, a date.
   // Test employers ("E2E Ghost", 7 Oct 2026) are never published, whatever reached the central scout.
   const nofeed = (Array.isArray(body.nofeed) ? body.nofeed : []).filter(item => item && /^[a-z0-9]{1,120}$/.test(item.key || '') && !/^e2e/.test(item.key) && /^\d{4}-\d{2}-\d{2}$/.test(item.last || ''))
-    .slice(0, 5000).map(item => ({key: item.key, company: String(item.company || '').slice(0, 120), host: /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host || '') ? item.host : null, last: item.last}));
+    .slice(0, MAX_NOFEED).map(item => ({key: item.key, company: String(item.company || '').slice(0, 120), host: /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host || '') ? item.host : null, last: item.last}));
   if (env.WAITLIST) await env.WAITLIST.put(NOFEED_KEY, JSON.stringify(nofeed));
   if (env.WAITLIST && Array.isArray(body.boards)) await env.WAITLIST.put(BOARDS_KEY, JSON.stringify(boardsOf(body.boards)));
   // The day's snapshot for /admin/scouting's growth: counts only; never a reason to refuse the index.

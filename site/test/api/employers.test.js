@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import worker from '../../worker/index.js';
-import {clean} from '../../api/employers.js';
+import {MAX_NOFEED, clean} from '../../api/employers.js';
 
 const store = new Map();
 const env = () => ({INDEX_PUBLISH_KEY: 'k3y', ASSETS: {fetch: () => new Response('asset')},
@@ -303,4 +303,14 @@ test('a feed is rewritten only for a real change, never for a new date or a smal
   assert.equal(worthWriting(base, {...base, fresh: {...base.fresh, fails: 3}}), true);
   assert.equal(worthWriting({...base, fresh: {...base.fresh, fails: 2}}, {...base, fresh: {...base.fresh, fails: 3}}), false, 'still failing');
   assert.equal(worthWriting(base, {...base, company: 'Acme AG'}), true, 'any other field');
+});
+
+test('the central scout\'s dead ends are published up to the cap (20 Oct 2026: 5,000 was full, the rest was probed again)', async () => {
+  store.clear();
+  const e = {...env(), STATS: d1()};
+  const nofeed = Array.from({length: 6000}, (_, i) => ({key: `co${i}`, company: `Co ${i}`, host: null, last: '2026-10-20'}));
+  await call(e, 'PUT', auth, {feeds: [feed('zh', {regions: ['europe']})], nofeed});
+  const got = await (await sliced(e, 'europe', await holder())).json();
+  assert.equal(got.nofeed.length, 6000);
+  assert.equal(MAX_NOFEED, 10000);
 });
