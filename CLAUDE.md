@@ -9,8 +9,9 @@ Nothing here may be needed by a public file, test or workflow. Never copy a priv
 
 ## How to work
 - **Run anything with `tools/site-run.sh <cmd>`** (public tree + this repo in `.overlay`, rebuilt hourly), e.g. `tools/site-run.sh bash -c 'cd site && npm test'`.
-- **Land through a normal PR to `main` of this repo**; the check to wait for is the job "All checks passed" (`tests.yml`: site tests + the public guards that read `site/` + this repo's own tests). No `tools/ship.sh` here: it is the public repo's tool.
-  Worktree: `git worktree add ../job-pilotto-site-<topic> -b <topic>`; commit subject ≤ 72 characters; PR body short (verdict line, Why, before/after).
+- **Land with the public repo's ship tool, from your worktree here:** `~/job-pilotto/tools/ship.sh --background --body=<file>` (rebase, push, open the PR, watch it: `ship: RED/GREEN/MERGED/CONFLICT` in its log; Monitor it). Never a bare `gh pr create`.
+  The body follows `~/job-pilotto/tools/pr-body-template.md` (verdict line, **Why**, **Unblocks**, impact table, bullets, Before/After, "No screenshots: <why>"); CI's step "PR description laid out" fails without it. The check to wait for is "All checks passed" (`tests.yml`).
+  Worktree: `git worktree add ../job-pilotto-site-<topic> -b <topic>`; commit subject ≤ 72 characters. The owner merges by hand.
 - **Merging to `main` deploys production** (`site.yml`, Worker `www`). Try it first on staging: Actions → "Release · Website staging" (Worker `www-staging`, no domain, no cron, no production secrets, probes every route against production).
 - **A new route** the app, extension or engine calls: first add it to `docs/site-routes.json` in the PUBLIC repo (a one-line PR there; it is the contract), then the Worker route here. The tests on both sides fail until both exist.
 - **A public file the site bundles changed** (`extension/…`, `desktop/lib/…`, `worker/src/report.js`, `config/…`): `public-watch.yml` (every 6 hours) redeploys; start it by hand when it matters.
