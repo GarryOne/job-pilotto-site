@@ -28,6 +28,7 @@ import {view as scoutingView} from '../admin/scoutingadmin.js';
 import {view as installsView} from '../admin/installsimpact.js';
 import {ingest as selfHealIngest, view as selfHealView} from '../admin/selfheal.js';
 import {ingest as opsIngest, view as opsView} from '../admin/ops-overview.js';
+import {ingest as schedulesIngest, view as schedulesView} from '../admin/schedules.js';
 import {ingest as e2eIntelIngest} from '../admin/e2e-intel.js';
 import {ingest as changelogIngest, list as changelogList} from '../admin/changelog-store.js';
 import {view as e2eIntelView} from '../admin/e2e-page.js';
@@ -172,7 +173,7 @@ async function route(request, env, ctx) {
   if (pathname === '/admin/test-mail') return testMail.view(request, env);   // Bearer only (admin/test-mail.js)
   // The owner's admin pages (admin/admin.js): one menu on all, the same key; never in public/, or they would be served to anyone.
   const admin = {'/admin': overviewView, '/admin/website': stats, '/admin/app': telemetryView, '/admin/insights': intelligenceView, '/admin/scouting': scoutingView, '/admin/installs': installsView,
-    '/admin/operations/overview': opsView, '/admin/form-overview': sectionOverview('/admin/form-overview', 'Form filling overview'), '/admin/growth-overview': sectionOverview('/admin/growth-overview', 'Growth overview'), '/admin/intelligence-overview': sectionOverview('/admin/intelligence-overview', 'Intelligence overview'), '/admin/operations/build-log': buildLogView, '/admin/operations/pr-checks': prChecksView, '/admin/operations/e2e': e2eIntelView, '/admin/self-healing': selfHealView, '/admin/ai-cost': jobCostView, '/admin/monetization': monetizationView, '/admin/signups': signupsView, '/admin/real-form-filling': realFormFillingView, '/admin/form-learning': formLearningView, '/admin/feedback': feedbackView,
+    '/admin/operations/overview': opsView, '/admin/operations/schedules': schedulesView, '/admin/form-overview': sectionOverview('/admin/form-overview', 'Form filling overview'), '/admin/growth-overview': sectionOverview('/admin/growth-overview', 'Growth overview'), '/admin/intelligence-overview': sectionOverview('/admin/intelligence-overview', 'Intelligence overview'), '/admin/operations/build-log': buildLogView, '/admin/operations/pr-checks': prChecksView, '/admin/operations/e2e': e2eIntelView, '/admin/self-healing': selfHealView, '/admin/ai-cost': jobCostView, '/admin/monetization': monetizationView, '/admin/signups': signupsView, '/admin/real-form-filling': realFormFillingView, '/admin/form-learning': formLearningView, '/admin/feedback': feedbackView,
     '/admin/access': accessView, '/admin/lab-form-filling': applyingView, '/admin/lab-job-search': searchLabView, '/admin/benchmark-form-filling': benchmarkView, '/admin/brain': brainView, '/admin/sentry': sentryView, '/admin/reports': reportsView}[pathname];   // access: the super admin's only (admin/access.js)
   if (pathname === '/admin/e2e' || pathname.startsWith('/admin/e2e/run/')) return e2eView(request, env);   // a run's HTML report (the link on GitHub's Summary page); the dropped runs page redirects (admin/e2e-report.js)
   if (pathname.startsWith('/admin/e2e/report/')) return e2eReportFile(request, env);   // its files: a signed address, no cookie needed (admin/e2e-report.js)
@@ -199,6 +200,7 @@ async function route(request, env, ctx) {
   if (pathname === '/e2e/data' && (request.method === 'PUT' || request.method === 'GET')) return e2eIntelIngest(request, env);   // CI publishes finished e2e runs and their red suites (Bearer SELFHEAL_PUBLISH_KEY, admin/e2e-intel.js)
   if (pathname === '/changelog/data' && (request.method === 'PUT' || request.method === 'GET')) return changelogIngest(request, env);   // CI publishes each new version's What's new entry (Bearer SELFHEAL_PUBLISH_KEY, admin/changelog-store.js)
   if (pathname === '/changelog.json' && request.method === 'GET') return changelogList(request, env);   // the What's new page's versions (falls back to public/changelog.json)
+  if (pathname === '/ops/data' && request.method === 'PUT' && new URL(request.url).searchParams.get('kind') === 'schedules') return schedulesIngest(request, env);   // CI publishes the scheduled jobs (admin/schedules.js; the same listed route, so no public list change)
   if (pathname === '/ops/data' && (request.method === 'PUT' || request.method === 'GET')) return opsIngest(request, env);   // CI publishes merged PRs (Bearer SELFHEAL_PUBLISH_KEY, admin/ops-overview.js)
   if (pathname === '/digest/data' && (request.method === 'PUT' || request.method === 'GET')) return buildLogIngest(request, env);   // CI publishes the day's build digest (Bearer SELFHEAL_PUBLISH_KEY, admin/build-log.js)
   if (pathname === '/pr-checks/data' && request.method === 'PUT') return prChecksIngest(request, env);   // the monthly PR-check scorecard (Bearer SELFHEAL_PUBLISH_KEY, admin/pr-checks.js)
