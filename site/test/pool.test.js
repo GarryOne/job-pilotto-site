@@ -273,7 +273,7 @@ test('a job board an install read jobs on: its template and countries only; serv
   assert.deepEqual(boards.map(fact => [fact.host, fact.url, fact.recipe, fact.installs]), [['net-empregos.com', template, {countries: ['pt']}, 3]]);
 });
 
-test('what a found board gave goes up with the install\'s families and countries; served per family × country only where 3 installs share it', async () => {
+test('what a found board gave goes up with the install\'s families and countries; served per family × country from one install (owner, 20 Oct 2026)', async () => {
   const {agreedSites} = await import('../src/employers.js');
   const env = setup();
   const template = 'https://www.net-empregos.com/pesquisa?chaves={role}';
@@ -285,8 +285,9 @@ test('what a found board gave goes up with the install\'s families and countries
   await share('install-d', ['software_dev'], ['pt'], {in_places: 40, fit70: 9, note: 'free text'});
   const board = (await agreedSites(env)).find(fact => fact.kind === 'board');
   assert.equal(board.installs, 4);
-  assert.deepEqual(board.relevant, [{family: 'accounting_finance', country: 'pt', installs: 3, in_places: 18, fit70: 3}],
-    'a cell 1 install gave never goes out; nl is not a country the board serves');
+  assert.deepEqual(board.relevant, [{family: 'accounting_finance', country: 'pt', installs: 3, in_places: 18, fit70: 3},
+    {family: 'driving_delivery', country: 'pt', installs: 1, in_places: 1, fit70: 1}, {family: 'software_dev', country: 'pt', installs: 1, in_places: 40, fit70: 9}],
+    'a cell one install gave goes out; nl is not a country the board serves');
   const row = env.STATS.db.prepare("SELECT in_places, fit70, countries, families FROM sitefacts WHERE install = (SELECT install FROM sitefacts ORDER BY in_places DESC LIMIT 1)").get();
   assert.deepEqual({...row}, {in_places: 40, fit70: 9, countries: 'pt', families: 'software_dev'}, 'counts and fixed ids only');
   const layout = env.STATS.db.prepare("SELECT COUNT(*) AS n FROM sitefacts WHERE kind != 'board' AND in_places IS NOT NULL").get();

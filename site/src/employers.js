@@ -133,6 +133,9 @@ async function slice(env, regions) {
 // Facts about sites that at least SITES_K installs shared in the last 90 days (src/pool.js sitefacts): a company's job page, a site only a
 // browser reads, a dead page. Counted, never who: only facts several installs agree on go out (the learned layer's k >= 3 rule).
 export const SITES_K = 3;
+// A job board and what it gave are served after ONE install (owner, 20 Oct 2026: "Yes, 1 install"): the next install's own read checks it;
+// at 3 a board that gave a Berlin music search 28 of its 62 jobs was left to each install's AI draw.
+export const BOARDS_K = 1;
 const fact = (row, relevant) => ({host: row.host, kind: row.kind, ...(row.url ? {url: row.url} : {}),
   ...(row.body ? (row.kind === 'browser_read' ? {read: JSON.parse(row.body)} : row.kind === 'route' ? {route: JSON.parse(row.body)} : {recipe: JSON.parse(row.body)}) : {}),
   installs: row.installs, ...(relevant?.length ? {relevant} : {})});
@@ -140,7 +143,7 @@ export async function agreedSites(env, k = SITES_K) {
   if (!env.STATS) return [];
   try {
     const rows = (await env.STATS.prepare(`SELECT host, kind, url, body, COUNT(DISTINCT install) AS installs FROM sitefacts WHERE kind NOT IN ('browser_read', 'route')
-      GROUP BY host, kind, url, body HAVING installs >= ? ORDER BY installs DESC LIMIT 3000`).bind(k).all()).results || [];
+      GROUP BY host, kind, url, body HAVING installs >= CASE WHEN kind = 'board' THEN ? ELSE ? END ORDER BY installs DESC LIMIT 3000`).bind(Math.min(k, BOARDS_K), k).all()).results || [];
     // A browser outcome is served after one install (owner, 20 Oct 2026: a fact the next install's own read checks): the newest per host.
     rows.push(...((await env.STATS.prepare(`SELECT host, kind, NULL AS url, body, 1 AS installs FROM sitefacts f WHERE kind = 'browser_read'
       AND day = (SELECT MAX(day) FROM sitefacts g WHERE g.kind = 'browser_read' AND g.host = f.host) GROUP BY host LIMIT 3000`).all()).results || []));
@@ -155,7 +158,7 @@ export async function agreedSites(env, k = SITES_K) {
       if (['"refused"', '"browser_only"'].includes(row.body) && row.installs < k) continue;
       rows.push(row);
     }
-    const cells = rows.some(row => row.kind === 'board') ? await boardCells(env, k) : {};
+    const cells = rows.some(row => row.kind === 'board') ? await boardCells(env, Math.min(k, BOARDS_K)) : {};
     const facts = rows.map(row => fact(row, row.kind === 'board' ? cells[row.host] : null));
     if (env.POOL_LAYOUTS === 'off') return facts.filter(item => item.kind !== 'layout');   // the kill switch for shared layouts
     return facts;
