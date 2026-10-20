@@ -12,6 +12,11 @@ git remote add origin "${PUBLIC_REPO_URL:-https://github.com/GarryOne/job-pilott
 # shellcheck disable=SC2086
 git fetch -q $depth origin "$ref"
 git checkout -q -f FETCH_HEAD
+# Until the public PR that moves the shared tables public (branch site-private-repo-move) is merged, main lacks files the site imports: use that branch. A merged and deleted branch ends this by itself.
+# shellcheck disable=SC2086
+if [ "$ref" = main ] && [ ! -f desktop/e2e/lib/applying-status.mjs ] && git fetch -q $depth origin site-private-repo-move 2>/dev/null; then
+  git checkout -q -f FETCH_HEAD; ref="site-private-repo-move, main lacks the moved tables"
+fi
 echo '.private/' >> .git/info/exclude
 rsync -a --exclude '.git/' --exclude '.private/' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude '.gitignore' --exclude '.public-*' .private/ ./
 # tests that list files with `git ls-files` must see this repo's files too
