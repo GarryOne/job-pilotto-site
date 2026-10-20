@@ -22,7 +22,7 @@ test('learned rows and switched-off seeds reach the app; nothing outside the sch
 
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
-import {evaluateMeanings, vote} from '../src/meanings.js';
+import {evaluateMeanings, vote, geoChecked} from '../src/meanings.js';
 import {installsNeeded} from '../src/learning-floor.js';
 
 function d1() {
@@ -52,16 +52,28 @@ test('a public wording 3 installs agree on grows from a 5% canary to verified; a
   assert.equal(learned(db)[0].status, 'disabled');   // the installs stopped agreeing: off for everyone
 });
 
-test('a job location placed on the map is learned only in its fixed format, and only when 3 installs agree', async () => {
+test('a job location placed on the map is learned only in its fixed format; a checked coordinate needs 1 install, an unchecked one 3', async () => {
   assert.equal(validRow({topic: 'job-location-geo', kind: 'exact', wording: 'baden, ag', answer: 'city:CH:47.5:8.3:10'}), true);
   for (const bad of ['Baden is in Switzerland', 'city:CH:47.5:8.3', 'europe', 'country:ch'])
     assert.equal(validRow({topic: 'job-location-geo', kind: 'exact', wording: 'baden, ag', answer: bad}), false, bad);
   assert.equal(installsNeeded('geo'), 3);
+  assert.equal(installsNeeded('geoChecked'), 1);
   const db = d1();
   const row = {topic: 'job-location-geo', wording: 'Baden, AG', answer: 'city:CH:47.5:8.3:10'};
-  for (const install of ['a', 'b']) await vote(db, install, [row], day(1));
-  assert.deepEqual(await evaluateMeanings(db, day(1)), []);   // 2 installs: not yet
-  await vote(db, 'c', [row], day(1));
-  assert.deepEqual((await evaluateMeanings(db, day(1))).map(a => a.action), ['canary']);
+  await vote(db, 'a', [row], day(1));
+  assert.deepEqual((await evaluateMeanings(db, day(1))).map(a => a.action), ['canary']);   // inside Switzerland: one install and the server check
   assert.deepEqual(learned(db), [{wording: 'baden, ag', answer: 'city:CH:47.5:8.3:10', status: 'canary', rollout: 5}]);
+});
+
+test('the server checks a coordinate answer itself: country known and the point inside its box', async () => {
+  for (const ok of ['city:CH:47.4:8.5:10', 'area:DE:48.5:9.0:200', 'country:FR', 'remote', 'unknown'])
+    assert.equal(geoChecked(ok), true, ok);
+  for (const bad of ['city:CH:52.5:13.4:10', 'city:XX:47.4:8.5:10', 'city:CH:-33.9:151.2:10', 'city:ZZ:0.1:0.1:5'])   // Berlin as Swiss, unknown code, Sydney as Swiss
+    assert.equal(geoChecked(bad), false, bad);
+  const db = d1();
+  const wrong = {topic: 'job-location-geo', wording: 'Baden, AG', answer: 'city:CH:52.5:13.4:10'};
+  await vote(db, 'a', [wrong], day(1));
+  assert.deepEqual(await evaluateMeanings(db, day(1)), []);   // outside the country's box: still waits for 3 installs
+  for (const install of ['b', 'c']) await vote(db, install, [wrong], day(1));
+  assert.deepEqual((await evaluateMeanings(db, day(1))).map(a => a.action), ['canary']);
 });

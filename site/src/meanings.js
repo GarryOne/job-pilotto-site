@@ -5,12 +5,26 @@
 import {installsNeeded} from './learning-floor.js';   // 1 for now: src/learning-floor.js
 import {reaches} from './canary-reach.js';
 import SCHEMA from '../../config/meanings_schema.json' with {type: 'json'};
+import BOXES from '../../config/country_boxes.json' with {type: 'json'};   // cc -> name + bounding box, also read by src/geo.py
 
 const TOPICS = Object.fromEntries(Object.entries(SCHEMA).filter(([topic]) => !topic.startsWith('_')));
 const fits = (spec, answer) => Boolean(spec) && (spec.answers.includes(answer)
   || (Boolean(spec.answer_pattern) && typeof answer === 'string' && new RegExp(spec.answer_pattern).test(answer)));   // a fixed format: job-location-geo (src/geo.py encode)
 export const validRow = row => fits(TOPICS[row?.topic], row?.answer) && ['pattern', 'exact'].includes(row.kind)
   && typeof row.wording === 'string' && row.wording.trim() && row.wording.length <= (row.kind === 'exact' ? 200 : 2000);
+
+// The server's own check of a placed job location (job-location-geo, src/geo.py encode): a country answer or a remote/unknown one is a checkable
+// shape; a city or area must name a country in the table and sit inside its box. Anything else cannot be checked here, so it keeps the 3-install floor.
+export function geoChecked(answer) {
+  const found = /^(city|area):([A-Z]{2}):(-?\d{1,2}\.\d):(-?\d{1,3}\.\d):\d{1,3}$/.exec(answer);
+  if (found) {
+    const box = BOXES[found[2]]?.box, lat = Number(found[3]), lon = Number(found[4]);
+    return Boolean(box) && lat >= box[0] && lat <= box[2] && lon >= box[1] && lon <= box[3];
+  }
+  const country = /^country:([A-Z]{2})$/.exec(answer);
+  return country ? Boolean(BOXES[country[1]]) : ['remote', 'unknown'].includes(answer);
+}
+const floorFor = t => { const kind = TOPICS[t.topic]?.floor || 'meaning'; return kind === 'geo' && geoChecked(t.answer) ? 'geoChecked' : kind; };
 
 export async function packMeanings(db, install, reach = {}) {
   const rows = (await db.prepare("SELECT topic, kind, wording, answer, ord, status, rollout, source FROM meanings WHERE source NOT LIKE 'seed:%' AND status IN ('canary', 'verified')").all()).results || [];
@@ -46,7 +60,7 @@ export async function evaluateMeanings(db, now = new Date()) {
   const tallies = (await db.prepare('SELECT topic, wording, answer, COUNT(*) AS n FROM meaning_votes GROUP BY topic, wording, answer').all()).results || [];
   const totals = {};
   for (const t of tallies) totals[`${t.topic}\u0000${t.wording}`] = (totals[`${t.topic}\u0000${t.wording}`] || 0) + t.n;
-  const agreed = t => t.n >= installsNeeded(TOPICS[t.topic]?.floor || 'meaning') && t.n / totals[`${t.topic}\u0000${t.wording}`] >= MIN_SHARE;
+  const agreed = t => t.n >= installsNeeded(floorFor(t)) && t.n / totals[`${t.topic}\u0000${t.wording}`] >= MIN_SHARE;
   const rows = (await db.prepare("SELECT topic, wording, answer, status, rollout, updated_at FROM meanings WHERE kind = 'exact' AND source = 'learned'").all()).results || [];
   const known = Object.fromEntries(rows.map(r => [`${r.topic}\u0000${r.wording}`, r]));
   for (const t of tallies.filter(agreed)) {
