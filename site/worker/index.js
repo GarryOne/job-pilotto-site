@@ -38,6 +38,7 @@ import {view as monetizationView} from '../admin/monetization.js';
 import {launchRoute, view as signupsView} from '../admin/signups.js';
 import * as mailLifecycle from '../admin/mail-lifecycle.js';
 import {ingest as benchmarkIngest, view as benchmarkView} from '../admin/benchmark.js';
+import {ingest as benchmarkSearchIngest, view as benchmarkSearchView} from '../admin/benchmark-search.js';
 import {ingest as jobCostIngest, spent as jobCostSpent, view as jobCostView} from '../admin/jobcost.js';
 import {digestView, view as realFormFillingView} from '../admin/real-form-filling.js';
 import {view as formLearningView} from '../admin/form-learning.js';
@@ -174,7 +175,7 @@ async function route(request, env, ctx) {
   // The owner's admin pages (admin/admin.js): one menu on all, the same key; never in public/, or they would be served to anyone.
   const admin = {'/admin': overviewView, '/admin/website': stats, '/admin/app': telemetryView, '/admin/insights': intelligenceView, '/admin/scouting': scoutingView, '/admin/installs': installsView,
     '/admin/operations/overview': opsView, '/admin/operations/schedules': schedulesView, '/admin/form-overview': sectionOverview('/admin/form-overview', 'Form filling overview'), '/admin/growth-overview': sectionOverview('/admin/growth-overview', 'Growth overview'), '/admin/intelligence-overview': sectionOverview('/admin/intelligence-overview', 'Intelligence overview'), '/admin/operations/build-log': buildLogView, '/admin/operations/pr-checks': prChecksView, '/admin/operations/e2e': e2eIntelView, '/admin/self-healing': selfHealView, '/admin/ai-cost': jobCostView, '/admin/monetization': monetizationView, '/admin/signups': signupsView, '/admin/real-form-filling': realFormFillingView, '/admin/form-learning': formLearningView, '/admin/feedback': feedbackView,
-    '/admin/access': accessView, '/admin/lab-form-filling': applyingView, '/admin/lab-job-search': searchLabView, '/admin/benchmark-form-filling': benchmarkView, '/admin/brain': brainView, '/admin/sentry': sentryView, '/admin/reports': reportsView}[pathname];   // access: the super admin's only (admin/access.js)
+    '/admin/access': accessView, '/admin/lab-form-filling': applyingView, '/admin/lab-job-search': searchLabView, '/admin/benchmark-form-filling': benchmarkView, '/admin/benchmark-job-search': benchmarkSearchView, '/admin/brain': brainView, '/admin/sentry': sentryView, '/admin/reports': reportsView}[pathname];   // access: the super admin's only (admin/access.js)
   if (pathname === '/admin/e2e' || pathname.startsWith('/admin/e2e/run/')) return e2eView(request, env);   // a run's HTML report (the link on GitHub's Summary page); the dropped runs page redirects (admin/e2e-report.js)
   if (pathname.startsWith('/admin/e2e/report/')) return e2eReportFile(request, env);   // its files: a signed address, no cookie needed (admin/e2e-report.js)
   if (pathname === '/admin/join') return join(request, env);   // an invite link
@@ -205,6 +206,7 @@ async function route(request, env, ctx) {
   if (pathname === '/digest/data' && (request.method === 'PUT' || request.method === 'GET')) return buildLogIngest(request, env);   // CI publishes the day's build digest (Bearer SELFHEAL_PUBLISH_KEY, admin/build-log.js)
   if (pathname === '/pr-checks/data' && request.method === 'PUT') return prChecksIngest(request, env);   // the monthly PR-check scorecard (Bearer SELFHEAL_PUBLISH_KEY, admin/pr-checks.js)
   if (pathname === '/benchmark/data' && request.method === 'PUT') return benchmarkIngest(request, env);   // the bake-off's scored runs (Bearer SELFHEAL_PUBLISH_KEY, admin/benchmark.js)
+  if (pathname === '/benchmark-search/data' && request.method === 'PUT') return benchmarkSearchIngest(request, env);   // search-bench's scored runs (Bearer SELFHEAL_PUBLISH_KEY, admin/benchmark-search.js)
   if (pathname === '/self-heal/data' && request.method === 'PUT') return selfHealIngest(request, env);   // CI publishes the loop's numbers (Bearer SELFHEAL_PUBLISH_KEY)
   if (pathname === '/ai-cost/data' && request.method === 'GET') return jobCostSpent(request, env);   // a day's reported spend for CI's budget guard (same key)
   if (pathname === '/ai-cost/data' && request.method === 'PUT') return jobCostIngest(request, env);   // each scheduled job reports its AI cost (Bearer AI_COST_PUBLISH_KEY)
