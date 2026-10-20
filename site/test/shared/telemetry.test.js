@@ -321,6 +321,10 @@ test('a search report keeps only its listed fields, is never a problem, and its 
   const bad = JSON.parse(e.STATS.db.prepare("SELECT data FROM telemetry WHERE kind = 'search' ORDER BY rowid DESC LIMIT 1").get().data);
   assert.deepEqual(Object.keys(bad).filter(k => ['family', 'country', 'in_places'].includes(k)), []);
   const {problems} = await import('../../shared/telemetry.js');
+  await send(e, [{...base, result: 'failed', engine: 'cli', trigger: 'you'}, {...base, result: 'weird'}]);
+  const results = e.STATS.db.prepare("SELECT data FROM telemetry WHERE kind = 'search' ORDER BY rowid DESC LIMIT 2").all().map(r => JSON.parse(r.data).result);
+  assert.deepEqual(results, [undefined, 'failed']);   // the app's done / failed / stopped outcome is kept, anything else dropped
+  e.STATS.db.prepare("DELETE FROM telemetry WHERE kind = 'search' AND rowid > 2").run();
   assert.equal(e.STATS.db.prepare("SELECT kind FROM telemetry WHERE kind = 'search'").all().length, 2);
   assert.equal(JSON.stringify(await problems(e.STATS, 7, new Date('2026-10-19T00:00:00Z'))).includes('Search ('), false);
   const {FAMILIES} = await import('../../shared/search-report.js');

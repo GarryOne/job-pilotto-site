@@ -11,6 +11,7 @@ export const FIELDS = {
   in_places: count, scored: count, fit70: count, first_s: count, tenth_s: count, first_fit70_s: count, nth: count, runs_to_fit70: count,
   engine: v => ['api', 'cli', 'openai', 'codex'].includes(v),
   trigger: v => ['first', 'you', 'schedule', 'telegram', 'other'].includes(v),
+  result: v => ['done', 'failed', 'stopped'].includes(v),   // a search that did not finish sends only this, its engine and its trigger
 };
 const ENVELOPE = ['kind', 'at', 'install', 'version', 'platform', 'os', 'source'];
 
