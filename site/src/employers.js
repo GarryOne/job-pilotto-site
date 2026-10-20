@@ -3,6 +3,7 @@
 // PUT /api/index (Bearer INDEX_PUBLISH_KEY) is the private central scout (repo GarryOne/job-pilotto-internal) publishing it.
 // Product data only: feeds, quality, last verified. Nothing about any user. Stored as one KV value (binding WAITLIST).
 import {REGIONS, ROLES} from './pool.js';
+import {poolSnapshot, pooledKeys, storePoolSnapshot} from './installsimpact.js';
 import {COUNTRIES, FAMILIES, METROS} from './pool-tags.js';
 import {authorize, digestOf, equal, flag} from './guard.js';
 import {store as storeScouting} from './scouting.js';
@@ -247,8 +248,10 @@ async function publish(request, env) {
   if (env.WAITLIST && Array.isArray(body.boards)) await env.WAITLIST.put(BOARDS_KEY, JSON.stringify(boardsOf(body.boards)));
   // The day's snapshot for /admin/scouting's growth: counts only; never a reason to refuse the index.
   if (env.STATS) {
-    const pooled = new Set(((await env.STATS.prepare("SELECT DISTINCT ats || ':' || slug AS k FROM contributions WHERE how IS NOT NULL AND how NOT IN ('index', 'own')").all().catch(() => ({results: []}))).results || []).map(row => row.k));
-    await storeSnapshot(env.STATS, generated.slice(0, 10), snapshot(feeds, feeds.filter(feed => pooled.has(`${feed.ats}:${feed.slug}`)).length, nofeed.length)).catch(() => false);
+    const pooled = await pooledKeys(env.STATS);
+    const date = generated.slice(0, 10);
+    await storeSnapshot(env.STATS, date, snapshot(feeds, feeds.filter(feed => pooled.has(`${feed.ats}:${feed.slug}`)).length, nofeed.length)).catch(() => false);
+    await storePoolSnapshot(env.STATS, date, poolSnapshot(feeds, pooled)).catch(() => false);   // what installs add, for /admin/installs (migration 0102)
   }
   // The central scout's own numbers for /intel (src/scouting.js): never a reason to refuse the index.
   if (env.STATS && body.stats) await storeScouting(env.STATS, body.stats, generated.slice(0, 10)).catch(() => false);
