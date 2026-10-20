@@ -48,7 +48,8 @@
   "nofeed": [
    {
     "company": "Nowhere Studio",
-    "host": "nowhere-studio.example"
+    "host": "nowhere-studio.example",
+    "outcome": "no_feed"
    }
   ],
   "regions": [
@@ -135,7 +136,8 @@
   "nofeed": [
    {
     "company": "Nowhere Studio",
-    "host": "nowhere-studio.example"
+    "host": "nowhere-studio.example",
+    "outcome": "no_feed"
    }
   ],
   "regions": [
