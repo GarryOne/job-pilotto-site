@@ -3,7 +3,7 @@
 // in the last 30 days, as {fact, share} = the share of the reporting installs that were asked it. Rides POST /api/controls (intel.facts) and GET /api/packs/aliases (facts).
 // The app turns the share into an order; the server never sends text. Guarded by test/shared/fact-asks.test.js.
 import {CATALOG} from '../../desktop/lib/fact-catalog.js';
-import {digestOf} from '../api/guard.js';
+import {digestOf} from './guard.js';
 
 export const FACTS = CATALOG.map(fact => fact.id);
 export const MIN_INSTALLS = 3, WINDOW_DAYS = 30;

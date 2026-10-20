@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import {byKind, floorCells, gather, page, poolSnapshot, pooledKeys, storePoolSnapshot, view} from '../src/installsimpact.js';
-import {stacked} from '../src/installscharts.js';
+import {byKind, floorCells, gather, page, view} from '../../admin/installsimpact.js';
+import {poolSnapshot, pooledKeys, storePoolSnapshot} from '../../shared/pool-snapshot.js';
+import {stacked} from '../../admin/installscharts.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
   for (const file of ['0001_stats.sql', '0003_contributions.sql', '0027_contributions_v2.sql', '0028_nofeed.sql', '0029_index_daily.sql', '0031_board_reads.sql', '0099_scouting_history.sql', '0101_pool_served.sql', '0102_installs_impact.sql'])
-    db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
+    db.exec(readFileSync(new URL(`../../migrations/${file}`, import.meta.url), 'utf8'));
   db.exec('CREATE TABLE IF NOT EXISTS index_feeds (key TEXT PRIMARY KEY, body TEXT)');
   const statement = (sql, args = []) => ({bind: (...values) => statement(sql, values), run: async () => db.prepare(sql).run(...args), all: async () => ({results: db.prepare(sql).all(...args)})});
   return {db, prepare: sql => statement(sql)};

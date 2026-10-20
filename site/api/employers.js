@@ -3,7 +3,7 @@
 // PUT /api/index (Bearer INDEX_PUBLISH_KEY) is the private central scout (repo GarryOne/job-pilotto-internal) publishing it.
 // Product data only: feeds, quality, last verified. Nothing about any user. Stored as one KV value (binding WAITLIST).
 import {REGIONS, ROLES} from '../shared/pool-labels.js';
-import {poolSnapshot, pooledKeys, storePoolSnapshot} from '../admin/installsimpact.js';
+import {poolSnapshot, pooledKeys, storePoolSnapshot} from '../shared/pool-snapshot.js';
 import {COUNTRIES, FAMILIES, METROS} from '../shared/pool-tags.js';
 import {authorize, digestOf, equal, flag} from '../shared/guard.js';
 import {store as storeScouting} from '../shared/scouting.js';

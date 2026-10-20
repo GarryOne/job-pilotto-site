@@ -1,34 +1,18 @@
+
+import {viewer} from '../shared/auth.js';
+import {EUROPE} from '../shared/pool-tags.js';
+import {CHART_STYLE, TOOLTIP, bars, C, columns, esc, n, tile} from '../shared/scoutingcharts.js';
+import {FLOOR, cellsOf, kindName, topKind} from '../shared/scoutingvisual.js';
+import {servedSection} from './scoutingadmin.js';
+import {stacked} from './installscharts.js';
+import {all, day, jobsOf, pooledKeys, isPooled} from '../shared/pool-snapshot.js';
+
 // /admin/installs: what real installs add to the product, above all the central employer list (owner, 20 Oct 2026: "the impact of real
 // users/installation over our product growth ... especially on the scouting/job search"). Employers an install shared, the open jobs they
 // hold, the kind × country cells installs filled, steps installs skipped thanks to the pool (pool_served_day), boards and dead ends.
-// Counts and names only, never a job text. Tests: site/test/installsimpact.test.js.
-import {viewer} from './auth.js';
-import {EUROPE} from './pool-tags.js';
-import {CHART_STYLE, TOOLTIP, bars, C, columns, esc, n, tile} from './scoutingcharts.js';
-import {FLOOR, cellsOf, kindName, topKind} from './scoutingvisual.js';
-import {servedSection} from './scoutingadmin.js';
-import {stacked} from './installscharts.js';
-
-const all = async (db, sql, ...args) => ((await db.prepare(sql).bind(...args).all().catch(() => ({results: []}))).results) || [];
-const day = (date, back = 0) => new Date(date.getTime() - back * 86400000).toISOString().slice(0, 10);
-const jobsOf = feed => Number(feed.jobs || feed.fresh?.jobs || 0);
+// Counts and names only, never a job text. Tests: test/admin/installsimpact.test.js.
 const parse = text => { try { return text ? JSON.parse(text) : null; } catch { return null; } };
 
-// The employers an install shared with a route of its own (not read from the central list): the same set the Growth table counts as "From installs".
-export async function pooledKeys(db) {
-  return new Set((await all(db, "SELECT DISTINCT ats || ':' || slug AS k FROM contributions WHERE how IS NOT NULL AND how NOT IN ('index', 'own')")).map(row => row.k));
-}
-const isPooled = (feed, keys) => keys.has(`${feed.ats}:${feed.slug}`);
-
-// The day's extra snapshot columns (migration 0102), written beside the scouting snapshot when the list is published.
-export function poolSnapshot(feeds, keys) {
-  const pooled = feeds.filter(feed => isPooled(feed, keys));
-  return {jobs_total: feeds.reduce((sum, feed) => sum + jobsOf(feed), 0), from_pool_jobs: pooled.reduce((sum, feed) => sum + jobsOf(feed), 0), pool_cells: cellsOf(pooled)};
-}
-export async function storePoolSnapshot(db, date, snap) {
-  await db.prepare('UPDATE index_daily SET jobs_total = ?, from_pool_jobs = ?, pool_cells = ? WHERE day = ?')
-    .bind(snap.jobs_total, snap.from_pool_jobs, JSON.stringify(snap.pool_cells || {}), date).run();
-}
 
 // Cells at the floor with installs, and how many of them only reached it thanks to installs (central cell alone is under the floor).
 export function floorCells(cells, poolCells) {

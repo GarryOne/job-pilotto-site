@@ -1,6 +1,6 @@
 // Charts for /admin/installs: the employer list over time split into the central scout's part and what installs added. Plain SVG strings
 // on the admin's dark surface, hover text through the page's [data-tip] tooltip. Tests: site/test/installsimpact.test.js.
-import {C, esc, n} from './scoutingcharts.js';
+import {C, esc, n} from '../shared/scoutingcharts.js';
 
 // Stacked areas, oldest first: rows [{day, central, installs}]. One scale from 0, the top labelled; each day has a hover column.
 export function stacked(rows, {width = 420, height = 170, label = ''} = {}) {

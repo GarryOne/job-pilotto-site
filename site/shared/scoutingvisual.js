@@ -3,7 +3,7 @@
 // fills which kind, and the central scout's last runs. Counts only. Charts: shared/scoutingcharts.js. Tests: site/test/shared/scoutingvisual.test.js.
 import {C, bars, columns, esc, inkOn, n, shade, sparkline, STEPS, tile} from './scoutingcharts.js';
 import {EUROPE} from './pool-tags.js';
-import {ROLES} from '../api/pool-labels.js';
+import {ROLES} from './pool-labels.js';
 
 export const FLOOR = 25;   // employers per kind and country the scout aims for (src/scout_cells.py FLOOR)
 export const KINDS = ['software', ...ROLES.slice(ROLES.indexOf('sales_b2b'))];   // src/role_kinds.py KINDS
