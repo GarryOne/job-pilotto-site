@@ -8,7 +8,7 @@ import {cleanStats, load, RUNS, store} from '../../shared/scouting.js';
 import {page} from '../../admin/scoutingadmin.js';
 import {snapshot, storeSnapshot} from '../../shared/scouting-snapshot.js';
 import {bars, columns, shade, sparkline} from '../../shared/scoutingcharts.js';
-import {AIMED, FLOOR, KINDS, cellsOf, demandOf, heatmap, history, tiles} from '../../shared/scoutingvisual.js';
+import {AIMED, BIG, FLOOR, SMALL, atFloor, floorFor, KINDS, cellsOf, demandOf, heatmap, history, tiles} from '../../shared/scoutingvisual.js';
 
 function d1(...migrations) {
   const db = new DatabaseSync(':memory:');
@@ -60,6 +60,16 @@ test('the kinds are the engine\'s, and the scout aims at every kind but software
   assert.deepEqual(KINDS, [...engine.matchAll(/'([a-z0-9_]+)'/g)].map(m => m[1]));
   assert.equal(FLOOR, Number(readFileSync(new URL('../../../src/scout_cells.py', import.meta.url), 'utf8').match(/^FLOOR = (\d+)/m)[1]));
   assert.deepEqual(AIMED.includes('software') || AIMED.includes('other'), false);
+});
+
+test('the floor follows the country size, the same lists as the engine', () => {
+  const engine = readFileSync(new URL('../../../src/scout_cells.py', import.meta.url), 'utf8');
+  const list = name => [...engine.match(new RegExp(`^${name} = \\((.*)\\)$`, 'm'))[1].matchAll(/'([a-z]+)'/g)].map(m => m[1]);
+  assert.deepEqual(BIG, list('BIG'));
+  assert.deepEqual(SMALL, list('SMALL'));
+  assert.deepEqual([floorFor('de'), floorFor('ch'), floorFor('lu')], [25, 10, 5]);
+  const cells = {'hospitality|lu': [5, 0], 'hospitality|ch': [9, 0], 'hospitality|de': [24, 0], 'logistics|de': [25, 0]};
+  assert.equal(atFloor(cells), 2, 'Luxembourg at 5 and Germany at 25 count; Switzerland at 9 and Germany at 24 do not');
 });
 
 test('the charts draw from the numbers and say when there is nothing yet', () => {

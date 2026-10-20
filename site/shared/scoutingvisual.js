@@ -5,7 +5,12 @@ import {C, bars, columns, esc, inkOn, n, shade, sparkline, STEPS, tile} from './
 import {EUROPE} from './pool-tags.js';
 import {ROLES} from './pool-labels.js';
 
-export const FLOOR = 25;   // employers per kind and country the scout aims for (src/scout_cells.py FLOOR)
+export const FLOOR = 25;   // employers per kind and country the scout aims for in the big markets (src/scout_cells.py FLOOR)
+export const BIG = ['de', 'gb', 'fr', 'it', 'es', 'pl', 'nl'], SMALL = ['lu', 'md', 'bg', 'hr', 'ee'];   // src/scout_cells.py BIG, SMALL
+// The floor follows the country's size (owner, 20 Oct 2026): 25 big markets, 10 mid-size, 5 small. Written as the engine's floor_for.
+export const floorFor = country => (BIG.includes(country) ? FLOOR : SMALL.includes(country) ? 5 : 10);
+// A count on the colour scale of the big markets: a cell at its own floor takes the colour of 25.
+const scaled = (count, country) => Math.round((count * FLOOR) / floorFor(country));
 export const KINDS = ['software', ...ROLES.slice(ROLES.indexOf('sales_b2b'))];   // src/role_kinds.py KINDS
 export const AIMED = KINDS.filter(kind => !['software', 'other'].includes(kind));   // the kinds the scout fills (src/scout_cells.py AIMED)
 const LABEL = {software: 'Software & IT', sales_b2b: 'B2B sales', sales_retail: 'Retail', logistics: 'Logistics', hospitality: 'Hospitality',
@@ -48,7 +53,7 @@ export function demandOf(rows, least = 3) {
 }
 
 const employers = (cells, cell) => cells?.[cell]?.[0] || 0;
-const atFloor = cells => AIMED.reduce((sum, kind) => sum + EUROPE.filter(country => employers(cells, `${kind}|${country}`) >= FLOOR).length, 0);
+export const atFloor = cells => AIMED.reduce((sum, kind) => sum + EUROPE.filter(country => employers(cells, `${kind}|${country}`) >= floorFor(country)).length, 0);
 const kindTotal = (cells, kind) => Object.entries(cells || {}).reduce((sum, [cell, [count]]) => sum + (cell.startsWith(`${kind}|`) ? count : 0), 0);
 
 // The daily snapshots that carry cells, oldest first, and the one a week back (null before a week of history).
@@ -69,7 +74,7 @@ export function tiles({feeds, daily, sharing7, central}, cells, past) {
   return `<div class="tiles">
 ${tile('Employers in the list', n(feeds.length), {spark: past.rows.map(row => row.feeds), delta: past.week ? feeds.length - past.week.feeds : null, note: '▲▼ against a week back'})}
 ${tile('Hire mostly outside IT', feeds.length ? `${Math.round((100 * nonIt) / feeds.length)}%` : '—', {spark: past.rows.map(row => (row.feeds ? (100 * row.non_it) / row.feeds : null)), note: `${n(nonIt)} employers`})}
-${tile(`Cells at ${FLOOR}+ employers`, `${n(atFloor(cells))} <small class="muted">/ ${n(AIMED.length * EUROPE.length)}</small>`, {spark: past.withCells.map(row => atFloor(row.cells)), delta: past.week?.cells ? atFloor(cells) - atFloor(past.week.cells) : null, note: 'kind × European country, the target'})}
+${tile('Cells at their floor', `${n(atFloor(cells))} <small class="muted">/ ${n(AIMED.length * EUROPE.length)}</small>`, {spark: past.withCells.map(row => atFloor(row.cells)), delta: past.week?.cells ? atFloor(cells) - atFloor(past.week.cells) : null, note: 'kind × European country, the target'})}
 ${tile('Open jobs in Europe', n(jobs), {note: 'at the employers hiring in Europe, each once'})}
 ${tile('Installs sharing', n(sharing7), {note: 'last 7 days'})}
 ${tile('Last central run', last ? `${n(last.found)} found` : '—', {spark: runs.map(run => run.found), note: last ? `${last.at.replace('T', ' ')} · ${cellName(last.cell) || 'its usual search'}` : 'no run recorded yet'})}
@@ -84,30 +89,30 @@ export function heatmap(cells, past, demand, aimedCell) {
     const parts = [`${kindName(kind)} · ${countryName(country)}: ${n(count)} employer${count === 1 ? '' : 's'}, ${n(jobs)} open jobs`];
     if (week) parts.push(`${signed(count - employers(week, cell))} this week`);
     if (demand[cell]) parts.push(`${n(demand[cell])} installs search here`);
-    if (AIMED.includes(kind) && count < FLOOR) parts.push(`${FLOOR - count} short of ${FLOOR}`);
+    if (AIMED.includes(kind) && count < floorFor(country)) parts.push(`${floorFor(country) - count} short of ${floorFor(country)}`);
     if (cell === aimedCell) parts.push('the AI ideas aim here now');
-    return `<td tabindex="0" class="${cell === aimedCell ? 'aimed' : ''}" style="background:${shade(count)};color:${inkOn(count)}" data-tip="${esc(parts.join(' · '))}">${count || '·'}</td>`;
+    return `<td tabindex="0" class="${cell === aimedCell ? 'aimed' : ''}" style="background:${shade(scaled(count, country))};color:${inkOn(scaled(count, country))}" data-tip="${esc(parts.join(' · '))}">${count || '·'}</td>`;
   }).join('')}<td class="total" data-tip="${esc(`${kindName(kind)} in Europe${week ? `: ${signed(kindTotal(cells, kind) - kindTotal(week, kind))} this week` : ''}`)}">${n(kindTotal(cells, kind))}</td></tr>`;
   const legend = STEPS.map(([from], i) => `<i style="background:${STEPS[i][1]}"></i>${i + 1 < STEPS.length ? `${from}${STEPS[i + 1][0] - 1 > from ? `–${STEPS[i + 1][0] - 1}` : ''}` : `${from}+`}`).join(' ');
-  return `<section class="card"><h2>🗺️ Where the list is strong or thin</h2><small class="muted">Employers by the kind they mostly hire for × the European countries their jobs are in. Bright from ${FLOOR}, the floor; hover a cell for its jobs, this week's change and who searches there.${aimedCell ? ` Now aiming at <b>${esc(cellName(aimedCell))}</b>.` : ''}</small>
+  return `<section class="card"><h2>🗺️ Where the list is strong or thin</h2><small class="muted">Employers by the kind they mostly hire for × the European countries their jobs are in. Bright from each country's floor (${FLOOR} big markets, 10 mid-size, 5 small); hover a cell for its jobs, this week's change and who searches there.${aimedCell ? ` Now aiming at <b>${esc(cellName(aimedCell))}</b>.` : ''}</small>
 <div class="scroll"><table class="heat"><tr><th></th>${EUROPE.map(country => `<th title="${esc(countryName(country))}">${country.toUpperCase()}</th>`).join('')}<th>Europe</th></tr>${kinds.map(row).join('')}</table></div>
 <div class="legend">Employers: ${legend}<span class="gap"></span><i class="ring"></i> aimed at by the next AI ideas</div></section>`;
 }
 
 // Gaps people search in (demand under the floor) and, per kind, how many countries reach the floor.
 export function gaps(cells, demand) {
-  const wanted = Object.entries(demand).filter(([cell]) => employers(cells, cell) < FLOOR && !cell.startsWith('software|'))
+  const wanted = Object.entries(demand).filter(([cell]) => employers(cells, cell) < floorFor(cell.split('|')[1]) && !cell.startsWith('software|'))
     .sort((a, b) => b[1] - a[1] || employers(cells, a[0]) - employers(cells, b[0])).slice(0, 10)
-    .map(([cell, installs]) => ({label: cellName(cell), parts: [[installs, C.accent, 'installs searching']], after: `${employers(cells, cell)}/${FLOOR}`,
-      tip: `${cellName(cell)}: ${installs} installs search here; ${employers(cells, cell)} of ${FLOOR} employers`}));
+    .map(([cell, installs]) => ({label: cellName(cell), parts: [[installs, C.accent, 'installs searching']], after: `${employers(cells, cell)}/${floorFor(cell.split('|')[1])}`,
+      tip: `${cellName(cell)}: ${installs} installs search here; ${employers(cells, cell)} of ${floorFor(cell.split('|')[1])} employers`}));
   const reach = KINDS.map(kind => {
-    const done = EUROPE.filter(country => employers(cells, `${kind}|${country}`) >= FLOOR).length;
-    return {label: kindName(kind), parts: [[done, AIMED.includes(kind) ? C.accent : C.gray, `countries at ${FLOOR}+`]], after: `${done}/${EUROPE.length}`,
-      tip: `${kindName(kind)}: ${done} of ${EUROPE.length} countries have ${FLOOR}+ employers; ${n(kindTotal(cells, kind))} in Europe`};
+    const done = EUROPE.filter(country => employers(cells, `${kind}|${country}`) >= floorFor(country)).length;
+    return {label: kindName(kind), parts: [[done, AIMED.includes(kind) ? C.accent : C.gray, 'countries at their floor']], after: `${done}/${EUROPE.length}`,
+      tip: `${kindName(kind)}: ${done} of ${EUROPE.length} countries are at their floor; ${n(kindTotal(cells, kind))} in Europe`};
   });
-  return `<div class="grid2"><section class="card"><h2>🎯 Gaps people search in</h2><small class="muted">Kind × country cells under ${FLOOR} employers where 3+ installs searched in the last 30 days, most searched first; right: employers / floor.</small>
-${bars(wanted, {empty: `No cell with 3+ installs searching is under ${FLOOR} yet.`})}</section>
-<section class="card"><h2>🏁 Countries at the floor, per kind</h2><small class="muted">Out of ${EUROPE.length} European countries, how many have ${FLOOR}+ employers of this kind. Gray: software, already strong.</small>
+  return `<div class="grid2"><section class="card"><h2>🎯 Gaps people search in</h2><small class="muted">Kind × country cells under their floor where 3+ installs searched in the last 30 days, most searched first; right: employers / floor.</small>
+${bars(wanted, {empty: `No cell with 3+ installs searching is under its floor yet.`})}</section>
+<section class="card"><h2>🏁 Countries at the floor, per kind</h2><small class="muted">Out of ${EUROPE.length} European countries, how many have reached their floor of employers of this kind. Gray: software, already strong.</small>
 ${bars(reach, {max: EUROPE.length})}</section></div>`;
 }
 

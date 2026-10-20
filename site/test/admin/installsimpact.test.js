@@ -37,8 +37,8 @@ test('the snapshot adds the jobs, the jobs from installs and the pooled kind × 
 });
 
 test('a cell lifted to the floor counts only when the central scout alone left it under', () => {
-  const cells = {'healthcare|ch': [25, 5], 'healthcare|de': [30, 5], 'sales_b2b|fr': [10, 1]};
-  assert.deepEqual(floorCells(cells, {'healthcare|ch': [5, 1], 'healthcare|de': [2, 1]}), {withInstalls: 2, alone: 1, gained: 1});
+  const cells = {'healthcare|pl': [25, 5], 'healthcare|de': [30, 5], 'sales_b2b|fr': [10, 1], 'logistics|lu': [5, 1]};   // floors: 25 big markets, 5 small
+  assert.deepEqual(floorCells(cells, {'healthcare|pl': [5, 1], 'healthcare|de': [2, 1], 'logistics|lu': [1, 1]}), {withInstalls: 3, alone: 1, gained: 2});
 });
 
 test('each employer is counted once per kind, central or from installs', () => {

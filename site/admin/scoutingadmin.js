@@ -6,7 +6,7 @@ import {section as nightly} from '../shared/scouting.js';
 import {section as closedSites} from './closed-sites.js';
 import {EUROPE} from '../shared/pool-tags.js';
 import {CHART_STYLE, TOOLTIP} from '../shared/scoutingcharts.js';
-import {FLOOR, cellsOf, gaps, heatmap, history, runs, sources, tiles, topKind, trends} from '../shared/scoutingvisual.js';
+import {floorFor, cellsOf, gaps, heatmap, history, runs, sources, tiles, topKind, trends} from '../shared/scoutingvisual.js';
 import {day, snapshot, gather} from '../shared/scouting-snapshot.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
@@ -50,11 +50,11 @@ export function page(data, url = new URL('https://www.jobadabra.top/admin/scouti
     for (const region of feed.regions?.length ? feed.regions : ['unknown']) grid[`${kind}|${region}`] = (grid[`${kind}|${region}`] || 0) + 1;
   }
   const regions = [...new Set(Object.keys(grid).map(key => key.split('|')[1]))].sort();
-  // And by European country (where its jobs are, src/scout_index.py countries): a kind under FLOOR employers in a country is a gap the scout
+  // And by European country (where its jobs are, src/scout_index.py countries): a kind under its country's floor in a country is a gap the scout
   // aims at (owner, 19 Oct 2026: "Scout where the list is thin", every industry in every European country).
   const cells = cellsOf(feeds);
   const byCountry = Object.fromEntries(Object.entries(cells).map(([cell, [count]]) => [cell, count]));
-  const thin = (kind, country) => !['other', 'unknown'].includes(kind) && (byCountry[`${kind}|${country}`] || 0) < FLOOR;
+  const thin = (kind, country) => !['other', 'unknown'].includes(kind) && (byCountry[`${kind}|${country}`] || 0) < floorFor(country);
   const verdict = !feeds.length ? 'No employer list published yet: the central scout publishes every 6 hours.'
     : `${n(feeds.length)} employers in the central list${growth == null ? '' : `, ${growth >= 0 ? '+' : ''}${n(growth)} this week`}; `
       + `${n(data.sharing7)} install${data.sharing7 === 1 ? '' : 's'} sharing this week; ${pct(nonIt, feeds.length)} hire mostly outside IT.`;
@@ -77,7 +77,7 @@ ${trends(cells, past)}
 ${sources(data.central)}
 ${runs(data.central)}
 <h2 class="more">The numbers behind the charts</h2>
-${fold('🇪🇺 Coverage by kind of role and country (table)', `<section class="card"><small class="muted">European employers by the kind they mostly hire for and the countries their jobs are in. Red: under ${FLOOR}, a gap the scout aims at next.</small>
+${fold('🇪🇺 Coverage by kind of role and country (table)', `<section class="card"><small class="muted">European employers by the kind they mostly hire for and the countries their jobs are in. Red: under the country's floor (25 big markets, 10 mid-size, 5 small), a gap the scout aims at next.</small>
 <div class="scroll"><table class="countries"><tr><th>Kind</th>${EUROPE.map(country => `<th>${country.toUpperCase()}</th>`).join('')}</tr>
 ${rows(Object.entries(kinds).sort((a, b) => b[1] - a[1]), ([kind]) => [esc(kind), ...EUROPE.map(country => `<span class="${thin(kind, country) ? 'thin' : ''}">${n(byCountry[`${kind}|${country}`])}</span>`)], 'No employers yet.')}</table></div></section>`)}
 ${fold('📈 Growth (daily snapshots)', `<section class="card"><small class="muted">One snapshot a day, when the central scout publishes.</small>

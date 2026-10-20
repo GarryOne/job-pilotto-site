@@ -2,7 +2,7 @@
 import {viewer} from '../shared/auth.js';
 import {EUROPE} from '../shared/pool-tags.js';
 import {CHART_STYLE, TOOLTIP, bars, C, columns, esc, n, tile} from '../shared/scoutingcharts.js';
-import {FLOOR, cellsOf, kindName, topKind} from '../shared/scoutingvisual.js';
+import {floorFor, cellsOf, kindName, topKind} from '../shared/scoutingvisual.js';
 import {servedSection} from './scoutingadmin.js';
 import {stacked} from './installscharts.js';
 import {all, day, jobsOf, pooledKeys, isPooled} from '../shared/pool-snapshot.js';
@@ -17,8 +17,8 @@ const parse = text => { try { return text ? JSON.parse(text) : null; } catch { r
 // Cells at the floor with installs, and how many of them only reached it thanks to installs (central cell alone is under the floor).
 export function floorCells(cells, poolCells) {
   const keys = Object.keys(cells || {});
-  const withInstalls = keys.filter(key => cells[key][0] >= FLOOR).length;
-  const alone = keys.filter(key => cells[key][0] - (poolCells?.[key]?.[0] || 0) >= FLOOR).length;
+  const withInstalls = keys.filter(key => cells[key][0] >= floorFor(key.split('|')[1])).length;
+  const alone = keys.filter(key => cells[key][0] - (poolCells?.[key]?.[0] || 0) >= floorFor(key.split('|')[1])).length;
   return {withInstalls, alone, gained: withInstalls - alone};
 }
 
@@ -60,7 +60,7 @@ export function page(data, now = new Date()) {
   const delta = key => { const before = weekAgo(daily, key); return before == null || !daily.length ? null : (last?.[key] ?? 0) - before; };
   const verdict = !total ? 'No employer list published yet: the central scout publishes every 6 hours.'
     : `${n(pooledNow.length)} of ${n(total)} employers (${pct(pooledNow.length, total)}) came from installs, holding ${pct(jobsPool, jobsAll)} of the open jobs. `
-      + `Installs skipped ${n(skipped30)} steps in 30 days and lifted ${n(floor.gained)} kind × country cells to ${FLOOR}+ employers.`;
+      + `Installs skipped ${n(skipped30)} steps in 30 days and lifted ${n(floor.gained)} kind × country cells to their floor.`;
   const series = daily.map(row => ({day: row.day, central: Math.max(0, row.feeds - row.from_pool), installs: row.from_pool}));
   const gainHistory = daily.filter(row => row.cells && row.pool_cells).map(row => floorCells(row.cells, row.pool_cells).gained);
   const kindBars = bars(kinds.map(k => ({label: kindName(k.kind), parts: [[k.central, C.gray, 'central scout'], [k.installs, C.accent, 'from installs']], after: `${n(k.central + k.installs)} <small class="muted">+${pct(k.installs, k.central + k.installs)}</small>`})), {empty: 'No employers yet.'});
@@ -76,7 +76,7 @@ export function page(data, now = new Date()) {
 ${tile('Employers from installs', n(pooledNow.length), {spark: daily.map(row => row.from_pool), delta: delta('from_pool'), note: `${pct(pooledNow.length, total)} of the list`})}
 ${tile('Open jobs they hold', n(jobsPool), {spark: daily.filter(row => row.jobs_total).map(row => row.from_pool_jobs), delta: delta('from_pool_jobs'), note: `${pct(jobsPool, jobsAll)} of ${n(jobsAll)}`})}
 ${tile('Steps skipped, 30 days', n(skipped30), {spark: days.map(d => perDay[d] || 0), note: 'work the pool already had done'})}
-${tile('Cells lifted by installs', n(floor.gained), {spark: gainHistory, note: `kind × country now at ${FLOOR}+`})}
+${tile('Cells lifted by installs', n(floor.gained), {spark: gainHistory, note: `kind × country now at their floor`})}
 ${tile('Dead ends shared', n(data.deadTotal), {note: 'skipped by everyone for 30 days'})}
 ${tile('Boards found by installs', n(data.boards), {note: `${n(data.sharing7)} installs sharing this week`})}
 </div>
