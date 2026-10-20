@@ -227,6 +227,21 @@ test('a browser read of a refused site: fixed shape in, served after one install
   assert.ok(!JSON.stringify(served).includes('why') && !JSON.stringify(served).includes('nonsense'), 'only the fixed shape goes out');
 });
 
+test('how a site is read: five fixed words in, a positive route served after one install, refused or browser-only after three, one per host', async () => {
+  const {agreedSites} = await import('../src/employers.js');
+  const env = setup();
+  const sites = [{host: 'jobs.tagged.ch', kind: 'route', route: 'jobposting'}, {host: 'closed.ch', kind: 'route', route: 'refused'},
+    {host: 'bad.ch', kind: 'route', route: 'hacked'}, {host: 'none.ch', kind: 'route'}];
+  const answer = await (await post(env, {...body('install-a', []), v: 2, sites})).json();
+  assert.equal(answer.sites, 2, 'an unknown word and a missing route are dropped');
+  const served = async () => Object.fromEntries((await agreedSites(env)).filter(fact => fact.kind === 'route').map(fact => [fact.host, fact.route]));
+  assert.deepEqual(await served(), {'jobs.tagged.ch': 'jobposting'}, 'a positive route needs one install; a refusal waits for three');
+  for (const install of ['install-b', 'install-c']) await post(env, {...body(install, []), v: 2, sites: [{host: 'closed.ch', kind: 'route', route: 'refused'}]});
+  assert.deepEqual(await served(), {'jobs.tagged.ch': 'jobposting', 'closed.ch': 'refused'});
+  const fact = (await agreedSites(env)).find(item => item.host === 'closed.ch');
+  assert.deepEqual(Object.keys(fact).sort(), ['host', 'installs', 'kind', 'route'], 'a host and a word, nothing else');
+});
+
 test('a learned page layout: checked, counted when identical, served at 3 installs, never with the switch off (8 Oct 2026)', async () => {
   const {agreedSites} = await import('../src/employers.js');
   const env = setup();

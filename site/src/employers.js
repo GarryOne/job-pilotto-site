@@ -134,16 +134,27 @@ async function slice(env, regions) {
 // browser reads, a dead page. Counted, never who: only facts several installs agree on go out (the learned layer's k >= 3 rule).
 export const SITES_K = 3;
 const fact = (row, relevant) => ({host: row.host, kind: row.kind, ...(row.url ? {url: row.url} : {}),
-  ...(row.body ? (row.kind === 'browser_read' ? {read: JSON.parse(row.body)} : {recipe: JSON.parse(row.body)}) : {}),
+  ...(row.body ? (row.kind === 'browser_read' ? {read: JSON.parse(row.body)} : row.kind === 'route' ? {route: JSON.parse(row.body)} : {recipe: JSON.parse(row.body)}) : {}),
   installs: row.installs, ...(relevant?.length ? {relevant} : {})});
 export async function agreedSites(env, k = SITES_K) {
   if (!env.STATS) return [];
   try {
-    const rows = (await env.STATS.prepare(`SELECT host, kind, url, body, COUNT(DISTINCT install) AS installs FROM sitefacts WHERE kind != 'browser_read'
+    const rows = (await env.STATS.prepare(`SELECT host, kind, url, body, COUNT(DISTINCT install) AS installs FROM sitefacts WHERE kind NOT IN ('browser_read', 'route')
       GROUP BY host, kind, url, body HAVING installs >= ? ORDER BY installs DESC LIMIT 3000`).bind(k).all()).results || [];
     // A browser outcome is served after one install (owner, 20 Oct 2026: a fact the next install's own read checks): the newest per host.
     rows.push(...((await env.STATS.prepare(`SELECT host, kind, NULL AS url, body, 1 AS installs FROM sitefacts f WHERE kind = 'browser_read'
       AND day = (SELECT MAX(day) FROM sitefacts g WHERE g.kind = 'browser_read' AND g.host = f.host) GROUP BY host LIMIT 3000`).all()).results || []));
+    // How a site is read: a positive route is checked by the next install's own read, so one install serves it; a refusal or a browser-only page
+    // depends on who asked, so it waits for k installs. One route per host: the one most installs gave.
+    const routes = (await env.STATS.prepare(`SELECT host, kind, NULL AS url, body, COUNT(DISTINCT install) AS installs FROM sitefacts WHERE kind = 'route'
+      GROUP BY host, body ORDER BY installs DESC LIMIT 3000`).all()).results || [];
+    const seen = new Set();
+    for (const row of routes) {
+      if (seen.has(row.host)) continue;
+      seen.add(row.host);
+      if (['"refused"', '"browser_only"'].includes(row.body) && row.installs < k) continue;
+      rows.push(row);
+    }
     const cells = rows.some(row => row.kind === 'board') ? await boardCells(env, k) : {};
     const facts = rows.map(row => fact(row, row.kind === 'board' ? cells[row.host] : null));
     if (env.POOL_LAYOUTS === 'off') return facts.filter(item => item.kind !== 'layout');   // the kill switch for shared layouts
