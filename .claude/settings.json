@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME\"/job-pilotto/tools/pr-red-check.sh",
+            "timeout": 10,
+            "statusMessage": "Checking that your pull request is not red…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME\"/job-pilotto/tools/pr-red-check.sh",
+            "timeout": 10,
+            "statusMessage": "Checking that your pull request is not red…"
+          }
+        ]
+      }
+    ]
+  }
+}

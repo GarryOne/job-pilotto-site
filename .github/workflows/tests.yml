@@ -6,6 +6,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]   # edited: the description is checked, so fixing it re-runs the check
   schedule:
     - cron: '17 5 * * *'
   workflow_dispatch:
@@ -43,6 +44,11 @@ jobs:
         working-directory: site
       - run: npm ci
         working-directory: desktop
+      - name: PR description laid out
+        if: github.event_name == 'pull_request'
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s' "$BODY" | python3 tools/pr-body-check.py   # the public repo's own check, from the joined tree: the same layout the owner reads in 2-5 seconds
       - name: Site tests
         run: bash tools/check.sh --area site
       - name: Tests that read site files, and the tests of this repo
