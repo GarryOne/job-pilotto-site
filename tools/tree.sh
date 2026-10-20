@@ -18,7 +18,7 @@ if [ "$ref" = main ] && [ ! -f desktop/e2e/lib/applying-status.mjs ] && git fetc
   git checkout -q -f FETCH_HEAD; ref="site-private-repo-move, main lacks the moved tables"
 fi
 echo '.private/' >> .git/info/exclude
-rsync -a --exclude '.git/' --exclude '.private/' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude '.gitignore' --exclude '.public-*' .private/ ./
+rsync -a --exclude '.git/' --exclude '.private/' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude 'AGENTS.md' --exclude '.gitignore' --exclude '.public-*' .private/ ./
 # tests that list files with `git ls-files` must see this repo's files too
 (cd "." && git ls-files -o --exclude-standard -z | xargs -0 -n 500 git add -N --)
 sha="$(git rev-parse HEAD)"
