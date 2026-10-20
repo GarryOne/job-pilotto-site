@@ -5,6 +5,7 @@
 import {FAMILIES, LATEST_FAMILY, familyLinks, familyParam} from './engines.js';
 import {viewer} from './auth.js';
 import {load as loadScouting, section as nightly} from './scouting.js';
+import {gather as gatherClosed, section as closedSites} from './closed-sites.js';
 import {EUROPE} from './pool-tags.js';
 import {CHART_STYLE, TOOLTIP} from './scoutingcharts.js';
 import {FLOOR, cellsOf, demandOf, gaps, heatmap, history, runs, sources, tiles, topKind, trends} from './scoutingvisual.js';
@@ -64,7 +65,7 @@ export async function gather(db, now = new Date(), family = '') {
   // Who searches where (last 30 days): kinds × countries of the installs that share, for the heat map's hover and the gaps (k >= 3 installs).
   const demand = demandOf(await all(db, `SELECT DISTINCT install, roles, countries FROM contributions WHERE day >= ? AND${F}`, day(now, 30), ...f));
   const served = await all(db, 'SELECT day, kind, n FROM pool_served_day WHERE day >= ? ORDER BY day DESC, kind', day(now, 30)).catch(() => []);   // before 0100: none
-  return {family, served, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central: await loadScouting(db)};
+  return {family, served, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central: await loadScouting(db), closed: await gatherClosed(db, family).catch(() => [])};
 }
 
 // What installs shared, per AI family (Claude = Claude Code or an Anthropic key; OpenAI = Codex or an OpenAI key).
@@ -155,6 +156,7 @@ ${fold('📋 Job boards by kind of role', `<section class="card"><small class="m
 <div class="scroll"><table><tr><th>Board</th><th>Kind of role</th><th>Installs</th><th>Got a match</th><th>Jobs matched</th><th>Only on this board</th><th>Interviews</th><th>Failed</th></tr>${rows(data.boards || [], row => [esc(row.board), esc(row.roles || '—'), n(row.installs), n(row.matched), n(row.hits), n(Math.max(0, (row.hits || 0) - (row.dup || 0))), n(row.interviews), n(row.failed)], 'No board reads shared yet.')}</table></div></section>`)}
 ${fold('🧑‍🏫 Advice shown → taken', `<section class="card"><small class="muted">What the app recommended (Strategy cards, "Few new jobs" chips) and how often people took it, last 90 days.</small>
 <table><tr><th>Advice</th><th>Where</th><th>Shown</th><th>Taken</th><th>Dismissed</th><th>Installs</th></tr>${rows(data.advice || [], row => [esc(row.advice), esc(row.place), n(row.shown), n(row.taken), n(row.dismissed), n(row.installs)], 'No advice reported yet.')}</table></section>`)}
+${closedSites(data.closed, today)}
 ${fold(`🕳️ Dead ends · ${n(data.deadTotal)}`, `<section class="card"><small class="muted">Employers installs found with no readable job site: skipped for 30 days by everyone.</small>
 <table><tr><th>Employer</th><th>Website</th><th>Installs</th><th>Last</th></tr>${rows(data.dead, row => [esc(row.company), esc(row.host || ''), n(row.installs), esc(row.last)], 'None reported yet.')}</table></section>`)}
 ${fold('🧭 The central scout\'s own numbers', nightly(data.central))}
