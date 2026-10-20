@@ -201,6 +201,22 @@ test('facts about sites: checked on the way in, served once 3 installs agree (k 
 });
 
 
+test('a browser read of a refused site: fixed shape in, served after one install, the newest per host (owner, 20 Oct 2026: one install teaches all)', async () => {
+  const {agreedSites} = await import('../src/employers.js');
+  const env = setup();
+  const sites = [{host: 'jobs.coop.ch', kind: 'browser_read', read: {outcome: 'opened', jobs: 12, kinds: {creative_media: 0.8, nonsense: 0.2}, why: 'never goes'}},
+    {host: 'jobs.manor.ch', kind: 'browser_read', read: {outcome: 'bot'}},
+    {host: 'bad.ch', kind: 'browser_read', read: {outcome: 'hacked'}}, {host: 'none.ch', kind: 'browser_read'}];
+  const answer = await (await post(env, {...body('install-a', []), v: 2, sites})).json();
+  assert.equal(answer.sites, 2, 'an unknown outcome and a missing read are dropped');
+  await post(env, {...body('install-b', []), v: 2, sites: [{host: 'jobs.coop.ch', kind: 'browser_read', read: {outcome: 'opened', jobs: 14}}]});
+  const served = Object.fromEntries((await agreedSites(env)).filter(fact => fact.kind === 'browser_read').map(fact => [fact.host, fact.read]));
+  assert.deepEqual(served['jobs.manor.ch'], {outcome: 'bot'}, 'one install is enough for an outcome');
+  assert.equal(Object.keys(served).length, 2, 'one fact per host');
+  assert.ok([12, 14].includes(served['jobs.coop.ch'].jobs));
+  assert.ok(!JSON.stringify(served).includes('why') && !JSON.stringify(served).includes('nonsense'), 'only the fixed shape goes out');
+});
+
 test('a learned page layout: checked, counted when identical, served at 3 installs, never with the switch off (8 Oct 2026)', async () => {
   const {agreedSites} = await import('../src/employers.js');
   const env = setup();

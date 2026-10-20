@@ -21,7 +21,7 @@ export function layoutOf(recipe) {
   if (typeof next !== 'string' || next.length > 200 || /[<>{}`]|javascript:/i.test(next)) return null;
   return JSON.stringify({selector: selector.trim(), title, company, place, link, next});
 }
-export const SITE_KINDS = ['jobpage', 'browser', 'dead', 'layout', 'board'];   // board: a job board's search template (docs/superpowers/specs/2026-10-08-job-board-discovery.md)   // facts installs share about sites (migrations/0037_pool_sitefacts.sql)
+export const SITE_KINDS = ['jobpage', 'browser', 'dead', 'layout', 'board', 'browser_read'];   // board: a job board's search template (docs/superpowers/specs/2026-10-08-job-board-discovery.md)   // facts installs share about sites (migrations/0037_pool_sitefacts.sql)
 // A job board's fact: its search template (on its own host, {role} in it, nothing else in braces) and the countries it serves, as the
 // pool's fixed country ids, sorted, so installs that found the same board send the same fact and agree (k installs, employers.js SITES_K).
 export const boardOf = (board, url, host) => {
@@ -29,6 +29,17 @@ export const boardOf = (board, url, host) => {
   try { if (new URL(url.replace(/\{(role|place)\}/g, 'x')).hostname.replace(/^www\./, '') !== host) return null; } catch { return null; }
   const countries = [...new Set((Array.isArray(board?.countries) ? board.countries : []).filter(c => COUNTRIES.includes(c)))].sort();
   return countries.length ? JSON.stringify({countries}) : null;
+};
+// What a user's browser met on a site that refused the engine (src/sources/refused_reads.py shared; owner, 20 Oct 2026: one install teaches all):
+// a fixed word and, for a page that opened, its job count and kinds of work. Anything else is dropped.
+const OUTCOMES = ['opened', 'refused', 'bot', 'login'];
+export const readOf = read => {
+  if (!read || typeof read !== 'object' || !OUTCOMES.includes(read.outcome)) return null;
+  const jobs = Number.isInteger(read.jobs) && read.jobs >= 0 && read.jobs <= 100000 ? read.jobs : null;
+  const kinds = read.kinds && typeof read.kinds === 'object' ? Object.fromEntries(Object.entries(read.kinds)
+    .filter(([kind, share]) => ROLES.includes(kind) && typeof share === 'number' && share >= 0 && share <= 1)) : {};
+  return JSON.stringify({outcome: read.outcome, ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
+    ...(read.outcome === 'opened' && Object.keys(kinds).length ? {kinds} : {})});
 };
 const MAX_FEEDS = 2000, MAX_NOFEED = 300, MAX_SITES = 300, MAX_BOARDS = 30, KEEP_DAYS = 90, PER_MINUTE = 30;   // installs share each find as it is made (owner, 6 Oct 2026): many small shares; every feed a check read (7 Oct 2026)
 // Outcome counts (src/contribute.py outcomes): only these names, only whole numbers; anything else is dropped.
@@ -115,11 +126,11 @@ export async function contribute(request, env, now = new Date()) {
     const host = typeof item?.host === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host) && item.host.length <= 100 ? item.host : null;
     const kind = SITE_KINDS.includes(item?.kind) ? item.kind : null;
     const url = typeof item?.url === 'string' && /^https:\/\/[^\s#]{4,200}$/.test(item.url) ? item.url : null;
-    const body = kind === 'layout' ? layoutOf(item.recipe) : kind === 'board' ? boardOf(item.board, url, host) : null;
-    if (!host || !kind || (kind === 'jobpage' && !url) || (['layout', 'board'].includes(kind) && !body) || facts.has(`${host}|${kind}`) || /^e2e/.test(host)) { drop('sites'); continue; }
+    const body = kind === 'layout' ? layoutOf(item.recipe) : kind === 'board' ? boardOf(item.board, url, host) : kind === 'browser_read' ? readOf(item.read) : null;
+    if (!host || !kind || (kind === 'jobpage' && !url) || (['layout', 'board', 'browser_read'].includes(kind) && !body) || facts.has(`${host}|${kind}`) || /^e2e/.test(host)) { drop('sites'); continue; }
     facts.add(`${host}|${kind}`);
     const given = kind === 'board' && item.yield && typeof item.yield === 'object' ? item.yield : null;   // what the board gave this install (PR 6, 18 Oct 2026)
-    sites.push({host, kind, url: ['browser', 'layout'].includes(kind) ? null : url, body, yield: given && {in_places: count(given.in_places) ?? 0, fit70: count(given.fit70) ?? 0}});
+    sites.push({host, kind, url: ['browser', 'layout', 'browser_read'].includes(kind) ? null : url, body, yield: given && {in_places: count(given.in_places) ?? 0, fit70: count(given.fit70) ?? 0}});
   }
   const candidates = cleanCandidates(body.candidates);   // the daily discovery batch's input (src/discovery-candidates.js)
   drop('candidates', (Array.isArray(body.candidates) ? Math.min(body.candidates.length, MAX_CANDIDATES) : 0) - candidates.length);
