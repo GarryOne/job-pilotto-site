@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# CI: lays the public job-pilotto repo's tree over the workspace, then this repo's files over that, so a moved workflow runs exactly as it did in the public repo.
+# This repo is checked out at .private/ (actions/checkout with path: .private). Usage: .private/tools/tree.sh [--full] [--ref <branch-or-sha>]
+# Sets PUBLIC_SHA (the public commit under test) for later steps. The public repo is public: no token needed.
+set -euo pipefail
+depth="--depth 1"; ref="main"
+while [ $# -gt 0 ]; do case "$1" in --full) depth="--tags";; --ref) ref="${2:-main}"; shift;; *) echo "tree.sh: unknown $1" >&2; exit 2;; esac; shift; done
+[ -n "$ref" ] || ref="main"
+cd "${GITHUB_WORKSPACE:-.}"
+git init -q .
+git remote add origin "${PUBLIC_REPO_URL:-https://github.com/GarryOne/job-pilotto.git}"
+# shellcheck disable=SC2086
+git fetch -q $depth origin "$ref"
+git checkout -q -f FETCH_HEAD
+echo '.private/' >> .git/info/exclude
+rsync -a --exclude '.git/' --exclude '.private/' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude '.gitignore' --exclude '.public-*' .private/ ./
+# tests that list files with `git ls-files` must see this repo's files too
+(cd "." && git ls-files -o --exclude-standard -z | xargs -0 -n 500 git add -N --)
+sha="$(git rev-parse HEAD)"
+echo "PUBLIC_SHA=$sha" >> "${GITHUB_ENV:-/dev/null}"
+echo "tree: job-pilotto@${sha:0:9} ($ref) + $(git -C .private rev-parse --short HEAD) of job-pilotto-site"

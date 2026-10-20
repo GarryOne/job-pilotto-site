@@ -1,0 +1,46 @@
+name: CI · Changelog publish
+# The What's new page publishes itself (owner, 18 Oct 2026): every stable release and every build the beta gate approved gets an entry, drafted by Haiku in plain words (new features / improvements / bug fixes),
+# checked by site/src/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. A failed draft is not published and is retried at the next run.
+# This run drafts only versions NEWER than the newest on the page; the one-time backfill of older versions (+ the 0.0.1 start entry) was run once from the owner's Mac, `node tools/changelog-publish.mjs --plan|--backfill`, never from here.
+# Runs hourly at :23 (the public repo cannot start a workflow here), or by hand: `gh workflow run changelog-publish.yml`.
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: changelog-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: GarryOne/job-pilotto   # the public repo's PRs, runs and tags (read with this repo's token: public data)
+      DIGEST_ANTHROPIC_KEY: ${{ secrets.DIGEST_ANTHROPIC_KEY }}
+      SELFHEAL_PUBLISH_KEY: ${{ secrets.SELFHEAL_PUBLISH_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: .private
+      - name: Lay the public repo's tree under this one
+        run: .private/tools/tree.sh --full
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Draft and publish the new versions
+        run: node tools/changelog-publish.mjs --cost "$RUNNER_TEMP/cost.json" 2>&1 | tee "$RUNNER_TEMP/changelog.log"
+      - name: Report the AI cost
+        if: always()
+        env:
+          AI_COST_PUBLISH_KEY: ${{ secrets.AI_COST_PUBLISH_KEY }}
+        run: if [ -s "$RUNNER_TEMP/cost.json" ]; then node desktop/e2e/ai-cost-report.mjs --job changelog-publish --file "$RUNNER_TEMP/cost.json"; else echo "no AI call this run"; fi
+      - name: Summary
+        if: always()
+        run: |
+          { echo '### Changelog publish'; echo '```'; cat "$RUNNER_TEMP/changelog.log"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

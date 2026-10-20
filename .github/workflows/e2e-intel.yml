@@ -1,0 +1,35 @@
+name: CI · E2E intelligence
+# Where our e2e fixing time goes (owner, 18 Oct 2026), for https://www.jobpilotto.top/admin/operations/e2e: every finished release/beta run and the cause of each red suite (tools/e2e-intel.mjs, facts only, no AI).
+# Runs hourly (the public repo cannot start a workflow here) (a red's cause "open" becomes "test" or "product" once its fix has run); each run is read once, the site keeps one row per run and one snapshot row.
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: e2e-intel
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: GarryOne/job-pilotto   # the public repo's PRs, runs and tags (read with this repo's token: public data)
+      SELFHEAL_PUBLISH_KEY: ${{ secrets.SELFHEAL_PUBLISH_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: .private
+      - name: Lay the public repo's tree under this one
+        run: .private/tools/tree.sh
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Read the new runs and publish them
+        run: node tools/e2e-intel.mjs

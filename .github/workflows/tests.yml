@@ -1,0 +1,49 @@
+name: CI · Tests
+# The site's own tests, the tests that live in this repo, and the public repo's tests that read site files, in a tree of the public repo with this repo's files laid over it (tools/tree.sh).
+# Runs on every push and pull request here, and once a day against the newest public main: a public change that drifts from the site fails here the next morning.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  tests:
+    name: All checks passed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      JOB_PILOTTO_FOLLOW_APP: '0'
+      JOB_PILOTTO_DISABLE: mail,notion,telegram,google_jobs
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: .private
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Lay the public repo's tree under this one
+        run: .private/tools/tree.sh
+      - run: pip install -r requirements.txt
+      - run: npm ci
+        working-directory: site
+      - run: npm ci
+        working-directory: desktop
+      - name: Site tests
+        run: bash tools/check.sh --area site
+      - name: Tests that read site files, and the tests of this repo
+        run: bash .private/tools/site-guards.sh . .private
