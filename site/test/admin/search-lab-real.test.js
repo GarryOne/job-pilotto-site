@@ -7,7 +7,7 @@ import {test} from 'node:test';
 import worker from '../../worker/index.js';
 import {judge} from '../../admin/search-lab-judge.js';
 import {page} from '../../admin/search-lab-page.js';
-import {realRows, realSection, summarize} from '../../admin/search-lab-real.js';
+import {byDay, canSend, realRows, realSection, summarize} from '../../admin/search-lab-real.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -52,4 +52,34 @@ test('the tab is in the page, empty it says nothing arrived yet, and it holds no
   const full = page([lab('a')], [], 'real', [report('install-aaaa')]);
   assert.match(full, /Hospitality/);
   assert.ok(!/Acme|https?:\/\/(?!www\.jobpilotto)/.test(full.replace(/<style>[\s\S]*?<\/style>/, '')));
+});
+
+test('failed and stopped searches are kept apart from finished ones and never count as a time', async () => {
+  const env = {STATS: d1(), ASSETS: {fetch: () => new Response('asset')}};
+  await send(env, [report('install-aaaa'), {kind: 'search', install: 'install-bbbb', version: '0.8.3', platform: 'win32', at: '2026-10-19T11:00:00Z', result: 'failed', engine: 'cli', trigger: 'you'},
+    {kind: 'search', install: 'install-cccc', version: '0.8.3', platform: 'win32', at: '2026-10-19T12:00:00Z', result: 'stopped', engine: 'cli', trigger: 'you', title: 'Barista'}]);
+  const rows = await realRows(env.STATS, new Date('2026-10-20T00:00:00Z'));
+  assert.deepEqual(rows.map(r => r.result).sort(), ['failed', 'stopped', undefined]);
+  const all = summarize(rows).all;
+  assert.deepEqual([all.searches, all.failed, all.stopped, all.first_s], [3, 1, 1, 9]);
+  assert.ok(!JSON.stringify(rows).includes('Barista'));
+});
+
+test('one row per day, newest first, with the day\'s searches, installs, failures and median first job', () => {
+  const rows = [report('install-a', {first_s: 10}), report('install-b', {first_s: 30}), {kind: 'search', install: 'install-a', result: 'failed'}].map((r, i) => ({...r, day: i < 2 ? '2026-10-19' : '2026-10-20'}));
+  const days = byDay(rows);
+  assert.deepEqual(days.map(d => [d.day, d.searches, d.installs, d.failed, d.first_s]), [['2026-10-20', 1, 1, 1, null], ['2026-10-19', 2, 2, 0, 10]]);
+  const html = realSection(rows);
+  assert.match(html, /Day by day/);
+  assert.match(html, /2026-10-19/);
+});
+
+test('zero reports says how many installs run a build that can send one, so an empty tab is not read as broken', async () => {
+  const env = {STATS: d1(), ASSETS: {fetch: () => new Response('asset')}};
+  const health = (install, version) => ({kind: 'health', install, version, platform: 'win32', at: '2026-10-19T09:00:00Z'});
+  await send(env, [health('install-old1', '0.7.37'), health('install-old2', '0.7.12'), health('install-new1', '0.8.3'), health('install-dev1', '0.9.580')]);
+  const sending = await canSend(env.STATS, new Date('2026-10-20T00:00:00Z'));
+  assert.deepEqual(sending, {installs: 4, canSend: 2});
+  assert.match(realSection([], [], sending), /2 of 4 installs/);
+  assert.match(page([], [], 'real', [], sending), /2 of 4 installs/);
 });
