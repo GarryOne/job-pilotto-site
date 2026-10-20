@@ -8,7 +8,7 @@ on:
     branches: [main]
     paths:
       - 'site/ready-runner/**'
-      - 'site/src/ready-consume.js'
+      - 'site/api/ready-consume.js'
       - '.github/workflows/release-ready-runner.yml'
   workflow_dispatch:
 permissions:

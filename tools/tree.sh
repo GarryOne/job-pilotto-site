@@ -19,6 +19,8 @@ if [ "$ref" = main ] && [ ! -f desktop/e2e/lib/applying-status.mjs ] && git fetc
 fi
 echo '.private/' >> .git/info/exclude
 rsync -a --exclude '.git' --exclude '.private/' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude 'AGENTS.md' --exclude '.claude/' --exclude '.gitignore' --exclude '.public-*' .private/ ./
+# the public repo still names site/src/x.js and site/public: keep them readable (tools/legacy-paths.sh)
+.private/tools/legacy-paths.sh "$PWD"
 # tests that list files with `git ls-files` must see this repo's files too
 (cd "." && git ls-files -o --exclude-standard -z | xargs -0 -n 500 git add -N --)
 sha="$(git rev-parse HEAD)"

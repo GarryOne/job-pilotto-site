@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Writes the daily build digest ("what we built today", spec docs/superpowers/specs/2026-10-16-daily-digest.md) from the PRs merged on one Zurich day, with Haiku (site/src/build-digest.js does the cutting, validating and rendering).
+// Writes the daily build digest ("what we built today", spec docs/superpowers/specs/2026-10-16-daily-digest.md) from the PRs merged on one Zurich day, with Haiku (site/admin/build-digest.js does the cutting, validating and rendering).
 //   node tools/daily-digest.mjs [--day YYYY-MM-DD] [--force [--final] [--rewrite]] [--out results.json] [--cost cost.json] [--prs prs.json --open open.json]
 // Hourly (daily-digest.yml): asks the site what it holds (GET /digest/data), plans (build-digest.js plan: unchanged set, once an hour, 8 drafts, final from 23:00 Zurich) and stores the draft (PUT, SELFHEAL_PUBLISH_KEY).
 // Needs gh with GH_TOKEN (unless --prs) and DIGEST_ANTHROPIC_KEY (the Self-heal workspace key; a missing key fails loudly, no fallback). --out: a list of {day, final, markdown, groups, open, numbers, usd}; --cost: {usd, calls} for desktop/e2e/ai-cost-report.mjs --job daily-digest --file.
 import {execFileSync} from 'node:child_process';
 import {readFileSync, writeFileSync} from 'node:fs';
-import {MODEL, countOf, daysToRun, makeDigest, plan, zurichDay, zurichHour} from '../site/src/build-digest.js';
-import {post} from '../site/src/build-digest-telegram.js';
+import {MODEL, countOf, daysToRun, makeDigest, plan, zurichDay, zurichHour} from '../site/admin/build-digest.js';
+import {post} from '../site/admin/build-digest-telegram.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
 const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';

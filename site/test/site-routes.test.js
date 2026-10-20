@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import worker from '../src/index.js';
+import worker from '../worker/index.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../../docs/site-routes.json', import.meta.url), 'utf8'));
-const source = readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../worker/index.js', import.meta.url), 'utf8');
 const ORIGIN = 'https://www.jobpilotto.top';
 const FALLTHROUGH = 'no-route-answered';   // the static-assets stand-in: a request no route took lands here
 
@@ -43,7 +43,7 @@ test('the list is well formed: unique paths, a known kind, methods only where a 
   }
 });
 
-test('every route in src/index.js is in the list (add a new one there, with its kind)', () => {
+test('every route in worker/index.js is in the list (add a new one there, with its kind)', () => {
   const listed = new Set(manifest.routes.map(route => route.path));
   const routes = [...source.matchAll(/pathname === '(\/[^']*)'/g)].map(match => match[1]).filter(path => path !== '/');
   const prefixes = [...source.matchAll(/pathname\.startsWith\('(\/[^']*)'\)/g)].map(match => match[1]);

@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {existsSync, readFileSync} from 'node:fs';
 import {test} from 'node:test';
 
-const source = readFileSync(new URL('../src/index.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../worker/index.js', import.meta.url), 'utf8');
 const routes = [...new Set([...source.matchAll(/pathname === '(\/[^']*)'/g)].map(match => match[1]))].filter(path => path !== '/');
-const isFile = path => ['', '.html'].some(ext => existsSync(new URL(`../public${path}${ext}`, import.meta.url)));
+const isFile = path => ['', '.html'].some(ext => existsSync(new URL(`../web/public${path}${ext}`, import.meta.url)));
 
-test('every exact route in src/index.js is free of a same-named file in public/ (the file would shadow it)', () => {
+test('every exact route in worker/index.js is free of a same-named file in public/ (the file would shadow it)', () => {
   assert.ok(routes.length > 10, `routes found: ${routes.length}`);
   assert.deepEqual(routes.filter(isFile), []);
 });

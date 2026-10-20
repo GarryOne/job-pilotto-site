@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {rowFromPress} from '../../site/src/search-lab-store.js';
+import {rowFromPress} from '../../site/admin/search-lab-store.js';
 import {replayMisses, staleNote} from './tape-store.mjs';
 
 const CANDIDATES = {finance: 'Finance · Amsterdam', music: 'Music producer · Berlin', driver: 'CE driver · Nuremberg', sre: 'SRE (control) · Zurich',

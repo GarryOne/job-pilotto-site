@@ -7,14 +7,14 @@ Static pages in `public/` (no build step), served by Cloudflare Workers static a
   each product's own website (dated on the page; re-check before changing a row)
 - `styles.css`: shared by both pages
 
-`src/index.js` adds one endpoint, `POST /api/waitlist`, which keeps Pro early-access sign-ups in Cloudflare KV.
+`worker/index.js` adds one endpoint, `POST /api/waitlist`, which keeps Pro early-access sign-ups in Cloudflare KV.
 
 - Deploy by hand: `cd site && npx wrangler@4 deploy`
 - Automatic: `.github/workflows/site.yml` deploys on every push to `main` that changes `site/`.
 
 ## Reading the owner pages from a script (/admin/*)
 
-Every `/admin/*` page (overview, ai-cost, self-healing, …) answers **404** without the owner's credentials (`src/auth.js`).
+Every `/admin/*` page (overview, ai-cost, self-healing, …) answers **404** without the owner's credentials (`shared/auth.js`).
 From a terminal or an agent session on the owner's Mac:
 
 ```sh

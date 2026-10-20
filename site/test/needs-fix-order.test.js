@@ -1,11 +1,11 @@
-// The Needs a fix order (site/src/applying-order.js) is ONE function: /admin/lab-form-filling embeds its source and tools/needs-fix-order.mjs imports it, so the page and
+// The Needs a fix order (site/admin/applying-order.js) is ONE function: /admin/lab-form-filling embeds its source and tools/needs-fix-order.mjs imports it, so the page and
 // the command cannot disagree. Seeded data through the real ingest and data(); the page's own script runs on a tiny DOM; the command reads the same JSON.
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import {PAGE, data, ingest} from '../src/applying.js';
-import {ORDER_SOURCE, needsFixOrder} from '../src/applying-order.js';
+import {PAGE, data, ingest} from '../admin/applying.js';
+import {ORDER_SOURCE, needsFixOrder} from '../admin/applying-order.js';
 import {orderLines, rankRows} from '../../tools/needs-fix-order.mjs';
 
 function d1() {

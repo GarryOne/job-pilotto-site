@@ -7,9 +7,10 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'site/src/hosted*'
-      - 'site/src/free-ai.js'
-      - 'site/src/mail*.js'
+      - 'site/api/hosted*'
+      - 'site/shared/hosted*'
+      - 'site/shared/free-ai.js'
+      - 'site/shared/mail*.js'
       - 'site/migrations/**'
       - 'tools/hosted-e2e/**'
       - '.github/workflows/hosted-e2e.yml'

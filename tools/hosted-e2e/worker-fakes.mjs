@@ -1,12 +1,12 @@
-// The hosted e2e's Cloudflare, in one Node process: the real Worker (site/src/index.js, routes and cron tick) over an in-memory D1 (every migration, in order), KV, R2, a Queue
-// that is drained by the real consumer logic (site/src/hosted-consume.js), a fake sender for the e-mails and the fake AI. Served on a loopback port so the app's client and the engine
+// The hosted e2e's Cloudflare, in one Node process: the real Worker (site/worker/index.js, routes and cron tick) over an in-memory D1 (every migration, in order), KV, R2, a Queue
+// that is drained by the real consumer logic (site/api/hosted-consume.js), a fake sender for the e-mails and the fake AI. Served on a loopback port so the app's client and the engine
 // (in Docker or not) talk to it over HTTP like they do to jobpilotto.top. Nothing here reaches a real account.
 import fs from 'node:fs';
 import http from 'node:http';
 import {DatabaseSync} from 'node:sqlite';
-import worker from '../../site/src/index.js';
-import {seal} from '../../site/src/hosted-state.js';
-import {consume} from '../../site/src/hosted-consume.js';
+import worker from '../../site/worker/index.js';
+import {seal} from '../../site/api/hosted-state.js';
+import {consume} from '../../site/api/hosted-consume.js';
 import {fakeAi} from './fake-ai.mjs';
 
 const MIGRATIONS = new URL('../../site/migrations/', import.meta.url);

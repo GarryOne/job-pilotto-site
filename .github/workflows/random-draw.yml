@@ -8,7 +8,7 @@
 # - Sites: data-centre IPs are refused by many boards; a refusal shows as "not reached" and is never retried or worked around (never past a login wall, captcha or 401/403/429).
 # - A re-run of a bad day: Run workflow with that day's seed (YYYY-MM-DD).
 # - The kept artifact is counts only (counts.json, draw.json): the search's top-10 job titles stay out of it.
-# Guard: tests/test_draw.py, site/test/search-lab-draws.test.js.
+# Guard: tests/test_draw.py, site/test/admin/search-lab-draws.test.js.
 name: CI · Random draw (every 2nd day)
 
 on:

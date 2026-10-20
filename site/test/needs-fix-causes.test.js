@@ -1,13 +1,13 @@
-// "Needs a fix" by cause (site/src/applying-groups.js): ONE function groups the Needs a fix rows by their top cause and puts the rows that need a pool run, not a fix, first
+// "Needs a fix" by cause (site/admin/applying-groups.js): ONE function groups the Needs a fix rows by their top cause and puts the rows that need a pool run, not a fix, first
 // ("Run first": never run, or the last run is older than a fix landed for that row). The page embeds its source (the "By cause" tab) and tools/needs-fix-causes.mjs
 // imports it, so they cannot disagree. Seeded data through the real ingest and data(); the page's own script runs on a tiny DOM; the command reads the same JSON.
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import {PAGE, data, ingest} from '../src/applying.js';
-import {GROUPS_SOURCE, needsFixGroups} from '../src/applying-groups.js';
-import {needsFixOrder} from '../src/applying-order.js';
+import {PAGE, data, ingest} from '../admin/applying.js';
+import {GROUPS_SOURCE, needsFixGroups} from '../admin/applying-groups.js';
+import {needsFixOrder} from '../admin/applying-order.js';
 import {groupLines, groupsOf} from '../../tools/needs-fix-causes.mjs';
 import {buildBrief, captureOf} from '../../tools/fixer-brief.mjs';
 
@@ -36,7 +36,7 @@ async function seeded({newBuild = false} = {}) {
   await ingest(db, {kind: 'fixes', day: '2026-10-12', rows: [fix('Aaa fixed since', '0.9.185'), fix('Ccc unread', '0.9.185')]}, now);
   await ingest(db, {kind: 'claims', day: '2026-10-12', rows: [{name: 'Ddd unread too', since: '2026-10-12T10:00:00Z'}, {name: 'Bbb never run', since: '2026-10-12T09:00:00Z'}]}, now);
   const json = JSON.parse(JSON.stringify(await data(db, now)));
-  const cause = {'Ccc unread': 'unread', 'Ddd unread too': 'unread', 'Eee no option': 'no_option'};   // the pool's fill-card causes (src/applying-cause.js), set on the seeded rows
+  const cause = {'Ccc unread': 'unread', 'Ddd unread too': 'unread', 'Eee no option': 'no_option'};   // the pool's fill-card causes (admin/applying-cause.js), set on the seeded rows
   for (const row of json.pool) row.cause = cause[row.name] ? {cause: cause[row.name], lost: 3, nights: 2} : null;
   return json;
 }
