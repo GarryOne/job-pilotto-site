@@ -27,6 +27,10 @@ class MediaWorkflowTests(unittest.TestCase):
         self.assertIn('brew install ffmpeg-full', CODE)
         self.assertIn("grep -qE ' libwebp '", CODE)
 
+    def test_the_record_hash_works_on_the_mac_runner(self):
+        # run 39458753406: macos-14 has no sha256sum; the refresh step died with exit 127 after a good recording
+        self.assertIn('shasum -a 256', (ROOT / 'tools/public-watch.sh').read_text())
+
     def test_no_ai_key_in_the_run(self):
         self.assertNotIn('ANTHROPIC', CODE)
         self.assertNotIn('direct.mjs', CODE)
