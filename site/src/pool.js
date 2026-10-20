@@ -21,7 +21,7 @@ export function layoutOf(recipe) {
   if (typeof next !== 'string' || next.length > 200 || /[<>{}`]|javascript:/i.test(next)) return null;
   return JSON.stringify({selector: selector.trim(), title, company, place, link, next});
 }
-export const SITE_KINDS = ['jobpage', 'browser', 'dead', 'layout', 'board', 'browser_read'];   // board: a job board's search template (docs/superpowers/specs/2026-10-08-job-board-discovery.md)   // facts installs share about sites (migrations/0037_pool_sitefacts.sql)
+export const SITE_KINDS = ['jobpage', 'browser', 'dead', 'layout', 'board', 'browser_read', 'route'];   // board: a job board's search template (docs/superpowers/specs/2026-10-08-job-board-discovery.md)   // facts installs share about sites (migrations/0037_pool_sitefacts.sql)
 // A job board's fact: its search template (on its own host, {role} in it, nothing else in braces) and the countries it serves, as the
 // pool's fixed country ids, sorted, so installs that found the same board send the same fact and agree (k installs, employers.js SITES_K).
 export const boardOf = (board, url, host) => {
@@ -33,6 +33,8 @@ export const boardOf = (board, url, host) => {
 // What a user's browser met on a site that refused the engine (src/sources/refused_reads.py shared; owner, 20 Oct 2026: one install teaches all):
 // a fixed word and, for a page that opened, its job count and kinds of work. Anything else is dropped.
 const OUTCOMES = ['opened', 'refused', 'bot', 'login'];
+export const ROUTES = ['jobposting', 'api', 'main', 'browser_only', 'refused'];   // how a site's posting text is read (src/sources/read_routes.py)
+export const routeOf = route => ROUTES.includes(route) ? JSON.stringify(route) : null;
 export const readOf = read => {
   if (!read || typeof read !== 'object' || !OUTCOMES.includes(read.outcome)) return null;
   const jobs = Number.isInteger(read.jobs) && read.jobs >= 0 && read.jobs <= 100000 ? read.jobs : null;
@@ -128,11 +130,11 @@ export async function contribute(request, env, now = new Date()) {
     const host = typeof item?.host === 'string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host) && item.host.length <= 100 ? item.host : null;
     const kind = SITE_KINDS.includes(item?.kind) ? item.kind : null;
     const url = typeof item?.url === 'string' && /^https:\/\/[^\s#]{4,200}$/.test(item.url) ? item.url : null;
-    const body = kind === 'layout' ? layoutOf(item.recipe) : kind === 'board' ? boardOf(item.board, url, host) : kind === 'browser_read' ? readOf(item.read) : null;
-    if (!host || !kind || (kind === 'jobpage' && !url) || (['layout', 'board', 'browser_read'].includes(kind) && !body) || facts.has(`${host}|${kind}`) || /^e2e/.test(host)) { drop('sites'); continue; }
+    const body = kind === 'layout' ? layoutOf(item.recipe) : kind === 'board' ? boardOf(item.board, url, host) : kind === 'browser_read' ? readOf(item.read) : kind === 'route' ? routeOf(item.route) : null;
+    if (!host || !kind || (kind === 'jobpage' && !url) || (['layout', 'board', 'browser_read', 'route'].includes(kind) && !body) || facts.has(`${host}|${kind}`) || /^e2e/.test(host)) { drop('sites'); continue; }
     facts.add(`${host}|${kind}`);
     const given = kind === 'board' && item.yield && typeof item.yield === 'object' ? item.yield : null;   // what the board gave this install (PR 6, 18 Oct 2026)
-    sites.push({host, kind, url: ['browser', 'layout', 'browser_read'].includes(kind) ? null : url, body, yield: given && {in_places: count(given.in_places) ?? 0, fit70: count(given.fit70) ?? 0}});
+    sites.push({host, kind, url: ['browser', 'layout', 'browser_read', 'route'].includes(kind) ? null : url, body, yield: given && {in_places: count(given.in_places) ?? 0, fit70: count(given.fit70) ?? 0}});
   }
   const candidates = cleanCandidates(body.candidates);   // the daily discovery batch's input (src/discovery-candidates.js)
   drop('candidates', (Array.isArray(body.candidates) ? Math.min(body.candidates.length, MAX_CANDIDATES) : 0) - candidates.length);
