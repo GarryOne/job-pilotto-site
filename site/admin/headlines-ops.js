@@ -3,6 +3,7 @@
 import {byWeek, dayOf, since, sum} from './admin.js';
 import {issues, fixer} from './sentry.js';
 import {read, summarize} from './jobcost.js';
+import {headline as schedules} from './schedules.js';
 
 const first = async (env, sql, ...binds) => { try { return env.STATS ? await env.STATS.prepare(sql).bind(...binds).first() : null; } catch { return null; } };
 const all = async (env, sql, ...binds) => { try { return env.STATS ? (await env.STATS.prepare(sql).bind(...binds).all()).results || [] : []; } catch { return []; } };
@@ -72,4 +73,4 @@ async function e2e(env, now) {
   return [{label: 'E2E reds, 7 days', value: `${num(reds)} of ${num(runs)}`, sub: top ? `top cause: ${top[0]} (${top[1]})` : 'no failures', status: !runs ? 'none' : share < 0.1 ? 'good' : share < 0.3 ? 'warn' : 'bad'}];
 }
 
-export const OPERATIONS = {'/admin/operations/build-log': buildLog, '/admin/operations/pr-checks': prChecks, '/admin/operations/e2e': e2e, '/admin/self-healing': selfHealing, '/admin/sentry': sentry, '/admin/ai-cost': aiCost};
+export const OPERATIONS = {'/admin/operations/build-log': buildLog, '/admin/operations/pr-checks': prChecks, '/admin/operations/e2e': e2e, '/admin/operations/schedules': schedules, '/admin/self-healing': selfHealing, '/admin/sentry': sentry, '/admin/ai-cost': aiCost};
