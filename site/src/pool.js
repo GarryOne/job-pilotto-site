@@ -184,12 +184,29 @@ export async function contribute(request, env, now = new Date()) {
         OR jobs IS NOT excluded.jobs OR hits IS NOT excluded.hits OR failed IS NOT excluded.failed OR dup IS NOT excluded.dup OR (excluded.out_json IS NOT NULL AND out_json IS NOT excluded.out_json) OR ai_family IS NOT excluded.ai_family`)
       .bind(install, today, item.board, roles.join(','), regions.join(','), item.jobs, item.hits, item.failed, item.dup, item.out, ...fine, aiFamily));
   }
+  statements.push(...await servedStatements(env.STATS, install, today, body.served));
   // D1 runs a batch as one call: 2,000 feeds stay one request's worth of queries.
   for (let i = 0; i < statements.length; i += 500) {
     const chunk = statements.slice(i, i + 500);
     if (env.STATS.batch) await env.STATS.batch(chunk); else for (const statement of chunk) await statement.run();
   }
   return Response.json({ok: true, feeds: feeds.length, nofeed: nofeed.length, boards: boards.length, sites: sites.length, candidates: candidates.length, ...(Object.keys(dropped).length ? {dropped} : {})});
+}
+
+// Steps skipped thanks to the pool (src/pool_served.py): an install's running total per fixed kind; what it grew since the last share is added to the day.
+const SERVED_KIND = /^[a-z][a-z_]{0,23}$/, MAX_SERVED_KINDS = 12, MAX_SERVED = 10_000_000;
+export async function servedStatements(db, install, today, served) {
+  if (!served || typeof served !== 'object' || Array.isArray(served)) return [];
+  const before = Object.fromEntries(((await db.prepare('SELECT kind, total FROM pool_served_total WHERE install = ?').bind(install).all()).results || []).map(r => [r.kind, r.total]));
+  const out = [];
+  for (const [kind, raw] of Object.entries(served).slice(0, MAX_SERVED_KINDS)) {
+    const total = Number.isInteger(raw) ? Math.min(raw, MAX_SERVED) : 0;
+    if (!SERVED_KIND.test(kind) || total < 1 || total === before[kind]) continue;
+    const added = total > (before[kind] || 0) ? total - (before[kind] || 0) : total;   // a lower total: the install started counting again
+    out.push(db.prepare('INSERT INTO pool_served_total (install, kind, total) VALUES (?, ?, ?) ON CONFLICT(install, kind) DO UPDATE SET total = excluded.total').bind(install, kind, total),
+      db.prepare('INSERT INTO pool_served_day (day, kind, n) VALUES (?, ?, ?) ON CONFLICT(day, kind) DO UPDATE SET n = n + excluded.n').bind(today, kind, added));
+  }
+  return out;
 }
 
 // Per feed: how many different installs sent it, how many found jobs there, and among those the roles / regions. Added up in SQL and paged

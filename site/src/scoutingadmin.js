@@ -63,7 +63,8 @@ export async function gather(db, now = new Date(), family = '') {
     FROM telemetry WHERE kind = 'advice' AND day >= ? AND (? = '' OR install IN (SELECT install FROM (${LATEST_FAMILY}) WHERE family = ?)) GROUP BY advice, place ORDER BY shown DESC`, day(now, 90), ...f);
   // Who searches where (last 30 days): kinds × countries of the installs that share, for the heat map's hover and the gaps (k >= 3 installs).
   const demand = demandOf(await all(db, `SELECT DISTINCT install, roles, countries FROM contributions WHERE day >= ? AND${F}`, day(now, 30), ...f));
-  return {family, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central: await loadScouting(db)};
+  const served = await all(db, 'SELECT day, kind, n FROM pool_served_day WHERE day >= ? ORDER BY day DESC, kind', day(now, 30)).catch(() => []);   // before 0100: none
+  return {family, served, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central: await loadScouting(db)};
 }
 
 // What installs shared, per AI family (Claude = Claude Code or an Anthropic key; OpenAI = Codex or an OpenAI key).
@@ -73,6 +74,14 @@ function familySection(families) {
   return `<section class="card"><h2>🤖 Shared by installs, per AI family</h2><small class="muted">From each install's latest health report. Unknown = shared before 9 Oct 2026, or no health report yet. The central scout and the published list are everyone's.</small>
 <table><tr><th>Family</th><th>Installs sharing (7 d)</th><th>Employer job sites shared</th><th>Dead ends reported</th><th>Board reads with matches</th></tr>
 ${row('claude', 'Claude')}${row('openai', 'OpenAI')}${row('unknown', 'Unknown')}</table></section>`;
+}
+
+// Steps installs skipped because another install had already done them (src/pool_served.py, shared daily): today, 7 days, 30 days, per kind.
+export function servedSection(served = [], today = new Date()) {
+  const kinds = [...new Set(served.map(r => r.kind))].sort(), within = (kind, back) => served.filter(r => r.kind === kind && r.day >= day(today, back)).reduce((sum, r) => sum + r.n, 0);
+  const body = kinds.map(kind => `<tr><td>${esc(kind)}</td><td>${n(within(kind, 0))}</td><td>${n(within(kind, 7))}</td><td>${n(within(kind, 30))}</td></tr>`).join('');
+  return `<section class="card"><h2>♻️ Steps skipped thanks to other installs</h2><small class="muted">Work an install did not repeat because the pool already had the answer (e.g. a place another install placed). Counts per fixed kind, from the daily share.</small>
+<table><tr><th>Kind</th><th>Today</th><th>7 days</th><th>30 days</th></tr>${body || '<tr><td colspan="4">Nothing reported yet.</td></tr>'}</table></section>`;
 }
 
 // A section folded away under its title: the numbers stay one click from the charts (owner, 19 Oct 2026: "too much of raw numbers/text/tables").
@@ -135,7 +144,7 @@ ${fold('🤝 The pool and discovery routes', `<div class="grid2"><section class=
 <tr><td>Different employers shared (90 days)</td><td>${n(data.shared)}</td></tr></table></section>
 <section class="card"><h2>🧭 Discovery routes that work</h2><small class="muted">How installs found the employers they share, and the jobs those matched for someone.</small>
 <table><tr><th>Route</th><th>Employers</th><th>Jobs matched</th></tr>${rows(data.routes, row => [esc(row.how), n(row.feeds), n(row.hits)], 'Nothing shared with a route yet (share v2).')}</table></section></div>
-${familySection(data.families)}`)}
+${familySection(data.families)}${servedSection(data.served, today)}`)}
 ${fold(`🩺 Freshness and most useful employers · ${n(failing.length)} failing`, `<div class="grid2"><section class="card"><small class="muted">From each employer's last reads (the central scout).</small>
 <table><tr><td>Growing (more jobs than last read)</td><td>${n(up)}</td></tr><tr><td>Shrinking</td><td>${n(down)}</td></tr>
 <tr><td>No open job right now</td><td>${n(emptyNow)}</td></tr><tr><td>Failing (3+ reads in a row)</td><td>${n(failing.length)}</td></tr></table>
