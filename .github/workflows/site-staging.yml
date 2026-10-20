@@ -1,0 +1,41 @@
+name: Release · Website staging
+
+# A staging copy of the website on its own Worker (www-staging, https://www-staging.jobpilotto.workers.dev): no custom domain, no cron, none of production's secrets, production untouched.
+# Then every route of docs/site-routes.json is asked on both and the table goes to the run's summary. By hand only (the proof that this repo deploys the site, owner 20 Oct 2026).
+# Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: .private
+      - name: Lay the public repo's tree under this one
+        run: .private/tools/tree.sh
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Staging config (own name, no routes, no cron)
+        run: node tools/staging-config.mjs www-staging
+      - name: Deploy the staging Worker
+        working-directory: site
+        run: ../tools/cf-retry.sh npx --yes wrangler@4 deploy --config wrangler.staging.toml
+      - name: Ask every route on staging and on production
+        run: |
+          set -o pipefail
+          sleep 10
+          node tools/probe-routes.mjs https://www-staging.jobpilotto.workers.dev https://www.jobpilotto.workers.dev | tee -a "$GITHUB_STEP_SUMMARY"
