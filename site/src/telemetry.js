@@ -1,7 +1,8 @@
 // Technical reports from Job Pilotto apps (desktop/lib/telemetry.js scrubs them before sending): POST /report/telemetry
 // stores them (D1 "telemetry", 90 days), /telemetry shows the problems users hit (same key as /stats), and a daily
-// run (scheduled) picks the top problems and starts the triage workflow on GitHub, which files or updates an issue
-// per problem. Design: Notion "📡 Technical reports (telemetry) — design".
+// run (scheduled) drops old reports (problems are no longer filed as issues since 20 Oct 2026). Each problem says the newest build
+// it was seen on: one seen only on builds older than the newest reporting is muted and sorted last (newestBuild).
+// Design: Notion "📡 Technical reports (telemetry) — design".
 import {installsByEngine} from './engines.js';
 import {filterLinks} from './admin.js';
 import {viewer} from './auth.js';   // admins (invited) read this page too
@@ -17,13 +18,6 @@ import {isOwner, esc, remember} from './stats.js';
 import {clean as cleanSearch} from './search-report.js';
 
 export const KINDS = ['crash', 'run_failed', 'run_warning', 'form_issue', 'stuck', 'health', 'setup', 'control', 'advice', 'tab', 'search'];
-export const TRIAGE_MIN_USERS = 3, TRIAGE_MIN_TIMES = 20;
-// What becomes a GitHub issue: [installs, times] by kind (either is enough). Crashes, stuck runs and failed runs are rare and always
-// worth reading, from the first install; a run that ended with warnings (AI not answering, Notion refusing) must repeat (3 times) or come from 3 installs;
-// form and control reports are many, so they wait for several installs (2 Oct 2026: a friend's search hung for 40 minutes and, with
-// the old 3-installs-or-20-times rule, would never have reached an issue).
-export const TRIAGE_AT = {crash: [1, 1], stuck: [1, 1], run_failed: [1, 1], run_warning: [3, 3], tab: [2, 3]};   // tab: a form tab the extension did not take, from 2 installs or 3 times
-export const triageWorthy = row => { const [users, times] = TRIAGE_AT[row.kind] || [TRIAGE_MIN_USERS, TRIAGE_MIN_TIMES]; return row.users >= users || row.n >= times; };
 const MAX_EVENTS = 50, MAX_BYTES = 8000, PER_INSTALL_PER_DAY = 1000, KEEP_DAYS = 90;
 const day = date => date.toISOString().slice(0, 10);
 const text = (value, max = 300) => String(value ?? '').slice(0, max);
@@ -91,7 +85,7 @@ export async function problems(db, days, now = new Date(), limit = 50) {
   const from = day(new Date(now.getTime() - (days - 1) * 86400000));
   const rows = (await db.prepare(`SELECT fingerprint, kind, MAX(summary) AS summary, COUNT(*) AS n, COUNT(DISTINCT install) AS users,
       GROUP_CONCAT(DISTINCT version) AS versions, MIN(day) AS first, MAX(at) AS last, MAX(data) AS sample
-    FROM telemetry WHERE day >= ? AND kind NOT IN ('health', 'setup', 'search') AND NOT (kind = 'tab' AND json_extract(data, '$.outcome') = 'taken') GROUP BY fingerprint ORDER BY users DESC, n DESC LIMIT ?`).bind(from, limit).all()).results || [];
+    FROM telemetry WHERE day >= ? AND kind NOT IN ('health', 'setup', 'search', 'advice') AND NOT (kind = 'tab' AND json_extract(data, '$.outcome') = 'taken') GROUP BY fingerprint ORDER BY users DESC, n DESC LIMIT ?`).bind(from, limit).all()).results || [];
   const installs = (await db.prepare(`SELECT version, platform, COUNT(DISTINCT install) AS n FROM telemetry WHERE day >= ?
     GROUP BY version, platform ORDER BY n DESC`).bind(from).all()).results || [];
   // Machines, not (version, platform) rows: one install that updated twice reports under three versions but is one machine.
@@ -208,14 +202,28 @@ export const OUTCOMES = ['matches', 'goodFits', 'formsFilled', 'applied', 'repli
 const STEP_LABELS = {ai: 'AI', cv: 'CV'};
 const OS_NAMES = {darwin: 'macOS', win32: 'Windows', linux: 'Linux'};
 
+// The newest build a problem was seen on, and whether that is the newest build any install reports now (versions: "0.7.12,0.7.16").
+// 20 Oct 2026: 9 of 18 problems filed as issues were fixed already and seen only on old builds; nothing here told them apart.
+export function newestBuild(versions, installs = []) {
+  // App versions compare by number (0.7.10 > 0.7.9); a missing part counts as 0.
+  const parts = v => String(v || '').split(/[.-]/).map(n => parseInt(n, 10) || 0);
+  const newer = (a, b) => { const x = parts(a), y = parts(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+  const newest = list => list.reduce((best, v) => (newer(v, best) ? v : best), '');
+  const seen = newest(String(versions || '').split(',').map(v => v.trim()).filter(Boolean));
+  const current = newest(installs.map(row => String(row.version || '')).filter(Boolean));
+  return {seen, current, old: !!seen && !!current && newer(current, seen)};
+}
+
 function page(data) {
   const {rows, installs} = data;
   const count = kind => rows.filter(row => row.kind === kind).reduce((sum, row) => sum + row.n, 0);
   const range = filterLinks([1, 7, 30].map(n => [n, n === 1 ? 'today' : `${n} days`, `?days=${n}`]), data.days);
   const tiles = [['🖥️ Machines reporting', data.unique, `${data.everSeen} ever seen` + (data.platforms.length ? ' · ' + data.platforms.map(p => `${p.n} ${esc(OS_NAMES[p.platform] || p.platform)}`).join(', ') : '')], ['🤖 AI engine', (data.engines || []).filter(e => e.engine !== 'unknown').reduce((sum, e) => sum + e.n, 0), (data.engines || []).filter(e => e.n).map(e => `${e.n} ${esc(e.label)}`).join(' · ') || 'no health report yet'], ['💥 Crashes', count('crash')], ['🔁 Failed runs', count('run_failed')], ['🧩 Form issues', count('form_issue')]];
-  const table = rows.map(row => `<tr><td><span class="kind ${row.kind}">${esc(row.kind.replace('_', ' '))}</span></td>
+  const built = row => newestBuild(row.versions, installs);
+  const ordered = [...rows.filter(row => !built(row).old), ...rows.filter(row => built(row).old)];   // current problems first, each part as it was
+  const table = ordered.map(row => `<tr${built(row).old ? ' class="old"' : ''}><td><span class="kind ${row.kind}">${esc(row.kind.replace('_', ' '))}</span></td>
     <td><details><summary>${esc(row.summary)}</summary><pre>${esc(JSON.stringify(JSON.parse(row.sample || '{}'), null, 1))}</pre></details></td>
-    <td><b>${row.users}</b></td><td>${row.n}</td><td class="muted">${esc(row.versions)}</td><td class="muted">${esc(String(row.last).slice(0, 16).replace('T', ' '))}</td></tr>`).join('');
+    <td><b>${row.users}</b></td><td>${row.n}</td><td title="${esc(row.versions)}">${built(row).old ? `<span class="muted">old builds only · ${esc(built(row).seen)}</span>` : `<span class="newest">on ${esc(built(row).seen || '?')}</span>`}</td><td class="muted">${esc(String(row.last).slice(0, 16).replace('T', ' '))}</td></tr>`).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex"><title>App · Admin</title><link rel="icon" href="/favicon-32.png">
 <style>
@@ -229,12 +237,13 @@ table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;colo
 td{padding:8px 4px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}summary{cursor:pointer}
 .funnel td{vertical-align:middle;padding:7px 14px 7px 0;white-space:nowrap}.funnel td.step{width:120px}.funnel td.bar{width:100%;white-space:normal}.funnel td.bar div{background:var(--amber);height:12px;border-radius:6px}.funnel td.n{text-align:right;font-variant-numeric:tabular-nums}.funnel tr:last-child td.bar div{background:var(--teal)}
 .machines{font-size:14px}.machines td,.machines th{white-space:nowrap;padding:10px 18px 10px 0;vertical-align:middle}.machines td.vs{white-space:normal;line-height:2}.machines .v{display:inline-block;white-space:nowrap;margin:0 4px 0 0;padding:0 8px;border-radius:99px;background:var(--line);color:var(--muted);font-size:12px}.machines .v.now{background:var(--amber);color:#000;font-weight:700;font-size:13px}.machines td.num{font-variant-numeric:tabular-nums}
+.newest{display:inline-block;white-space:nowrap;padding:0 8px;border-radius:99px;background:var(--amber);color:#000;font-weight:700;font-size:12px}tr.old td{opacity:.6}
 pre{white-space:pre-wrap;font-size:12px;color:var(--muted);margin:8px 0 0}.kind{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line);white-space:nowrap}
 .kind.crash{color:var(--red)}.kind.run_failed{color:var(--amber)}.kind.form_issue{color:var(--teal)}
 </style></head><body><main>
 <header><h1>🖥️ App</h1><span class="muted">${range}</span></header>
 <div class="tiles">${tiles.map(([label, value, note]) => `<div class="card tile"><span class="muted">${label}</span><b>${value}</b>${note ? `<small class="muted">${note}</small>` : ''}</div>`).join('')}</div>
-<section class="card" style="margin-bottom:12px"><h2>Problems, most users first${chip(data, 'problems')}</h2><table><tr><th>Kind</th><th>Problem (click for a sample)</th><th>Users</th><th>Times</th><th>Versions</th><th>Last</th></tr>
+<section class="card" style="margin-bottom:12px"><h2>Problems, most users first${chip(data, 'problems')}</h2><table><tr><th>Kind</th><th>Problem (click for a sample)</th><th>Users</th><th>Times</th><th>Newest build</th><th>Last</th></tr>
 ${table || '<tr><td colspan="6" class="muted">No problems reported. 🎉</td></tr>'}</table></section>
 ${tabCard(data.tabs)}
 <section class="card" style="margin-bottom:12px"><h2>🖥️ Machines${chip(data, 'machines')}</h2><small class="muted">one row per install: the version it runs now, and every version it has run (id shown as a short prefix)</small>
@@ -342,20 +351,10 @@ export async function evidence(request, env) {
   return Response.json({ok: true, keptDays: KEEP_DAYS, versions: result}, {headers: {'Cache-Control': 'no-store'}});
 }
 
-// Daily (Worker cron): drop reports older than 90 days, then send the top problems of the last day to the triage
-// queue, which the private repo's triage pulls and files as one issue per problem.
-export async function daily(env, dispatch, now = new Date()) {
+// Daily (Worker cron): drop reports older than 90 days. The top problems are no longer sent to the private triage (owner, 20 Oct 2026: 0 of
+// 18 such issues led to a fix; Sentry and its fixer handle crashes and failed runs): they stay counted here, on /admin/app.
+export async function daily(env, now = new Date()) {
   if (!env.STATS) return 0;
   await env.STATS.prepare('DELETE FROM telemetry WHERE day < ?').bind(day(new Date(now.getTime() - KEEP_DAYS * 86400000))).run();
-  const {rows: found} = await problems(env.STATS, 7, now, 50);
-  // Only what recurs becomes an issue: several installs, or very many times. The rest stays counted, visible on /telemetry, and
-  // waits (2 Oct 2026). A control failure that a running recipe already covers is handled there, not here.
-  const rows = found.filter(triageWorthy).slice(0, 10);
-  if (!rows.length) return 0;
-  const brief = rows.map(row => ({fingerprint: row.fingerprint, kind: row.kind, summary: row.summary, users: row.users, times: row.n,
-    versions: row.versions, sample: String(row.sample).slice(0, 2500)}));
-  let payload = JSON.stringify(brief);
-  while (payload.length > 60000 && brief.length > 1) { brief.pop(); payload = JSON.stringify(brief); }
-  await dispatch(env, {problems: payload}, 'telemetry-triage.yml');
-  return brief.length;
+  return 0;
 }
