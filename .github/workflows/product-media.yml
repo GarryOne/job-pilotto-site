@@ -1,7 +1,7 @@
 # The site's screenshots and videos, remade by themselves when the app's screens change (owner, 20 Oct 2026: "I want me doing nothing and everything
 # being done automatically"; moved here from the public repo the same day: marketing stays private). desktop/scripts/media/media.mjs records the
 # public app (demo mode, dark, the nurse persona) and the real extension on a fictional form, adds zooms and clicks in code (no AI here: the
-# director's plans are committed), checks every piece, then opens a PR that refreshes the files site/public/media already holds. The owner merges it.
+# director's plans are committed), checks every piece, then opens a PR that refreshes the files site/web/public/media already holds. The owner merges it.
 # Cost: the daily check is a 1-minute Linux job; the recording runs on a Mac runner (the site shows the Mac app, with its fonts), only when the
 # public files that draw the screens changed since the last refresh (.public-media), or by hand, or when this pipeline changes on main.
 name: Release · Product media

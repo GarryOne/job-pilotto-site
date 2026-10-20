@@ -46,12 +46,12 @@ class MediaRefreshTests(unittest.TestCase):
     def setUp(self):
         self.tmp = pathlib.Path(tempfile.mkdtemp())
         self.repo = self.tmp / 'repo'
-        (self.repo / 'site/public/media').mkdir(parents=True)
+        (self.repo / 'site/web/public/media').mkdir(parents=True)
         (self.repo / 'tools').mkdir()
         for name in ('media-refresh.sh', 'public-watch.sh', 'media-paths.txt'):
             shutil.copy(ROOT / 'tools' / name, self.repo / 'tools' / name)
-        (self.repo / 'site/public/media/hero.mp4').write_text('old hero')
-        (self.repo / 'site/public/media/still-jobs.webp').write_text('old still')
+        (self.repo / 'site/web/public/media/hero.mp4').write_text('old hero')
+        (self.repo / 'site/web/public/media/still-jobs.webp').write_text('old still')
         git(self.repo, 'init', '-q', '-b', 'main')
         git(self.repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'add', '.')
         git(self.repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-qm', 'start')
@@ -76,7 +76,7 @@ class MediaRefreshTests(unittest.TestCase):
     def test_only_the_files_the_site_shows_are_refreshed_and_the_screens_are_recorded(self):
         run = self.refresh()
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-        media = self.repo / 'site/public/media'
+        media = self.repo / 'site/web/public/media'
         self.assertEqual((media / 'hero.mp4').read_text(), 'new hero')
         self.assertEqual((media / 'still-jobs.webp').read_text(), 'old still', 'a file the set did not make stays')
         self.assertFalse((media / 'snip-new.webp').exists(), 'a new piece is listed, never added')
@@ -89,7 +89,7 @@ class MediaRefreshTests(unittest.TestCase):
         (self.set / 'manifest.json').unlink()
         run = self.refresh()
         self.assertNotEqual(run.returncode, 0)
-        self.assertEqual((self.repo / 'site/public/media/hero.mp4').read_text(), 'old hero')
+        self.assertEqual((self.repo / 'site/web/public/media/hero.mp4').read_text(), 'old hero')
 
 
 if __name__ == '__main__':
