@@ -3,7 +3,7 @@
 import {bestCaseSection} from './best-case.js';
 import {answersSection} from './answer-metrics.js';
 import {proposalCard} from '../shared/proposal-digest.js';
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 import {familySection, funnelSection, recipesTile, trend} from './form-sections.js';
 import {pageView, shell} from './form-shell.js';
 

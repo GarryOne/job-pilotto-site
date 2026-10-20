@@ -3,7 +3,8 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
 import worker from '../../worker/index.js';
-import {device, sourceOf, versioned} from '../../shared/stats.js';
+import {sourceOf, versioned} from '../../api/downloads.js';
+import {device} from '../../shared/device.js';
 
 // A D1 stand-in on real SQLite, with the real migration.
 function d1() {

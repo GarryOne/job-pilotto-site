@@ -3,7 +3,8 @@
 //   record(db, ...): api/brain.js records each button tap
 //   /admin/brain: the owner's page, latest first, filtered by a decision's status now (its newest row's)
 // Notion ("🧭 Product Brain · Decisions") keeps its rows; this is the copy the page reads.
-import {isOwner, esc, remember} from './stats.js';
+import {isOwner, remember} from './auth.js';
+import {esc} from './html.js';
 import {viewer} from './auth.js';
 
 export const KINDS = ['recommendation', 'plan', 'status', 'tap'];

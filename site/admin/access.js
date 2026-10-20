@@ -3,7 +3,7 @@
 // the usual 404: nobody but the super admin sees or changes access. Changes are POSTs from this page only (same origin, and the
 // session cookie is SameSite=Strict).
 import {GUEST_DAYS, extend, invite, isOwner, people, recentLogins, remember, revoke} from '../shared/auth.js';
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 
 const NOT_FOUND = () => new Response('Not found', {status: 404});
 const html = body => new Response(body, {headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex'}});

@@ -1,7 +1,7 @@
 // The sections the form-filling pages are built from, and the arrows and numbers they share (the data: admin/formlearning.js; the thin-data rule: shared/thin-data.js). Guard: site/test/shared/thin-data.test.js.
 import {RESULT_STATES} from '../../desktop/lib/application-result.js';
 import {MARKS_MIN} from './formlearning.js';
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 import {gate, isThin, thinWords} from '../shared/thin-data.js';
 
 export const pct = cell => (cell?.rate == null ? '–' : `${Math.round(cell.rate * 100)}%`);

@@ -295,7 +295,7 @@ test('what a found board gave goes up with the install\'s families and countries
 });
 
 test('a share is kept with the AI family of the install that sent it, and the scouting page filters by it', async () => {
-  const {gather} = await import('../../shared/scoutingadmin.js');
+  const {gather} = await import('../../shared/scouting-snapshot.js');
   const env = setup();
   const health = (install, aiEngine) => env.STATS.db.prepare(`INSERT INTO telemetry (day, at, kind, install, version, platform, fingerprint, summary, data)
     VALUES ('2026-10-09', '2026-10-09T10:00:00Z', 'health', ?, '0.6.0', 'darwin', 'health', 'health', ?)`).run(install, JSON.stringify({aiEngine}));

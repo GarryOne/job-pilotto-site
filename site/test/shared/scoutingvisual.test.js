@@ -1,13 +1,14 @@
-// /admin/scouting's data to iterate on and its charts (api/scoutingvisual.js, scoutingcharts.js, scouting.js run log; owner, 19 Oct 2026:
+// /admin/scouting's data to iterate on and its charts (shared/scoutingvisual.js, scoutingcharts.js, scouting.js run log; owner, 19 Oct 2026:
 // "store enough data ... where we're strong, where we're weak", "add more graphs", "too much of raw numbers/text/tables").
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
-import {cleanStats, load, RUNS, store} from '../../api/scouting.js';
-import {page, snapshot, storeSnapshot} from '../../shared/scoutingadmin.js';
-import {bars, columns, shade, sparkline} from '../../api/scoutingcharts.js';
-import {AIMED, FLOOR, KINDS, cellsOf, demandOf, heatmap, history, tiles} from '../../api/scoutingvisual.js';
+import {cleanStats, load, RUNS, store} from '../../shared/scouting.js';
+import {page} from '../../admin/scoutingadmin.js';
+import {snapshot, storeSnapshot} from '../../shared/scouting-snapshot.js';
+import {bars, columns, shade, sparkline} from '../../shared/scoutingcharts.js';
+import {AIMED, FLOOR, KINDS, cellsOf, demandOf, heatmap, history, tiles} from '../../shared/scoutingvisual.js';
 
 function d1(...migrations) {
   const db = new DatabaseSync(':memory:');

@@ -1,7 +1,8 @@
 // The owner's page /self-heal: what the self-healing loops (the Finder's AI screenshot review, the UI and Sentry fixers) spend on AI.
 // Owner-only like /stats (STATS_KEY), never a static page: static assets are public. The figures are a snapshot read from the CI logs.
 import {viewer} from '../shared/auth.js';   // admins (invited) read this page too
-import {isOwner, esc, remember} from '../shared/stats.js';
+import {isOwner, remember} from '../shared/auth.js';
+import {esc} from '../shared/html.js';
 import {equal} from '../shared/guard.js';
 import {changesSection, dayLabel, TREND_SCRIPT, TREND_STYLE, trendSection} from './trend.js';
 

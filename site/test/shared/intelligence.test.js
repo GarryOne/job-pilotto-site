@@ -4,7 +4,8 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
 import {controls} from '../../api/recipes.js';
-import {report, store, tidy, view} from '../../shared/intelligence.js';
+import {report, store, tidy} from '../../shared/intelligence.js';
+import {view} from '../../admin/intelligence.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');

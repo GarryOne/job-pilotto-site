@@ -2,7 +2,7 @@
 // dates its rules changed marked on the line. Inline SVG from the daily history the stats build (desktop/e2e/lib/selfheal-stats.mjs dailyHistory): no library, and a table view of the same
 // numbers. Colours follow the entity, never the rank: blue = a real bug, orange = a false positive or a test mistake, aqua = stale or duplicate; "not judged yet" is a hatch, not a colour
 // (the three colours were validated on this surface for colour-blind readers). Pure: every function returns a string.
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 
 export const MILESTONES = [
   {day: '2026-10-02', label: 'The Finder starts filing issues'},

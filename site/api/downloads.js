@@ -1,0 +1,102 @@
+// Website traffic without cookies: page views (POST /api/hit from web/public/track.js) and Download clicks (GET /download/mac|windows,
+// which records the click and redirects to the GitHub release file). Called by visitors and by /install (api/install.js), never by /admin.
+// The /stats page that reads these tables is admin/stats.js. Stored in Cloudflare D1 (binding STATS, tables in migrations/). A visitor is a hash of
+// IP + browser + the day + the secret STATS_SALT: it counts unique people per day and can't be traced back to an address.
+// Guarded by test/api/stats.test.js.
+import {OWN_HOSTS} from '../shared/hosts.js';
+import {net} from './attribution.js';
+import {device} from '../shared/device.js';
+
+const RELEASE = 'https://github.com/GarryOne/job-pilotto/releases/latest/download/';
+export const FILES = {mac: 'Job-Pilotto-mac-arm64.dmg', windows: 'Job-Pilotto-windows-x64.exe'};
+const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|curl|wget|python|monitor/i;
+
+const clip = (value, max = 80) => String(value || '').replace(/[^\w.\-/: ]/g, '').slice(0, max);
+const today = (now = new Date()) => now.toISOString().slice(0, 10);
+
+
+// "linkedin.com" from a referrer URL; our own pages and empty referrers count as direct.
+export function sourceOf(referrer, self) {
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, '');
+    return host && host !== self.replace(/^www\./, '') && !OWN_HOSTS.includes(host) ? clip(host, 60) : 'direct';
+  } catch { return 'direct'; }
+}
+
+export async function visitor(request, env, day) {
+  const ip = request.headers.get('CF-Connecting-IP') || '';
+  const data = new TextEncoder().encode(`${env.STATS_SALT || ''}|${day}|${ip}|${request.headers.get('User-Agent') || ''}`);
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+  return [...hash.slice(0, 8)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const isBot = request => BOT.test(request.headers.get('User-Agent') || '');
+
+async function base(request, env, now) {
+  const day = today(now);
+  return {day, at: now.toISOString(), visitor: await visitor(request, env, day), country: clip(request.cf?.country || '', 4),
+    device: device(request.headers.get('User-Agent') || '')};
+}
+
+// POST /api/hit {page, source}: one page view.
+export async function hit(request, env, now = new Date()) {
+  if (request.method !== 'POST') return new Response(null, {status: 405});
+  if (!env.STATS || isBot(request)) return new Response(null, {status: 204});
+  let body = {};
+  try { body = JSON.parse(await request.text()); } catch { /* an empty beacon still counts */ }
+  const row = await base(request, env, now);
+  await env.STATS.prepare('INSERT INTO visits (day, at, visitor, page, source, country, device) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(row.day, row.at, row.visitor, clip(body.page) || '/', clip(body.source, 60) || 'direct', row.country, row.device).run();
+  return new Response(null, {status: 204});
+}
+
+// GET /download/mac?from=hero&page=/&src=linkedin.com: count it (in the background), then send the visitor to the file.
+// The latest stable release's own file (Job-Pilotto-0.5.3-arm64.dmg), so each download is named after its
+// version instead of Chrome's "Job-Pilotto-mac-arm64 (6).dmg". Asked from GitHub at most every 10 minutes (Cloudflare
+// cache); if GitHub doesn't answer, the fixed name above still works.
+const VERSIONED = {mac: /^Job-Pilotto-\d[\w.-]*-arm64\.dmg$/, windows: /^Job-Pilotto-\d[\w.-]*-x64\.exe$/};
+export async function versioned(platform, env, fetcher = globalThis.fetch, cache = globalThis.caches?.default) {
+  const api = `https://api.github.com/repos/${env.GITHUB_REPO || 'GarryOne/job-pilotto'}/releases/latest`;
+  try {
+    let response = cache && await cache.match(api);
+    if (!response) {
+      // Signed in with the site's GitHub token when it has one: 5,000 lookups an hour, not 60 per (shared) address.
+      response = await fetcher(api, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site',
+        ...(env.GITHUB_TOKEN ? {Authorization: `Bearer ${env.GITHUB_TOKEN}`} : {})}});
+      if (!response.ok) return null;
+      response = new Response(response.body, response);
+      response.headers.set('Cache-Control', 'max-age=600');
+      if (cache) await cache.put(api, response.clone());
+    }
+    const release = await response.json();
+    return (release.assets || []).find(asset => VERSIONED[platform].test(asset.name))?.browser_download_url || null;
+  } catch { return null; }
+}
+
+// One download row; also used by /install (api/install.js), whose client (curl) isn't a bot there.
+export async function record(request, env, {platform, button, page = 'unknown', source}, now = new Date()) {
+  if (!env.STATS) return;
+  const row = await base(request, env, now);
+  await env.STATS.prepare(
+    'INSERT INTO downloads (day, at, visitor, platform, button, page, source, country, device, net) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(row.day, row.at, row.visitor, platform, button, page, source || 'direct', row.country, row.device, await net(request, env)).run();
+}
+
+export async function download(request, env, ctx, now = new Date()) {
+  const url = new URL(request.url);
+  const platform = url.pathname.split('/')[2];
+  if (!FILES[platform]) return new Response('Not found', {status: 404});
+  const target = await versioned(platform, env, env.fetcher || globalThis.fetch) || RELEASE + FILES[platform];  // env.fetcher: tests
+  if (env.STATS && request.method === 'GET' && !isBot(request)) {
+    // net: the network's hash, so the app's first start can learn this click's channel (api/attribution.js)
+    const save = Promise.all([base(request, env, now), net(request, env)]).then(([row, network]) => env.STATS.prepare(
+      'INSERT INTO downloads (day, at, visitor, platform, button, page, source, country, device, net) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(row.day, row.at, row.visitor, platform, clip(url.searchParams.get('from'), 30) || 'unknown',
+        clip(url.searchParams.get('page')) || 'unknown',
+        clip(url.searchParams.get('src'), 60) || sourceOf(request.headers.get('Referer'), url.hostname),
+        row.country, row.device, network).run()).catch(error => console.log('download stat failed', error.message));
+    if (ctx?.waitUntil) ctx.waitUntil(save); else await save;
+  }
+  // Never kept by the browser: the next click asks again and gets the newest release.
+  return new Response(null, {status: 302, headers: {Location: target, 'Cache-Control': 'no-store'}});
+}

@@ -6,7 +6,7 @@ import {familyOf, familyOfInstall} from './engines.js';
 import {ANSWER_COUNTS, ANSWER_ENGINES, MS_BUCKETS} from '../../desktop/lib/answer-counts.js';
 import {cleanLabel} from '../../extension/alias-schema.js';
 import {digestOf} from './guard.js';
-import {isOwner} from './stats.js';
+import {isOwner} from './auth.js';
 import {cleanUse} from '../../desktop/lib/proposal-use.js';
 
 export {cleanLabel};

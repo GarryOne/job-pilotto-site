@@ -5,7 +5,7 @@ import {test} from 'node:test';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import worker from '../../worker/index.js';
-import {snapshot, storeSnapshot} from '../../shared/scoutingadmin.js';
+import {snapshot, storeSnapshot} from '../../shared/scouting-snapshot.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');

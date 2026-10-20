@@ -4,7 +4,7 @@
 //   GET /api/playbook?board=greenhouse   Bearer <recipes token> + X-Install-Id: {board, text}  (a few boards a day per install)
 //   PUT /api/playbook                    the owner's key: {board, text} (the private repo's playbooks/ publishes here)
 import {authorize, flag} from '../shared/guard.js';
-import {isOwner} from '../shared/stats.js';
+import {isOwner} from '../shared/auth.js';
 
 const BOARD = /^[a-z0-9-]{2,30}$/, MAX_TEXT = 40000, PER_INSTALL_PER_DAY = 30;
 const day = date => date.toISOString().slice(0, 10);

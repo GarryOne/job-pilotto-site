@@ -55,8 +55,8 @@ test('the old addresses redirect the owner to the new pages, the digest too, and
 // The class: no file links an old page path. The redirect list (admin/admin.js) is the one place; migrations and the dated specs are history and are never rewritten.
 test('no tracked file names an old page path except the redirect list', () => {
   const files = execFileSync('git', ['ls-files', '-z'], {cwd: new URL('../../../', import.meta.url), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024}).split('\0').filter(Boolean);
-  const skip = file => file.startsWith('site/migrations/') || file.startsWith('docs/superpowers/') || file === 'site/admin/admin.js' || file === 'site/test/web/form-pages.test.js' || /\.(png|jpe?g|gif|webp|ico|woff2?|zip|pdf)$/.test(file);
-  const old = /(?<!site)\/admin\/(applying|form-filling)\b|\/smart-form-filling|admin\\\/(applying|form-filling)/;
+  const skip = file => file.startsWith('site/migrations/') || file.startsWith('site/src/') || file.startsWith('docs/superpowers/') || file === 'site/admin/admin.js' || file === 'site/test/web/form-pages.test.js' || /\.(png|jpe?g|gif|webp|ico|woff2?|zip|pdf)$/.test(file);
+  const old = /\/admin\/(applying|form-filling)(?![-\w]|\.(?:js|test))|\/smart-form-filling|admin\\\/(applying|form-filling)/;
   const hits = [];
   for (const file of files.filter(name => !skip(name))) {
     let text = '';

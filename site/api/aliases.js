@@ -11,9 +11,9 @@ import {MIN_PEOPLE, hints} from '../shared/intelligence.js';
 import {BUTTON_KEYS, FILE_KEYS, KEYS, SENSITIVE, aliasKey, cleanLabel, fileKind, validateAlias} from '../../extension/alias-schema.js';
 import {authorize, digestOf, flag} from '../shared/guard.js';
 import {benchmarks, report} from '../shared/knowledge.js';
-import {isOwner} from '../shared/stats.js';
+import {isOwner} from '../shared/auth.js';
 import {packMeanings, vote as voteMeanings} from './meanings.js';
-import {shares as factShares} from './fact-asks.js';
+import {shares as factShares} from '../shared/fact-asks.js';
 
 const STATUSES = ['candidate', 'canary', 'verified', 'disabled'];
 const STEPS = [5, 25, 100];

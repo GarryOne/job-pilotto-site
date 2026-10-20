@@ -4,7 +4,8 @@
 // Categories: admin/ops-categories.js. No AI. Guard: test/admin/ops-overview.test.js.
 import {viewer} from '../shared/auth.js';
 import {equal} from '../shared/guard.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 import {CATEGORIES, CATEGORY_IDS} from './ops-categories.js';
 import {filterLinks} from './admin.js';
 import {BARS_CSS, barRows, legend} from './day-bars.js';

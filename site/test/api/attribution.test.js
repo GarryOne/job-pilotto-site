@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
 import {attribution, purge} from '../../api/attribution.js';
-import {download} from '../../shared/stats.js';
+import {download} from '../../api/downloads.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');

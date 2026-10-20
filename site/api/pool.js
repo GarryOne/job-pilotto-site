@@ -4,11 +4,10 @@
 // hashed, and a feed's tags are only ever published from many installs (the scout's threshold).
 import {MAX_CANDIDATES, candidateStatements, cleanCandidates, pruneCandidates} from '../shared/discovery-candidates.js';
 import {familyOfInstall} from '../shared/engines.js';
-import {COUNTRIES, METROS, FAMILIES} from './pool-tags.js';
+import {COUNTRIES, METROS, FAMILIES} from '../shared/pool-tags.js';
+import {REGIONS, ROLES} from '../shared/pool-labels.js';
 
 const SYSTEMS = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'teamtailor', 'join', 'workday', 'umantis', 'successfactors', 'careers', 'amazon', 'netflix', 'jobsch'];
-export const ROLES = ['software', 'sre_devops', 'data', 'security', 'mobile', 'qa', 'management', 'sales_b2b', 'sales_retail', 'logistics', 'hospitality', 'healthcare', 'creative_media', 'finance_admin', 'education', 'trades', 'other'];   // src/contribute.py: IT families, then src/role_kinds.py's other trades
-export const REGIONS = ['europe', 'north_america', 'latin_america', 'asia_pacific', 'middle_east_africa', 'remote'];
 // A learned page layout, checked and in one canonical form (identical layouts from several installs are counted together): a CSS selector of
 // plain selector characters, small line numbers, and how to reach the next page. Anything else, or any other field, is dropped. The same
 // check runs in the engine before a served layout is used (src/sources/visits.py layout_ok).

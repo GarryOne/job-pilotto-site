@@ -2,7 +2,8 @@
 // to /pr-checks/data (Bearer SELFHEAL_PUBLISH_KEY, like the Build log); the page draws the latest month per check plus the catches of the months before. No AI. Guard: test/admin/pr-checks.test.js.
 import {viewer} from '../shared/auth.js';
 import {equal} from '../shared/guard.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 
 const SHOWN = 6;
 const authorized = (request, env) => Boolean(env.SELFHEAL_PUBLISH_KEY && equal((request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, ''), env.SELFHEAL_PUBLISH_KEY));

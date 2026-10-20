@@ -3,7 +3,7 @@
 // Counts only. Guarded by site/test/admin/answer-metrics.test.js.
 import {MS_BUCKETS} from '../../desktop/lib/answer-counts.js';
 import {MS_COLUMNS} from '../shared/knowledge.js';
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 
 export const ANSWER_FAMILIES = [['claude', 'Claude'], ['openai', 'OpenAI'], ['unknown', 'Unknown']];
 const ratio = (a, b) => (b ? a / b : null);

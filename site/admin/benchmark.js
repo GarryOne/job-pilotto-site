@@ -3,7 +3,7 @@
 // page load (D1 free plan). Tool, form and build names are data from the owner-only write; none is written in this code. Pure maths: admin/benchmark-data.js; the page: admin/benchmark-page.js.
 import {viewer} from '../shared/auth.js';
 import {equal} from '../shared/guard.js';
-import {remember} from '../shared/stats.js';
+import {remember} from '../shared/auth.js';
 import {APPLICANTS, FIX_KEYS, MODES, summarize} from './benchmark-data.js';
 import {page} from './benchmark-page.js';
 

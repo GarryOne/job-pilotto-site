@@ -1,7 +1,8 @@
 // GET /api/signals?days=7 (the /stats key, as `Authorization: Bearer`): the numbers the daily product brief reads
 // (.github/workflows/product-brain.yml): website visits and downloads, app problems and outcome totals, how many
 // joined the Pro waitlist, and users' feedback (their words, never their contact). No emails, visitor hashes or samples.
-import {isOwner, report, signups} from '../shared/stats.js';
+import {isOwner} from '../shared/auth.js';
+import {report, signups} from '../shared/traffic.js';
 import {funnel, problems} from '../shared/telemetry.js';
 import {recentFeedback} from '../shared/feedback.js';
 

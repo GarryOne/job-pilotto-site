@@ -4,7 +4,7 @@
 // by silence. Later words slot into their group in GROUP_OF: the answer side's meaning words (the answer-side PR 1) under 'answer', the control cause words under 'control'.
 import {LEFT_REASONS} from '../shared/knowledge.js';   // the words the site accepts from the apps (it mirrors desktop/lib/question-labels.js)
 import {CAUSES} from '../../extension/fill-card.js';
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 import {splitGaps} from './answer-gaps.js';
 import {LEFT_EMPTY_CSS, bucketsTable, groupsTable, headlineBar} from './left-empty-view.js';
 import {MIN_INSTALLS, isThin, sampleOf} from '../shared/thin-data.js';

@@ -1,9 +1,9 @@
 // The facts forms ask most, learned from installs (owner, 18 Oct 2026: the missing-facts order is "blocked fills > server counts > section order"). An install reports
 // which facts of Your details its forms asked, as FIXED ids (desktop/lib/missing-facts.js CATALOG: no wording, no text); a fact is served once 3+ installs reported it
 // in the last 30 days, as {fact, share} = the share of the reporting installs that were asked it. Rides POST /api/controls (intel.facts) and GET /api/packs/aliases (facts).
-// The app turns the share into an order; the server never sends text. Guarded by test/api/fact-asks.test.js.
+// The app turns the share into an order; the server never sends text. Guarded by test/shared/fact-asks.test.js.
 import {CATALOG} from '../../desktop/lib/fact-catalog.js';
-import {digestOf} from '../shared/guard.js';
+import {digestOf} from '../api/guard.js';
 
 export const FACTS = CATALOG.map(fact => fact.id);
 export const MIN_INSTALLS = 3, WINDOW_DAYS = 30;

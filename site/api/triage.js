@@ -1,7 +1,7 @@
 // Recurring problems wait in D1 for the private repo's daily triage to take them (GET /api/triage, the owner's key), which files the
 // issues there. Replaces the old push into the public repo's workflows: no token for a private repository on the website, and
 // nothing about which sites or fields fail is published.
-import {isOwner} from '../shared/stats.js';
+import {isOwner} from '../shared/auth.js';
 
 const KINDS = {'fill-failure-intake.yml': 'report', 'telemetry-triage.yml': 'problems'};
 const KEEP_DAYS = 30, MAX_BYTES = 64 * 1024;

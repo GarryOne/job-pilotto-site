@@ -1,7 +1,8 @@
 // /admin/operations/e2e: where our e2e fixing time goes (owner, 18 Oct 2026; replaces the dropped /admin/e2e runs page). Draws the ONE snapshot row admin/e2e-intel.js keeps: finished release/beta runs, which suites
 // went red, and why (facts, admin/e2e-causes.js). No AI, no table scan. Guard: test/admin/e2e-page.test.js.
 import {viewer} from '../shared/auth.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 import {CAUSES, CAUSE_IDS} from './e2e-causes.js';
 import {filterLinks} from './admin.js';
 import {BARS_CSS, barRows, legend} from './day-bars.js';

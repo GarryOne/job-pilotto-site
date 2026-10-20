@@ -1,8 +1,9 @@
 // /admin/scouting closed sites table (site/src/closed-sites.js): reasons, agreement, retry dates, served flag and the page wiring.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {AGREE, REASONS, deadEndRow, factRow, retryOn, section} from '../src/closed-sites.js';
-import {page} from '../src/scoutingadmin.js';
+import {AGREE, REASONS, deadEndRow, factRow} from '../../shared/closed-sites.js';
+import {retryOn, section} from '../../admin/closed-sites.js';
+import {page} from '../../admin/scoutingadmin.js';
 
 const today = new Date('2026-10-20T10:00:00Z');
 test('a dead end takes the word enough installs gave, and is served only when they agree', () => {

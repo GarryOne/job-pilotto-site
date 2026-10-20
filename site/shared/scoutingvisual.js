@@ -1,9 +1,9 @@
 // The chart-first top of /admin/scouting (owner, 19 Oct 2026: "where we're strong, where we're weak", "add more graphs", "too much of raw
 // numbers/text/tables"): tiles with trends, the kind × European country heat map, the gaps installs search in, each kind's trend, which source
-// fills which kind, and the central scout's last runs. Counts only. Charts: api/scoutingcharts.js. Tests: site/test/api/scoutingvisual.test.js.
+// fills which kind, and the central scout's last runs. Counts only. Charts: shared/scoutingcharts.js. Tests: site/test/shared/scoutingvisual.test.js.
 import {C, bars, columns, esc, inkOn, n, shade, sparkline, STEPS, tile} from './scoutingcharts.js';
 import {EUROPE} from './pool-tags.js';
-import {ROLES} from './pool.js';
+import {ROLES} from '../api/pool-labels.js';
 
 export const FLOOR = 25;   // employers per kind and country the scout aims for (src/scout_cells.py FLOOR)
 export const KINDS = ['software', ...ROLES.slice(ROLES.indexOf('sales_b2b'))];   // src/role_kinds.py KINDS

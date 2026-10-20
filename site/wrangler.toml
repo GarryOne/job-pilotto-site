@@ -5,7 +5,7 @@ main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
 # Hosts: jobadabra.top (19 Oct 2026, the new main address) and jobpilotto.top are aliases of this worker; workers.dev stays on (installed apps and old engine tags call it, forever); jobpilotto.top is an alias on the same worker
-# (the bare name redirects to www: a Cloudflare Redirect Rule on the zone for static pages, worker/hosts.js for the rest). Replaceable: another domain is two more lines here.
+# (the bare name redirects to www: a Cloudflare Redirect Rule on the zone for static pages, shared/hosts.js for the rest). Replaceable: another domain is two more lines here.
 workers_dev = true
 routes = [
   {pattern = "www.jobpilotto.top", custom_domain = true},
@@ -25,7 +25,7 @@ name = "EMAIL"
 [assets]
 directory = "./web/public"
 binding = "ASSETS"
-# The worker runs first for the pages, so the old host can redirect them (worker/hosts.js legacyPageRedirect); every other path is served as before.
+# The worker runs first for the pages, so the old host can redirect them (shared/hosts.js legacyPageRedirect); every other path is served as before.
 run_worker_first = ["/", "/changelog", "/compare", "/coverage", "/download", "/faq", "/features", "/friends", "/how-it-works", "/intelligence", "/platforms", "/pricing", "/privacy", "/ready-live", "/research", "/terms", "/trust", "/*.html"]
 
 # Pro early-access sign-ups.
@@ -96,7 +96,7 @@ LINKEDIN_CLIENT_ID = "77cda0c4oymws4"
 # The central employer index (api/employers.js): GET /api/index for every app, PUT from the private central scout
 # (GarryOne/job-pilotto-internal) with the Worker secret INDEX_PUBLISH_KEY (Keychain job-pilotto.site.index_publish_key). Stored in WAITLIST as "index:employers".
 
-# Website stats (shared/stats.js): page views, Download clicks, the private /stats page. Tables: migrations/ (apply: npx wrangler@4 d1 migrations apply www-stats --remote).
+# Website stats (api/downloads.js): page views, Download clicks, the private /stats page. Tables: migrations/ (apply: npx wrangler@4 d1 migrations apply www-stats --remote).
 # Secrets: STATS_KEY (opens /stats; Keychain job-pilotto.site.stats_key) and STATS_SALT (hashes visitors).
 # "Report this form" (docs/superpowers/specs/2026-10-15-report-this-form.md §4): the private bucket for encrypted reports (created 15 Oct 2026, 30-day expiry rule `expire-30d`).
 [[r2_buckets]]

@@ -2,7 +2,7 @@
 // and what was dropped is on /admin and not only in chat. The rows are docs/lab/search-experiments.json, read at deploy: the session that measured adds its row in the PR that ships or drops the change.
 // Owner-only like the rest of /admin. Fixed columns, no job or CV text. Guard: test/admin/search-lab-experiments.test.js.
 import ROWS from '../../docs/lab/search-experiments.json' with {type: 'json'};
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 
 export const OUTCOMES = {shipped: 'good', 'shipped, then fixed': 'good', 'not shipped': 'bad', parked: 'wait'};
 export const FIELDS = ['date', 'what', 'metric', 'before', 'after', 'outcome', 'link'];

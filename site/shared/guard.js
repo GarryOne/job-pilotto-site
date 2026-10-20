@@ -4,7 +4,7 @@
 //   fingerprint no real form produces) revokes whoever asks for it. The owner reads it all on /telemetry and at GET /api/guard.
 // The honest limit: this adds friction and traceability. Anything a running app can download, a determined user can copy; the aim is that
 // copying costs effort and leaves a trace. Every database call is allowed to fail (a missing table must never block a real user).
-import {isOwner} from './stats.js';
+import {isOwner} from './auth.js';
 
 const day = date => date.toISOString().slice(0, 10);
 

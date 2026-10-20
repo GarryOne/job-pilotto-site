@@ -2,12 +2,12 @@
 // {install, purpose: 'index'}) and at most INDEX_PER_INSTALL_PER_DAY times a day; GET /api/index?summary=1 is public and holds only the counts;
 // PUT /api/index (Bearer INDEX_PUBLISH_KEY) is the private central scout (repo GarryOne/job-pilotto-internal) publishing it.
 // Product data only: feeds, quality, last verified. Nothing about any user. Stored as one KV value (binding WAITLIST).
-import {REGIONS, ROLES} from './pool.js';
-import {poolSnapshot, pooledKeys, storePoolSnapshot} from './installsimpact.js';
-import {COUNTRIES, FAMILIES, METROS} from './pool-tags.js';
+import {REGIONS, ROLES} from '../shared/pool-labels.js';
+import {poolSnapshot, pooledKeys, storePoolSnapshot} from '../admin/installsimpact.js';
+import {COUNTRIES, FAMILIES, METROS} from '../shared/pool-tags.js';
 import {authorize, digestOf, equal, flag} from '../shared/guard.js';
-import {store as storeScouting} from './scouting.js';
-import {snapshot, storeSnapshot} from '../shared/scoutingadmin.js';
+import {store as storeScouting} from '../shared/scouting.js';
+import {snapshot, storeSnapshot} from '../shared/scouting-snapshot.js';
 const KEY = 'index:employers';
 const NOFEED_KEY = 'index:nofeed';
 const SUMMARY_KEY = 'index:summary';   // the website's two counts, written at every publish (the old single-value copy stops once the list outgrows it)
@@ -256,7 +256,7 @@ async function publish(request, env) {
     await storeSnapshot(env.STATS, date, snapshot(feeds, feeds.filter(feed => pooled.has(`${feed.ats}:${feed.slug}`)).length, nofeed.length)).catch(() => false);
     await storePoolSnapshot(env.STATS, date, poolSnapshot(feeds, pooled)).catch(() => false);   // what installs add, for /admin/installs (migration 0102)
   }
-  // The central scout's own numbers for /intel (api/scouting.js): never a reason to refuse the index.
+  // The central scout's own numbers for /intel (shared/scouting.js): never a reason to refuse the index.
   if (env.STATS && body.stats) await storeScouting(env.STATS, body.stats, generated.slice(0, 10)).catch(() => false);
   // Older app versions download the whole list from KV: kept while it fits in one value, else left as it was (they update soon).
   const legacy = JSON.stringify({version: 1, generated, feeds});

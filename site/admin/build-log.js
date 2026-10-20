@@ -3,7 +3,8 @@
 // The page draws the groups itself (never markdown parsed from a string). No AI here. Guard: test/admin/build-log.test.js.
 import {viewer} from '../shared/auth.js';
 import {equal} from '../shared/guard.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 import {canClose, countOf, dayWords, isClosed, prList} from './build-digest.js';
 
 const SHOWN = 45, MAX_DRAFTS = 8;

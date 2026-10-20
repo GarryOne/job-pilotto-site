@@ -1,9 +1,9 @@
-// Both hosts keep working: workers.dev (installed apps, never redirected) and the jobpilotto.top alias (bare name -> www). Guards worker/hosts.js and wrangler.toml.
+// Both hosts keep working: workers.dev (installed apps, never redirected) and the jobpilotto.top alias (bare name -> www). Guards shared/hosts.js and wrangler.toml.
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {test} from 'node:test';
 import worker from '../../worker/index.js';
-import {apexRedirect, legacyPageRedirect, PAGE_PATHS} from '../../worker/hosts.js';
+import {apexRedirect, legacyPageRedirect, PAGE_PATHS} from '../../shared/hosts.js';
 
 const ask = (host, path, init) => new Request(`https://${host}${path}`, init);
 const API_PATHS = ['/api/index', '/api/notion/start?session=x', '/report/fill-failure', '/telemetry', '/admin', '/privacy', '/'];

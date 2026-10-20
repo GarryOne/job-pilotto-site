@@ -2,7 +2,8 @@
 // below, one card per page with its key numbers, their last 8 weeks and a link. Everything from the tables the pages already read.
 import {viewer} from '../shared/auth.js';   // admins (invited) read this page too
 import {PAGES, byWeek, ratio, since, spark, sum} from './admin.js';
-import {isOwner, esc, remember} from '../shared/stats.js';
+import {isOwner, remember} from '../shared/auth.js';
+import {esc} from '../shared/html.js';
 import {appTrends, insightTrends} from './trends.js';
 
 const rows = async (db, sql, ...binds) => { try { return (await db.prepare(sql).bind(...binds).all()).results || []; } catch { return []; } };

@@ -11,6 +11,9 @@ The website, `/admin`, and the CI jobs that feed them. Moved out of the public `
 - `tools/site-guards.sh <tree> [<this repo>]`: the public tests that read `site/` plus this repo's own tests.
 - No `ship.sh` here: open a normal PR; the required check is the job "All checks passed" (`tests.yml`).
 
+## Layout
+`site/web` (public pages), `site/admin` (/admin), `site/api` (what the apps call), `site/shared`, `site/worker` (router): see `site/README.md`.
+
 ## Contract with the public repo
 `docs/site-routes.json` (public) lists every route the app calls. Two tests keep it true: `site/test/site-routes.test.js` (here) and `desktop/test/site-routes.test.js` (public).
 

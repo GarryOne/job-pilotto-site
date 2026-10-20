@@ -2,7 +2,8 @@
 // the AI cost per free and per Pro user, and the money once the Pro tables exist. The numbers are admin/monetization-data.js; the lines and fixed costs are admin/monetization-config.js. Counts only, never an e-mail.
 import {viewer} from '../shared/auth.js';
 import {filterLinks} from './admin.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 import {BARS_CSS, barRows, legend} from './day-bars.js';
 import {collect, RANGES, rangeOf} from './monetization-data.js';
 import {PROJECTIONS_URL, TRIAL_MIN_FOR_VERDICT} from './monetization-config.js';

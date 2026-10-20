@@ -3,7 +3,7 @@
 // desktop/e2e/pool-moves.mjs) and 'replay' (the recorded pages on main, desktop/e2e/replays-report.mjs): accepted only with CI's narrow key (REPLAYS_PUBLISH_KEY) or the owner's, so test
 // data never poses as a user's. Fixed values and integers only, as desktop/lib/ladder/learning.js counts() (its lists are checked equal to these by desktop/test/ladder-moves-site.test.js).
 // Not served to installs yet: the pack's k>=3 rule comes with phase 3. GET /api/ladder-moves (owner): every move, each source apart. Guard: test/shared/ladder-moves.test.js.
-import {isOwner} from './stats.js';
+import {isOwner} from './auth.js';
 import {readRepairs} from './repair-evidence.js';
 
 export const SOURCES = ['user', 'ci', 'replay'];

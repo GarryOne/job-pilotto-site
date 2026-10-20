@@ -2,7 +2,7 @@
 // sent after each Find jobs run (kind 'search', site/shared/search-report.js): per role family, the median time to the first job, the 10th and the first 70+, jobs
 // in places and scoring 70+, how many searches it took to reach a 70+, set beside the lab's median so a real number has the lab's to be read against.
 // A city is shown only when 3+ installs share it (k >= 3, read time). Counts, seconds and fixed words only. Guard: test/admin/search-lab-real.test.js.
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 import {TIME_NAMES} from './search-lab-judge.js';
 import {TONE_COLOR, median} from './search-lab-visuals.js';
 

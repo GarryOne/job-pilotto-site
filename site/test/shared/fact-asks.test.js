@@ -1,9 +1,9 @@
-// The facts forms ask most (site/api/fact-asks.js): fixed ids only, 3+ installs before a fact is served, a share per fact, old reports dropped, and the pack carries it.
+// The facts forms ask most (site/shared/fact-asks.js): fixed ids only, 3+ installs before a fact is served, a share per fact, old reports dropped, and the pack carries it.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import {FACTS, shares, store, tidy} from '../../api/fact-asks.js';
+import {FACTS, shares, store, tidy} from '../../shared/fact-asks.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');

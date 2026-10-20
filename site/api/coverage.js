@@ -1,7 +1,7 @@
 // GET /api/coverage: the website's public numbers (owner, 20 Oct 2026). Employers and open jobs: the summary of the latest publish (KV
 // index:summary, the landing's numbers too, each employer's jobs once); per country, per kind of work and the week's growth: the latest daily
 // snapshot (index_daily). Counts only, never an employer or anything from an install. Read by site/public/coverage.html. Tests: site/test/api/coverage.test.js.
-import {countryName, history, kindName} from './scoutingvisual.js';
+import {countryName, history, kindName} from '../shared/scoutingvisual.js';
 
 const HIDDEN = ['other', 'unknown'];   // shown as one line (other) or not at all (not counted yet): a chart of named kinds only
 

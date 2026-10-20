@@ -9,7 +9,7 @@
 // link on /admin/access (a name and an expiry). Opened, it gives that person a session of their own (v2: signed with their
 // id); every request checks they are still invited and not expired, so Remove takes effect at once. An admin reads every admin
 // page; only the super admin manages access (invites, expiry, removal) and calls the APIs.
-import {device} from './stats.js';
+import {device} from './device.js';
 
 export const SESSION_COOKIE = 'jp_admin', LEGACY_COOKIE = 'jp_stats', SESSION_DAYS = 30;
 const encoder = new TextEncoder();

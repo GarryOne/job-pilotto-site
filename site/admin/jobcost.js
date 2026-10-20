@@ -3,7 +3,8 @@
 import {freeSection, freeSummary, trialUse} from './free-ai-cost.js';
 import {accountNeurons} from '../shared/free-ai-usage.js';
 import {viewer} from '../shared/auth.js';   // admins (invited) read this page too
-import {isOwner, esc, remember} from '../shared/stats.js';
+import {isOwner, remember} from '../shared/auth.js';
+import {esc} from '../shared/html.js';
 import {equal} from '../shared/guard.js';
 import {filterLinks} from './admin.js';
 

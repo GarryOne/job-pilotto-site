@@ -1,7 +1,7 @@
 // The owner's admin area: every private page under /admin, one menu on all of them, and the old addresses redirected (for the
 // owner only: anyone else still gets a 404, so the redirect tells nobody a page is there). Same key as before: ?key= once, then
 // a session cookie (shared/auth.js isOwner). The pages keep their own code; this file adds the menu and the small trend charts they share.
-import {esc} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
 import {viewer} from '../shared/auth.js';
 
 // overview: true = the section's Overview tab (admin/section-overview.js draws the headline numbers every other page of the group declares in admin/headlines.js).

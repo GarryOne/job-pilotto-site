@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import {feedback, recentFeedback} from '../../shared/feedback.js';
+import {feedback} from '../../api/feedback.js';
+import {recentFeedback} from '../../shared/feedback.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -44,7 +45,7 @@ test('the brain gets the words, never the contact', async () => {
 });
 
 test('the live page is the owner\'s only: 404 without the key, the page and its JSON with it', async () => {
-  const {view} = await import('../../shared/feedback.js');
+  const {view} = await import('../../admin/feedback.js');
   const e = {...env(), STATS_KEY: 'secret'};
   await send(e, good);
   const open = (path, headers = {}) => view(new Request(`https://x/feedback${path}`, {headers}), e);

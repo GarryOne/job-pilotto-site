@@ -1,4 +1,4 @@
-// The website sends nothing to a third-party analytics service (owner, 13 Oct 2026): its own counting (shared/stats.js) is the only one. The privacy page may name PostHog for the app.
+// The website sends nothing to a third-party analytics service (owner, 13 Oct 2026): its own counting (api/downloads.js) is the only one. The privacy page may name PostHog for the app.
 import assert from 'node:assert/strict';
 import {readdirSync, readFileSync} from 'node:fs';
 import {test} from 'node:test';

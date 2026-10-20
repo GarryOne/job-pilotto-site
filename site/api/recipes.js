@@ -15,7 +15,7 @@ import {betaOf, reaches, staged} from './canary-reach.js';
 import {cleanCard} from '../../extension/fill-card.js';
 import {recordUse} from '../shared/hostuse.js';
 import {hashed} from './pool.js';
-import {isOwner} from '../shared/stats.js';
+import {isOwner} from '../shared/auth.js';
 import {authorize, digestOf, equal, flag, honeypotAmong, revoke, tokenFor} from '../shared/guard.js';
 import {storeProposals as storeAliasProposals, storeUse as storeAliasUse} from './aliases.js';
 import {store as storeIntelligence} from '../shared/intelligence.js';

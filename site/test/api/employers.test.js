@@ -223,7 +223,7 @@ test('the central scout sends its own numbers with the index; they are checked t
     recipes: 12, page_reads: 30, link_choices: 9, commoncrawl: 'CC-MAIN-2026-39', ideas_at: '2026-10-03T04:30:00', ideas_note: 'Tried Swiss banks <b>now</b>',
     sources: [{origin: 'Common Crawl', probed: 500, found: 40}], market: [{term: 'devops', ours: 61, jobsch: 305}], extra: 'dropped'};
   await call(e, 'PUT', auth, {feeds: [feed('a', {regions: ['europe']})], stats});
-  const {load, section} = await import('../../api/scouting.js');
+  const {load, section} = await import('../../shared/scouting.js');
   const shown = await load(db);
   assert.equal(shown.feeds, 412);
   assert.equal(shown.extra, undefined);

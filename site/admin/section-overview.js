@@ -2,7 +2,8 @@
 // (a number, what it counts, a weekly bar chart when there is one, a status dot, a link to the page). Same weekly series and bars as the /admin Overview (admin/admin.js).
 // A number that cannot be judged says so (few: true -> "Too few", with its counts underneath). No AI; each loader reads rows or one snapshot the page already has. Guard: test/admin/section-overview.test.js.
 import {PAGES, spark} from './admin.js';
-import {esc, remember} from '../shared/stats.js';
+import {esc} from '../shared/html.js';
+import {remember} from '../shared/auth.js';
 import {viewer} from '../shared/auth.js';
 import {HEADLINES} from './headlines.js';
 

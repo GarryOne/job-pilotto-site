@@ -1,7 +1,8 @@
-// /admin/scouting (shared/scoutingadmin.js): the central employer list's growth and health, from the site's own tables; counts and names only.
+// /admin/scouting (shared/scouting-snapshot.js): the central employer list's growth and health, from the site's own tables; counts and names only.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {page, snapshot, topKind} from '../../shared/scoutingadmin.js';
+import {page} from '../../admin/scoutingadmin.js';
+import {snapshot, topKind} from '../../shared/scouting-snapshot.js';
 
 const feeds = [
   {company: 'Coop', ats: 'successfactors', slug: 'jobs.coop.ch', regions: ['europe'], countries: ['ch'], kinds: {sales_retail: 0.6, logistics: 0.3}, fresh: {ok: '2026-10-06', fails: 0, jobs: 3142, trend: 'up', new: '2026-10-06'}},
