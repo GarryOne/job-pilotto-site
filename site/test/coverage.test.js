@@ -15,6 +15,7 @@ function d1() {
   return {prepare: sql => statement(sql)};
 }
 const feed = (i, kind, countries, jobs = 10) => ({company: `Secret Employer ${i}`, ats: 'lever', slug: `secret${i}`, kinds: {[kind]: 0.9}, countries, jobs});
+const kv = values => ({get: async key => values[key] ?? null});
 const get = env => worker.fetch(new Request('https://www.jobadabra.top/api/coverage'), env, {});
 
 test('the coverage numbers: employers, open jobs in Europe, countries and kinds from the latest snapshot, the week\'s growth, no names', async () => {
@@ -22,11 +23,12 @@ test('the coverage numbers: employers, open jobs in Europe, countries and kinds 
   await storeSnapshot(STATS, '2026-10-13', snapshot([feed(1, 'software', ['de'])]));
   await storeSnapshot(STATS, '2026-10-20', snapshot([feed(1, 'software', ['de']), feed(2, 'healthcare', ['fr', 'de'], 4), feed(3, 'other', ['pl']),
     feed(4, 'logistics', ['us'])]));
-  const res = await get({STATS});
+  const res = await get({STATS, WAITLIST: kv({'index:summary': JSON.stringify({employers: 5, jobs: 24})})});
   assert.equal(res.status, 200);
   assert.match(res.headers.get('Cache-Control'), /public, max-age=3600/);
   const body = await res.json();
-  assert.deepEqual(body, {day: '2026-10-20', employers: 4, jobs_europe: 28, country_count: 3, week_added: 3,
+  // employers and jobs: the landing's summary of the latest publish (each employer's jobs once); the rest from the snapshot
+  assert.deepEqual(body, {day: '2026-10-20', employers: 5, jobs: 24, country_count: 3, week_added: 3,
     countries: [['Germany', 2], ['France', 1], ['Poland', 1]],
     kinds: [['Healthcare', 2], ['Software & IT', 1]], other_kinds: 1});
   assert.doesNotMatch(JSON.stringify(body), /Secret|lever|secret/, 'never an employer');
@@ -41,4 +43,13 @@ test('a week of history is needed for the growth; without it the field is left o
   const STATS = d1();
   await storeSnapshot(STATS, '2026-10-20', snapshot([feed(1, 'software', ['de'])]));
   assert.equal((await (await get({STATS})).json()).week_added, undefined);
+});
+
+test('without the summary the employers come from the snapshot and jobs are left out (never a sum that counts an employer twice)', async () => {
+  const STATS = d1();
+  await storeSnapshot(STATS, '2026-10-20', snapshot([feed(1, 'software', ['de']), feed(2, 'healthcare', ['fr', 'de'], 4)]));
+  const body = await (await get({STATS, WAITLIST: kv({})})).json();
+  assert.equal(body.employers, 2);
+  assert.equal(body.jobs, undefined);
+  assert.equal(body.jobs_europe, undefined);
 });

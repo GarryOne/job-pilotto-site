@@ -32,6 +32,11 @@ export function cellsOf(feeds) {
   return cells;
 }
 
+// Open jobs at the employers hiring in Europe, each employer once: a cell holds an employer's whole count in every country it hires in,
+// so a sum over cells counts it once per country (20 Oct 2026: 979,528 shown for ~334k).
+export const jobsInEurope = feeds => feeds.filter(feed => (feed.countries || []).some(country => EUROPE.includes(country)))
+  .reduce((sum, feed) => sum + Number(feed.jobs || feed.fresh?.jobs || 0), 0);
+
 // Installs searching each kind × country in the last 30 days, from what they share (contributions.roles + countries); a cell only with 3+.
 export function demandOf(rows, least = 3) {
   const installs = {};
@@ -60,12 +65,12 @@ export function history(daily, today = new Date()) {
 export function tiles({feeds, daily, sharing7, central}, cells, past) {
   const nonIt = feeds.filter(feed => !['software', 'unknown'].includes(topKind(feed))).length;
   const runs = central?.runs || [], last = runs[runs.length - 1];
-  const jobs = Object.values(cells).reduce((sum, [, open]) => sum + open, 0);
+  const jobs = jobsInEurope(feeds);
   return `<div class="tiles">
 ${tile('Employers in the list', n(feeds.length), {spark: past.rows.map(row => row.feeds), delta: past.week ? feeds.length - past.week.feeds : null, note: '▲▼ against a week back'})}
 ${tile('Hire mostly outside IT', feeds.length ? `${Math.round((100 * nonIt) / feeds.length)}%` : '—', {spark: past.rows.map(row => (row.feeds ? (100 * row.non_it) / row.feeds : null)), note: `${n(nonIt)} employers`})}
 ${tile(`Cells at ${FLOOR}+ employers`, `${n(atFloor(cells))} <small class="muted">/ ${n(AIMED.length * EUROPE.length)}</small>`, {spark: past.withCells.map(row => atFloor(row.cells)), delta: past.week?.cells ? atFloor(cells) - atFloor(past.week.cells) : null, note: 'kind × European country, the target'})}
-${tile('Open jobs in Europe', n(jobs), {spark: past.withCells.map(row => Object.values(row.cells).reduce((sum, [, open]) => sum + open, 0)), note: 'at the employers listed'})}
+${tile('Open jobs in Europe', n(jobs), {note: 'at the employers hiring in Europe, each once'})}
 ${tile('Installs sharing', n(sharing7), {note: 'last 7 days'})}
 ${tile('Last central run', last ? `${n(last.found)} found` : '—', {spark: runs.map(run => run.found), note: last ? `${last.at.replace('T', ' ')} · ${cellName(last.cell) || 'its usual search'}` : 'no run recorded yet'})}
 </div>`;
