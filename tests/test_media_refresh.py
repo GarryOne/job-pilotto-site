@@ -25,6 +25,10 @@ class LocalMediaCommandTests(unittest.TestCase):
             if 'media.mjs' in code or 'media-refresh' in code or 'tools/media.sh' in code:
                 self.assertNotRegex(code, r'(?m)^\s*(schedule|push|pull_request):', f'{flow.name} records media from CI')
 
+    def test_the_refresh_pr_title_has_a_tag_for_the_description_check(self):
+        # site#31 was red on "PR description laid out": a title needs an "[xx] " tag (tools/pr-body-check.py)
+        self.assertIn('--title "[media] ', (ROOT / 'tools/media-refresh.sh').read_text())
+
     def test_the_old_ci_recorder_is_gone(self):
         self.assertFalse((ROOT / '.github/workflows/product-media.yml').exists())
 

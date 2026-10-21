@@ -47,7 +47,7 @@ else
 fi
 if [ -n "$(gh pr list --head media-refresh --state open --json number --jq '.[0].number')" ]; then
   echo "media-refresh: the open refresh PR now holds this set"
-elif ! gh pr create --head media-refresh --base main --title "Refresh the site's media (screens changed)" --body "$body"; then
+elif ! gh pr create --head media-refresh --base main --title "[media] Refresh the site's media (screens changed)" --body "$body"; then
   echo "media-refresh: GitHub refused the PR (is gh signed in on this Mac: gh auth status?)."
   echo "media-refresh: the set is on branch media-refresh: ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-GarryOne/job-pilotto-site}/compare/main...media-refresh"
   exit 1
