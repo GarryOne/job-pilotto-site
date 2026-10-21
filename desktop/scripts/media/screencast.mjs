@@ -18,9 +18,13 @@ export async function startScreencast(page, dir, {quality = 92, maxWidth = 3600,
   await cdp.send('Page.startScreencast', {format: 'jpeg', quality, maxWidth, maxHeight, everyNthFrame: 1});
   await page.waitForTimeout(300);
   t0 = Date.now() / 1000;
+  // A still page sends no frame until something changes, so a quiet first screen would have none: nudge the paint once to get its frame.
+  const nudge = async () => { await page.evaluate(() => { document.documentElement.style.opacity = '0.995'; return new Promise(done => setTimeout(() => { document.documentElement.style.opacity = ''; done(); }, 60)); }).catch(() => {}); await page.waitForTimeout(120); };
+  await nudge();
   return {
     clock: () => Date.now() / 1000 - t0,
     stop: async () => {
+      await nudge();   // a last frame, so a still ending is as long as it was held
       await cdp.send('Page.stopScreencast').catch(() => {});
       await cdp.detach().catch(() => {});
       if (!frames.length) throw new Error('media: the screencast sent no frame');

@@ -38,7 +38,7 @@ async function makeVideo(name, persona, work, out) {
   fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(job));
   const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), path.join(dir, 'job.json')], {stdio: 'inherit', timeout: 15 * 60000});
   if (run.status !== 0) throw new Error(`media: ${name}: the renderer failed (${run.status ?? run.signal})`);
-  const problems = pieceProblems({name, source: piece.source, log, posterBrightness: brightness(path.join(dir, 'frames', log.frames[0].file)), forbid: persona.forbid});
+  const problems = pieceProblems({name, source: piece.source, log, posterBrightness: brightness(path.join(dir, 'frames', log.frames[0].file)), forbid: persona.forbid, quiet: piece.quiet});
   if (problems.length) throw new Error(problems.join('\n'));
   const {files, bytes} = encodeVideo({master: job.out, name, piece, outDir: out, posterAt: posterTime(log.events)});
   console.log(`media: ${name}: ${Object.entries(bytes).map(([kind, n]) => `${kind} ${(n / 1e6).toFixed(2)} MB`).join(', ')}`);
