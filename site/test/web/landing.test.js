@@ -94,7 +94,7 @@ test('the landing stays short: one hero, the numbers, three steps, control, one 
 
 test('the hero is a carousel of four clips: the first loads, the rest wait; each has a poster and a phone copy; reduced motion keeps a still', () => {
   const html = read('index.html');
-  const carousel = html.match(/<div class="carousel"[\s\S]*?<\/div>\s*<\/div>\s*<\/figure>/)[0];
+  const carousel = html.match(/<div class="hero-clips"[\s\S]*?<\/div>\s*<\/div>\s*<\/figure>/)[0];
   const clips = [...carousel.matchAll(/<video class="slide[^>]*>[\s\S]*?<\/video>/g)].map(match => match[0]);
   assert.equal(clips.length, 4);
   clips.forEach((clip, i) => {
