@@ -18,7 +18,7 @@ The website, `/admin`, and the CI jobs that feed them. Moved out of the public `
 | `workers/` | `www` (the ONE Worker serving web + admin + api), `hosted-runner`, `ready-runner` |
 | `db/migrations/` | D1 migrations |
 | `test/` | mirrors the folders above; `test/boundary.test.js` guards the import directions. Run: `node --test "test/**/*.test.js"` |
-| `media/` | the product-media recorder (videos and stills for the site) |
+| `media/` | the product-media recorder (videos and stills for the site); run it with `tools/media.sh` (by hand, never CI) |
 | `preview/` | the next website, reviewed before it goes live |
 | `jobs/` | scheduled jobs that feed /admin (digest, ops overview, changelog, e2e intel, hosted e2e, Lab uploads) |
 | `tools/` | the dev kit (overlay, tree, site-run, site-guards, staging) |
@@ -28,7 +28,7 @@ The website, `/admin`, and the CI jobs that feed them. Moved out of the public `
 `docs/site-routes.json` (public) lists every route the app calls. Two tests keep it true: `test/site-routes.test.js` (here) and `desktop/test/site-routes.test.js` (public).
 
 ## CI
-`tests.yml` (PRs, push, daily against newest public main), `site.yml` / `site-next.yml` (deploys), `public-watch.yml` (every 6 hours: a public change that a deploy bundles dispatches the deploy), `product-media.yml` (daily: when the public screens changed, a Mac run re-records the site's media and opens the PR `media-refresh`), plus the scheduled jobs moved from public (digest, changelog, ops overview, e2e intel, hosted e2e, random draw, search lab).
+`tests.yml` (PRs, push, daily against newest public main), `site.yml` / `site-next.yml` (deploys), `public-watch.yml` (every 6 hours: a public change that a deploy bundles dispatches the deploy), plus the scheduled jobs moved from public (digest, changelog, ops overview, e2e intel, hosted e2e, random draw, search lab).
 
 ## Secrets (set on this repo by the owner; never in code)
 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `AI_COST_PUBLISH_KEY`, `SELFHEAL_PUBLISH_KEY`, `REPLAYS_PUBLISH_KEY`, `DIGEST_ANTHROPIC_KEY`, `BUILDLOG_TELEGRAM_TOKEN`, `BUILDLOG_TELEGRAM_CHAT`;

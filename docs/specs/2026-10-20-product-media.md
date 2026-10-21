@@ -11,9 +11,7 @@ The public repo keeps only the app's hook `JOB_PILOTTO_DEMO_DIR` (desktop/lib/de
   extension filling a fictional form (form.html at a reserved `.example` address, e2e harness isolation), renders zoom/cursor/click from the click
   log in code (camera.mjs + render.cjs: real pixels only), checks (check.mjs), encodes (encode.mjs), writes `manifest.json` (manifest.mjs).
 - Director: `node media/direct.mjs <piece>` (Claude on the subscription, never in CI) writes `plans/<piece>.json` (zoom per look, caption).
-- CI: `.github/workflows/product-media.yml`: a daily Linux check of the public files that draw the screens (`tools/media-paths.txt`, record
-  `.public-media`); when they changed, a Mac run records the set and `tools/media-refresh.sh` opens the PR `media-refresh` that refreshes the files
-  `site/public/media/` already holds. The owner merges it; the merge deploys the site.
+- Delivery (21 Oct 2026, owner: "Local only, one command"): `tools/media.sh [pieces]` on the owner's Mac lays public origin/main under this repo, records, checks, then `tools/media-refresh.sh` opens the PR `media-refresh` that refreshes the files `web/public/media/` already holds (`tools/media.sh --check` says if the screens changed). No CI schedule or push trigger. The owner merges it; the merge deploys the site.
 - Pieces and formats agreed with the site redesign (bd): hero, extension-fill, stills, snips; dark only; captions in the manifest only.
 
 ## Progress
