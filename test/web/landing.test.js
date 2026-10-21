@@ -130,5 +130,5 @@ test('the coverflow: the centred clip is full size and opaque, neighbours smalle
   assert.equal(place(-1).x, -next.x, 'the previous one mirrors the next');
   assert.ok(far.opacity < 0.01 && gone.opacity === 0, 'beyond the neighbours nothing shows');
   assert.ok(centre.z > next.z && next.z > far.z, 'the centre is in front');
-  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(0, 4\.6fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
+  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(440px, 4\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
 });
