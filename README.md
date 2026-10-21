@@ -21,7 +21,7 @@ The website, `/admin`, and the CI jobs that feed them. Moved out of the public `
 | `media/` | the product-media recorder (videos and stills for the site) |
 | `preview/` | the next website, reviewed before it goes live |
 | `jobs/` | scheduled jobs that feed /admin (digest, ops overview, changelog, e2e intel, hosted e2e, Lab uploads) |
-| `tools/` | the dev kit (overlay, tree, site-run, site-guards, legacy-paths, staging) |
+| `tools/` | the dev kit (overlay, tree, site-run, site-guards, staging) |
 | `tests/`, `desktop/test/` | tests that run inside the public tree's own harness (python / desktop) |
 
 ## Contract with the public repo
