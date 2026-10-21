@@ -10,9 +10,9 @@
 //                       evidence). Product data only: no user data, no text, no answers.
 // evaluateCanary (daily) promotes a canary that works and halts one that fails, with no one watching.
 import {familyOfInstall} from '../shared/engines.js';
-import {validateRecipe} from '../../extension/recipe-schema.js';
+import {validateRecipe} from '../extension/recipe-schema.js';
 import {betaOf, reaches, staged} from './canary-reach.js';
-import {cleanCard} from '../../extension/fill-card.js';
+import {cleanCard} from '../extension/fill-card.js';
 import {recordUse} from '../shared/hostuse.js';
 import {hashed} from './pool.js';
 import {isOwner} from '../shared/auth.js';

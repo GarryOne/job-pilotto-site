@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// Prints the "Needs a fix" order of /admin/lab-form-filling, worst first, with the page's own sort (site/admin/applying-order.js: the page embeds the same function, so they cannot disagree).
+// Prints the "Needs a fix" order of /admin/lab-form-filling, worst first, with the page's own sort (admin/applying-order.js: the page embeds the same function, so they cannot disagree).
 // Reads the owner page's data with the Keychain key job-pilotto.site.api_key (never printed). Read-only: a saved copy of the page's data at most 15 minutes old (--refresh fetches it again).
-// Usage: node tools/needs-fix-order.mjs [--json <file>]   (--json reads a saved copy of the page's ?json instead of the site)
+// Usage: node jobs/needs-fix-order.mjs [--json <file>]   (--json reads a saved copy of the page's ?json instead of the site)
 // Columns: rank, shape (the pool row's name), platform, reached, filled/left of the last run, claimed (when a session took the shape: its time only, never the session).
-// Guard: site/test/needs-fix-order.test.js.
+// Guard: test/needs-fix-order.test.js.
 import fs from 'node:fs';
-import {pageJson} from './applying-page-copy.mjs';
+import {pageJson} from '../tools/applying-page-copy.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {needsFixOrder} from '../site/admin/applying-order.js';
+import {needsFixOrder} from '../admin/applying-order.js';
 
 
 // The sites that need a fix, worst first, from the page's ?json.

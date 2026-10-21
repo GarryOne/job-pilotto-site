@@ -2,7 +2,7 @@
 // morning calls to that container: the site Worker reaches it through a service binding only (workers_dev is off, there is no public route). NOT DEPLOYED: it needs a Queue and a Worker on the Cloudflare account, which the owner has not agreed to yet.
 // A separate Worker because the Container class needs @cloudflare/containers, which the site's tests cannot load.
 import {Container, getContainer} from '@cloudflare/containers';
-import {consume} from '../api/ready-consume.js';
+import {consume} from '../../api/ready-consume.js';
 
 export class ReadyRunner extends Container {
   defaultPort = 8080;

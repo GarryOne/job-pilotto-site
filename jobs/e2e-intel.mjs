@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Publishes the finished release/beta e2e runs of the last 30 days and the cause of every red suite to /admin/operations/e2e (e2e-intel.yml: after each release run, hourly as backup).
-// A run is read once; a red whose cause is "open" or "unknown" is read again until its fix lands. Causes come from facts only (site/admin/e2e-causes.js, guard: site/test/admin/e2e-intel-collector.test.js):
+// A run is read once; a red whose cause is "open" or "unknown" is read again until its fix lands. Causes come from facts only (admin/e2e-causes.js, guard: test/admin/e2e-intel-collector.test.js):
 // the job's step results, the failing job's log text (never stored), and the files changed between the red run and the next run where the same suite passed.
-//   node tools/e2e-intel.mjs [--dry [--out rows.json]]    needs gh with GH_TOKEN; publishing needs SELFHEAL_PUBLISH_KEY (optional E2E_INTEL_URL)
+//   node jobs/e2e-intel.mjs [--dry [--out rows.json]]    needs gh with GH_TOKEN; publishing needs SELFHEAL_PUBLISH_KEY (optional E2E_INTEL_URL)
 import {execFile, execFileSync} from 'node:child_process';
 import {promisify} from 'node:util';
 import {writeFileSync} from 'node:fs';
-import {CAUSES, RULES_VERSION, causeOf, suiteOfJob} from '../site/admin/e2e-causes.js';
+import {CAUSES, RULES_VERSION, causeOf, suiteOfJob} from '../admin/e2e-causes.js';
 
 const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';
 const base = process.env.E2E_INTEL_URL || 'https://www.jobpilotto.top/e2e/data';

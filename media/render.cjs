@@ -1,5 +1,5 @@
 /* global document, createImageBitmap, Path2D, Blob */
-// Draws a product video from recorded frames (desktop/scripts/media): each output frame is a recorded frame moved and scaled through the camera
+// Draws a product video from recorded frames (media): each output frame is a recorded frame moved and scaled through the camera
 // (a float transform, so pans are smooth), plus a cursor and a click ring. The app's pixels are never redrawn. Electron's canvas does the drawing in a
 // hidden window; raw pixels go to ffmpeg, which writes one high-quality master (encode.mjs makes the site's files from it).
 // Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press}], scale, width, height, fps, out, ffmpeg}

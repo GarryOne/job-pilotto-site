@@ -1,4 +1,4 @@
-// The product media's manifest.json (desktop/scripts/media): one entry per file set, the shape agreed with the site redesign (session bd,
+// The product media's manifest.json (media): one entry per file set, the shape agreed with the site redesign (session bd,
 // 20 Oct 2026). The site takes the files as they are and writes its own text beside them; captions are here, never burned in. Pure.
 // Guard: desktop/test/media-manifest.test.js.
 

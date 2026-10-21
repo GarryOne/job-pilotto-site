@@ -2,15 +2,15 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {test} from 'node:test';
-import worker from '../../worker/index.js';
+import worker from '../../workers/www/index.js';
 import {sourceOf, versioned} from '../../api/downloads.js';
 import {device} from '../../shared/device.js';
 
 // A D1 stand-in on real SQLite, with the real migration.
 function d1() {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('../../migrations/0001_stats.sql', import.meta.url), 'utf8'));
-  db.exec(readFileSync(new URL('../../migrations/0032_download_net.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../../db/migrations/0001_stats.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../../db/migrations/0032_download_net.sql', import.meta.url), 'utf8'));
   const statement = (sql, args = []) => ({
     bind: (...values) => statement(sql, values),
     run: async () => db.prepare(sql).run(...args),

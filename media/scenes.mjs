@@ -1,5 +1,5 @@
-// What each product picture and video shows (desktop/scripts/media): the steps the recorder drives, by selector, and the manifest's words.
-// Data only: re-record with another search profile by `node scripts/media/media.mjs --persona <folder>` (a copy of desktop/demo with its own media.json).
+// What each product picture and video shows (media): the steps the recorder drives, by selector, and the manifest's words.
+// Data only: re-record with another search profile by `node media/media.mjs --persona <folder>` (a copy of desktop/demo with its own media.json).
 // Pieces and sizes agreed with the site redesign (session bd, 20 Oct 2026): hero, extension-fill, apply-split, stills, snips; dark only; captions
 // live in the manifest, never burned into a video. Guard: desktop/test/media-scenes.test.js.
 

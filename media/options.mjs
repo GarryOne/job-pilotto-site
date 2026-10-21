@@ -1,4 +1,4 @@
-// The media command's pure parts (desktop/scripts/media): its arguments, the persona (a demo-data folder, refused if it holds a real key), the AI
+// The media command's pure parts (media): its arguments, the persona (a demo-data folder, refused if it holds a real key), the AI
 // director's plan over a scene, a frame's size. Kept apart from the recorders so tests load them without a browser. Guard: desktop/test/media-options.test.js.
 import fs from 'node:fs';
 import os from 'node:os';

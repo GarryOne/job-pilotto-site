@@ -1,12 +1,12 @@
 /* global document, location, innerWidth, innerHeight */
 // Records the REAL extension filling a fictional form (form.html, served at a reserved .example address) for the product media
-// (desktop/scripts/media). Isolation is the e2e harness's (e2e/lib/real-extension.mjs): a copy of the extension that talks only to a stand-in app,
+// (media). Isolation is the e2e harness's (e2e/lib/real-extension.mjs): a copy of the extension that talks only to a stand-in app,
 // a throwaway Chromium profile, no network (every other host resolves to nothing). The stand-in hands over the persona's fictional details and
 // answers the form's questions as Claude would for them. Nothing is pressed: the extension fills a marked tab by itself, as after the app's Apply.
 // Never submitted: the form's button does nothing.
 import fs from 'node:fs';
 import path from 'node:path';
-import {startRealExtension} from '../../e2e/lib/real-extension.mjs';
+import {startRealExtension} from '../desktop/e2e/lib/real-extension.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {answerReply, formHost, formHtml} from './stand-in.mjs';
 

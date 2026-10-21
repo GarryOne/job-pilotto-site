@@ -1,8 +1,8 @@
-// The product videos' camera (desktop/scripts/media/camera.mjs): zooms frame each hold's box, clicks pull back so the cursor's trip shows,
+// The product videos' camera (media/camera.mjs): zooms frame each hold's box, clicks pull back so the cursor's trip shows,
 // the view never leaves the page, every output frame maps to a recorded frame.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, posterTime, renderPlan} from '../scripts/media/camera.mjs';
+import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, posterTime, renderPlan} from '../../media/camera.mjs';
 
 const viewport = {w: 1800, h: 1125};
 const box = {x: 250, y: 500, width: 1200, height: 540};

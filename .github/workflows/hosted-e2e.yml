@@ -7,12 +7,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'site/api/hosted*'
-      - 'site/shared/hosted*'
-      - 'site/shared/free-ai.js'
-      - 'site/shared/mail*.js'
-      - 'site/migrations/**'
-      - 'tools/hosted-e2e/**'
+      - 'api/hosted*'
+      - 'shared/hosted*'
+      - 'shared/free-ai.js'
+      - 'shared/mail*.js'
+      - 'db/migrations/**'
+      - 'jobs/hosted-e2e/**'
       - '.github/workflows/hosted-e2e.yml'
   schedule:
     - cron: '17 3 * * *'
@@ -51,7 +51,7 @@ jobs:
       - name: Run the scenario against the real hosted image
         env:
           HOSTED_E2E_RUNNER: docker
-        run: node tools/hosted-e2e/run.mjs 2>&1 | tee hosted-e2e.log
+        run: node jobs/hosted-e2e/run.mjs 2>&1 | tee hosted-e2e.log
       - name: The scenario's steps
         if: always()
         run: grep '^hosted-e2e:' hosted-e2e.log >> "$GITHUB_STEP_SUMMARY" || true

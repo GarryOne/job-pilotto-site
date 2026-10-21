@@ -1,9 +1,9 @@
-// The product media's checks (desktop/scripts/media/check.mjs): an address that may be real, a real key in a persona folder, a light window or a
+// The product media's checks (media/check.mjs): an address that may be real, a real key in a persona folder, a light window or a
 // form the extension did not fill each stop the run.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {missingFills, pieceProblems, realEmails, realSecrets} from '../scripts/media/check.mjs';
-import {missingEncoders} from '../scripts/media/encode.mjs';
+import {missingFills, pieceProblems, realEmails, realSecrets} from '../../media/check.mjs';
+import {missingEncoders} from '../../media/encode.mjs';
 
 test('only e-mail addresses on reserved test domains pass', () => {
   assert.deepEqual(realEmails('alex.morgan@example.com · ada@tester.example · x@y.test · hr@northwind.example.org'), []);
@@ -35,7 +35,7 @@ test('a run stops before recording when ffmpeg lacks an encoder the pieces need'
 });
 
 test('every piece in scenes.mjs is checked for a light picture, whatever it records', async () => {
-  const {VIDEOS} = await import('../scripts/media/scenes.mjs');
+  const {VIDEOS} = await import('../../media/scenes.mjs');
   const frames = Array.from({length: 100}, (_, i) => ({t: i / 10}));
   for (const [name, piece] of Object.entries(VIDEOS)) {
     const log = {frames, text: '', filled: ['first_name', 'last_name', 'email', 'resume', 'permit', 'privacy']};
@@ -46,7 +46,7 @@ test('every piece in scenes.mjs is checked for a light picture, whatever it reco
 
 test('the fictional form and its recorder are dark', async () => {
   const fs = await import('node:fs');
-  const read = file => fs.readFileSync(new URL(`../scripts/media/${file}`, import.meta.url), 'utf8');
+  const read = file => fs.readFileSync(new URL(`../../media/${file}`, import.meta.url), 'utf8');
   assert.match(read('form.html'), /prefers-color-scheme: dark/);
   assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'\}\)/);
 });

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
-import {callerOf, meter, newTally, requestLine, routeOf} from '../../worker/d1-meter.js';
+import {callerOf, meter, newTally, requestLine, routeOf} from '../../workers/www/d1-meter.js';
 
 function fakeDb() {
   const seen = [];
@@ -44,6 +44,6 @@ test('a request that touched D1 gets one line with its rows; one that did not is
 });
 
 test('the Worker wraps every request with the meter, and Workers Logs stay on in the config', () => {
-  assert.match(readFileSync(new URL('../../worker/index.js', import.meta.url), 'utf8'), /meter\(env\.STATS, tally\)/);
-  assert.match(readFileSync(new URL('../../wrangler.toml', import.meta.url), 'utf8'), /\[observability\]\s*\nenabled = true\s*\nhead_sampling_rate = 1/);
+  assert.match(readFileSync(new URL('../../workers/www/index.js', import.meta.url), 'utf8'), /meter\(env\.STATS, tally\)/);
+  assert.match(readFileSync(new URL('../../workers/www/wrangler.toml', import.meta.url), 'utf8'), /\[observability\]\s*\nenabled = true\s*\nhead_sampling_rate = 1/);
 });

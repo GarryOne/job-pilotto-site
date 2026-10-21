@@ -1,5 +1,5 @@
 /* global document, localStorage, innerWidth, innerHeight, devicePixelRatio, getComputedStyle */
-// Records the desktop app for the product media (desktop/scripts/media): demo mode on a temp copy of a persona folder, dark, a hidden window,
+// Records the desktop app for the product media (media): demo mode on a temp copy of a persona folder, dark, a hidden window,
 // never the owner's app, data folder or Keychain. Videos: a CDP screencast (works on a hidden window) + a click log for the renderer.
 // Stills and close-ups: screenshots after the steps. Run by media.mjs; the steps come from scenes.mjs.
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
 
-const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
+const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
 const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.json'))('playwright-core');
 export const WINDOW = {width: 1440, height: 900};   // 16:10, the site's hero shape; the app's own zoom lays it out wider, Retina capture is 2x
 

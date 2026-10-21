@@ -32,8 +32,8 @@ jobs:
       - name: Staging config (own name, no routes, no cron)
         run: node tools/staging-config.mjs www-staging
       - name: Deploy the staging Worker
-        working-directory: site
-        run: ../tools/cf-retry.sh npx --yes wrangler@4 deploy --config wrangler.staging.toml
+        working-directory: workers/www
+        run: ../../tools/cf-retry.sh npx --yes wrangler@4 deploy --config wrangler.staging.toml
       - name: Ask every route on staging and on production
         run: |
           set -o pipefail

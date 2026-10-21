@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// Prints the "Needs a fix" rows grouped by cause, as /admin/lab-form-filling's "By cause" tab does (site/admin/applying-groups.js: the page embeds the same function, so they cannot disagree):
+// Prints the "Needs a fix" rows grouped by cause, as /admin/lab-form-filling's "By cause" tab does (admin/applying-groups.js: the page embeds the same function, so they cannot disagree):
 // "Run first" (never run, or the last run is older than a fix landed for that row: a pool run, not a fix), one group per top cause, then the rows with no cause recorded.
 // Reads the owner page's data with the Keychain key job-pilotto.site.api_key (never printed). Read-only: a saved copy of the page's data at most 15 minutes old (--refresh fetches it again).
-// Usage: node tools/needs-fix-causes.mjs [--rows] [--json <file>] [--brief "<cause>" [--note "<one line>"]]   (--brief prints a ready fixer prompt for that cause: tools/fixer-brief.mjs; "Run first" refuses, exit 1)
+// Usage: node jobs/needs-fix-causes.mjs [--rows] [--json <file>] [--brief "<cause>" [--note "<one line>"]]   (--brief prints a ready fixer prompt for that cause: tools/fixer-brief.mjs; "Run first" refuses, exit 1)
 //   (--rows lists the shapes under each group; --json reads a saved copy of the page's ?json)
-// Columns: cause, rows, claimed (rows a session holds; the session itself is never on the site), oldest run. Guard: site/test/needs-fix-causes.test.js.
+// Columns: cause, rows, claimed (rows a session holds; the session itself is never on the site), oldest run. Guard: test/needs-fix-causes.test.js.
 import fs from 'node:fs';
-import {recordVar} from './record-env.mjs';
-import {pageJson} from './applying-page-copy.mjs';
+import {recordVar} from '../tools/record-env.mjs';
+import {pageJson} from '../tools/applying-page-copy.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import os from 'node:os';
-import {needsFixGroups} from '../site/admin/applying-groups.js';
-import {buildBrief} from './fixer-brief.mjs';
+import {needsFixGroups} from '../admin/applying-groups.js';
+import {buildBrief} from '../tools/fixer-brief.mjs';
 
 
 // The groups from the page's ?json.

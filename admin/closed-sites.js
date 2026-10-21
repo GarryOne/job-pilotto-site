@@ -1,7 +1,7 @@
 
 import {AGREE, REASONS} from '../shared/closed-sites.js';
 
-// /admin/scouting "Closed sites": sites and boards installs found refused, browser-only, unreachable, page gone or without a feed, with who agrees and when each is tried again (owner, 20 Oct 2026). Host names, counts and dates only. Tests: site/test/closed-sites.test.js.
+// /admin/scouting "Closed sites": sites and boards installs found refused, browser-only, unreachable, page gone or without a feed, with who agrees and when each is tried again (owner, 20 Oct 2026). Host names, counts and dates only. Tests: test/closed-sites.test.js.
 const esc = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 export const retryOn = (row, today = new Date()) => {
   const date = new Date(Date.parse(row.last) + REASONS[row.reason].rest * 86400000).toISOString().slice(0, 10);

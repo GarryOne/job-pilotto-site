@@ -1,9 +1,9 @@
 // The product's screenshots and videos, made with nobody's hands (owner, 20 Oct 2026): records the app (demo mode, dark) and the real extension on a
 // fictional form, adds zooms, cursor and clicks in code from the click log, checks every piece, writes the site's files + manifest.json.
-//   node scripts/media/media.mjs                                   all pieces → <tmp>/jobadabra-media
-//   node scripts/media/media.mjs hero stills --out <dir>        some pieces (hero, extension-fill, stills, snips); a partial run keeps the others in manifest.json
-//   node scripts/media/media.mjs --persona <folder>             another search profile (default: personas/nurse-lyon): files laid over desktop/demo + media.json
-//   node scripts/media/media.mjs --keep                         keep the frames and logs (<out>/.work) for the director (direct.mjs) or a look
+//   node media/media.mjs                                   all pieces → <tmp>/jobadabra-media
+//   node media/media.mjs hero stills --out <dir>        some pieces (hero, extension-fill, stills, snips); a partial run keeps the others in manifest.json
+//   node media/media.mjs --persona <folder>             another search profile (default: personas/nurse-lyon): files laid over desktop/demo + media.json
+//   node media/media.mjs --keep                         keep the frames and logs (<out>/.work) for the director (direct.mjs) or a look
 // Zooms and captions the AI director chose are in plans/<piece>.json (direct.mjs); without one, the camera frames each hold's `look`.
 // CI: .github/workflows/product-media.yml runs it on main after a screen, extension or demo change. Guards: desktop/test/media-*.test.js.
 import {execFileSync, spawnSync} from 'node:child_process';
@@ -19,7 +19,7 @@ import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from './options.mjs
 import {SNIPS, STILLS, VIDEOS} from './scenes.mjs';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
-const desktop = path.resolve(here, '..', '..');
+const desktop = path.resolve(here, '..', 'desktop');
 const FPS = 30;
 
 async function makeVideo(name, persona, work, out) {

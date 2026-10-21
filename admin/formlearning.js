@@ -2,12 +2,12 @@
 //   1 real use (the form lab on public forms was retired 9 Oct 2026: it could not see what real fills meet): why fields stayed empty and what people answered themselves, per 100 required questions (form_exposure.required;
 //     per 100 forms for apps older than 0.8.96, which send no count)
 //   2 the recipe funnel (candidate -> canary -> verified, disabled).
-// Counts and the forms' own public wording only. Guard: site/test/shared/digest.test.js, thin-data.test.js.
+// Counts and the forms' own public wording only. Guard: test/shared/digest.test.js, thin-data.test.js.
 import {slowCache} from './applying-store.js';
 import {leftEmpty} from './left-empty.js';
 import {answersByFamily} from './answer-metrics.js';
 import {digest} from '../shared/digest.js';
-import {RESULT_STATES} from '../../desktop/lib/application-result.js';
+import {RESULT_STATES} from '../desktop/lib/application-result.js';
 
 export const WEEK = 7;
 // Real-use reasons (desktop/lib/question-labels.js LEFT_REASONS) in the order the page shows them, with what each means.

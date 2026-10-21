@@ -367,7 +367,7 @@ const reportedTag = s => (/^reported-/.test(s.shape || s.name || '') ? el('span'
         el('button', {className: 'chip', type: 'button', textContent: 'Next →', disabled: nextPage[key] >= pages - 1, onclick: go(1)})) : null),
       rows.length ? el('table', {className: key === 'fix' || key === 'causes' ? 'fixtable' : ''}, el('tr', {}, ...heads(key, labels, () => { nextPage[key] = 0; redraw(); })), ...shown.flatMap(row)) : null];
   };
-${COVERAGE_SCRIPT}  // Needs a fix and its worst-first order live in admin/applying-order.js, one function shared with tools/needs-fix-order.mjs (the source is embedded at the top of this script).
+${COVERAGE_SCRIPT}  // Needs a fix and its worst-first order live in admin/applying-order.js, one function shared with jobs/needs-fix-order.mjs (the source is embedded at the top of this script).
   let ORDER = needsFixOrder(d.pool, d.scorecard, d.steps);   // recomputed on every draw: the page refreshes its data
   const useOf = s => ORDER.useOf(s);
   const filledRuns = s => (s.shares || []).filter(value => value != null);
@@ -394,7 +394,7 @@ ${COVERAGE_SCRIPT}  // Needs a fix and its worst-first order live in admin/apply
       ...block('fix', 'Sites', 'Worst first: regressions, then the platform most used', ORDER.rows, ['Site / platform', 'Why', 'Last run', 'Details'], needRow,
         'Nothing needs a fix', () => drawFix(), [s => s.name.toLowerCase(), s => ORDER.rank.get(s.shape), s => (s.at ? Date.parse(s.at) : null)]).filter(Boolean))); };
   // By cause (owner, 11 Oct 2026): the Needs a fix rows grouped by their top cause, biggest first, after "Run first" (rows that need a pool run, not a fix); admin/applying-groups.js, shared with
-  // tools/needs-fix-causes.mjs. A row opens to its sites. The session that holds a claim never reaches the site, so the column counts claimed rows.
+  // jobs/needs-fix-causes.mjs. A row opens to its sites. The session that holds a claim never reaches the site, so the column counts claimed rows.
   const causeOpen = new Set();
   const causeDetail = g => el('div', {className: 'detail'}, el('div', {}, el('h4', {textContent: g.hint || 'Sites'}),
     el('ul', {className: 'fixguard'}, ...g.rows.map(s => el('li', {}, s.name, el('span', {className: 'muted', textContent: ' · ' + s.platform + (s.at ? ' · last run ' + ago(s.at) : ' · never run') + (s.version ? ' · build ' + s.version : '') + (g.reasons[g.rows.indexOf(s)] && g.reasons[g.rows.indexOf(s)] !== 'never run' ? ' · ' + g.reasons[g.rows.indexOf(s)] : '') + (s.claimed ? ' · claimed' : '')}))))));

@@ -1,4 +1,4 @@
-// A page's CDP screencast to numbered JPEG files with each frame's own time, and the step log both recorders share (desktop/scripts/media).
+// A page's CDP screencast to numbered JPEG files with each frame's own time, and the step log both recorders share (media).
 // The renderer resamples the frames to a fixed rate, so an uneven capture rate never changes the video's speed.
 import fs from 'node:fs';
 import path from 'node:path';

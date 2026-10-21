@@ -2,7 +2,7 @@
 // A fresh install, no Notion, no keys, no GitHub: the app turns Always on on with an e-mail and pushes its profile, the cron tick queues the run, the real engine runs against fixture feeds
 // (in the real hosted image with HOSTED_E2E_RUNNER=docker, or a local Python with =python), AI goes through the Worker's /api/ai with the run token to a fake model, the debit is recorded,
 // the result lands in the inbox and in the mail, the app pulls it into its own store; then Turn off deletes everything, and a trial that has used its budget pauses with the functional notice.
-// Run: node tools/hosted-e2e/run.mjs (CI: .github/workflows/hosted-e2e.yml). Never touches a real account: the Worker, D1, R2, KV, Queue and sender are in-process fakes.
+// Run: node jobs/hosted-e2e/run.mjs (CI: .github/workflows/hosted-e2e.yml). Never touches a real account: the Worker, D1, R2, KV, Queue and sender are in-process fakes.
 import assert from 'node:assert/strict';
 import {spawn, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -10,15 +10,15 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {digestOf, tokenFor} from '../../site/shared/guard.js';
-import {tick} from '../../site/api/hosted-tick.js';
-import {run as lifecycle} from '../../site/admin/mail-lifecycle.js';
+import {digestOf, tokenFor} from '../../shared/guard.js';
+import {tick} from '../../api/hosted-tick.js';
+import {run as lifecycle} from '../../admin/mail-lifecycle.js';
 import {pullInbox, schedule, turnOff, turnOn} from '../../desktop/lib/hosted-search.js';
 import {TRIAL_KEY} from '../../desktop/lib/ai-free.js';
 import {startCloud} from './worker-fakes.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const HERE = path.join(ROOT, 'tools/hosted-e2e');
+const HERE = path.join(ROOT, 'jobs/hosted-e2e');
 const FEEDS = path.join(ROOT, 'desktop/e2e/fixtures/feeds');
 const RUNNER = process.env.HOSTED_E2E_RUNNER || 'docker';
 const PYTHON = process.env.PYTHON || (fs.existsSync(path.join(ROOT, '.venv/bin/python')) ? path.join(ROOT, '.venv/bin/python') : 'python3');

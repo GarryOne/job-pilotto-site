@@ -1,5 +1,5 @@
 """Builds the hosted state tar the e2e puts in the fake R2 as if an earlier run had left it: two fixture employers in the SQLite store (a first run on our servers
-reads the central index for these; a fixture run downloads nothing, so they are given). Usage: python3 tools/hosted-e2e/seed_state.py <out.tgz>. Guard: tools/hosted-e2e/run.mjs."""
+reads the central index for these; a fixture run downloads nothing, so they are given). Usage: python3 jobs/hosted-e2e/seed_state.py <out.tgz>. Guard: jobs/hosted-e2e/run.mjs."""
 import os
 import sys
 import tarfile

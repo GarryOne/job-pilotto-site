@@ -1,5 +1,5 @@
 // Where our e2e fixing time goes (owner, 18 Oct 2026). CI (e2e-intel.yml, after each release/beta run and hourly) sends every finished run and its red suites (PUT /e2e/data, Bearer SELFHEAL_PUBLISH_KEY);
-// causes are decided by tools/e2e-intel.mjs from facts (admin/e2e-causes.js). A red whose cause is still "open" or "unknown" is read again and rewritten when its fix lands. The site keeps one row per run and
+// causes are decided by jobs/e2e-intel.mjs from facts (admin/e2e-causes.js). A red whose cause is still "open" or "unknown" is read again and rewritten when its fix lands. The site keeps one row per run and
 // per red suite, and ONE snapshot row (e2e_snapshot) with the last 30 days; the page reads that row only (D1 free plan). No AI, no logs, no personal data. Guard: test/admin/e2e-intel.test.js.
 import {equal} from '../shared/guard.js';
 import {CAUSE_IDS, RULES_VERSION} from './e2e-causes.js';

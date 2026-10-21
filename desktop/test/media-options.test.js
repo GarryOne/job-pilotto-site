@@ -1,12 +1,12 @@
-// The media command's pure parts (desktop/scripts/media/options.mjs, stand-in.mjs): pieces, persona folders, the director's plan, the stand-in's answers.
+// The media command's pure parts (media/options.mjs, stand-in.mjs): pieces, persona folders, the director's plan, the stand-in's answers.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
-import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from '../scripts/media/options.mjs';
-import {VIDEOS} from '../scripts/media/scenes.mjs';
-import {answerReply, formHtml} from '../scripts/media/stand-in.mjs';
+import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from '../../media/options.mjs';
+import {VIDEOS} from '../../media/scenes.mjs';
+import {answerReply, formHtml} from '../../media/stand-in.mjs';
 
 const demo = path.join(import.meta.dirname, '..', 'demo');
 
@@ -44,7 +44,7 @@ test('the stand-in answers only the questions asked, with the persona\'s words; 
   const reply = answerReply(JSON.stringify({fields: [{field: 'permit'}, {field: 'unknown'}]}), {permit: 'Yes', notice: '1 month'});
   assert.deepEqual(reply, {ok: true, eligible: true, answers: [{field: 'permit', value: 'Yes'}]});
   assert.deepEqual(answerReply('not json', {permit: 'Yes'}).answers, []);
-  const page = formHtml(fs.readFileSync(path.join(import.meta.dirname, '..', 'scripts', 'media', 'form.html'), 'utf8'), {company: 'Clinique du Parc', title: 'Nurse', place: 'Lyon, France', city: 'Lyon'});
+  const page = formHtml(fs.readFileSync(path.join(import.meta.dirname, '..', '..', 'media', 'form.html'), 'utf8'), {company: 'Clinique du Parc', title: 'Nurse', place: 'Lyon, France', city: 'Lyon'});
   assert.ok(page.includes('<h1>Nurse</h1>') && page.includes('Clinique du Parc') && !page.includes('{{'));
 });
 

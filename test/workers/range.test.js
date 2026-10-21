@@ -1,9 +1,9 @@
-// Byte ranges for the landing's videos (worker/range.js): Safari plays a <video> only when a Range request is answered with 206 + Content-Range.
+// Byte ranges for the landing's videos (workers/www/range.js): Safari plays a <video> only when a Range request is answered with 206 + Content-Range.
 // The worker must run first for every folder that holds a video (wrangler.toml run_worker_first), or static assets answer 200 with the whole file.
 import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {test} from 'node:test';
-import {mediaRange, parseRange} from '../../worker/range.js';
+import {mediaRange, parseRange} from '../../workers/www/range.js';
 
 const bytes = Uint8Array.from({length: 1000}, (_, i) => i % 251);
 const env = {ASSETS: {async fetch(request) {
@@ -42,7 +42,7 @@ test('a range past the end is 416; HEAD gets no body', async () => {
 });
 
 test('every folder of public/ that holds a video is run through the worker first', () => {
-  const toml = readFileSync(new URL('../../wrangler.toml', import.meta.url), 'utf8');
+  const toml = readFileSync(new URL('../../workers/www/wrangler.toml', import.meta.url), 'utf8');
   const root = new URL('../../web/public/', import.meta.url);
   const folders = new Set();
   const walk = (dir, prefix) => { for (const entry of readdirSync(dir, {withFileTypes: true})) {

@@ -1,7 +1,7 @@
-// The AI director's plan (desktop/scripts/media/direct.mjs) is kept only when it is sound: known looks, zooms within range, a short caption.
+// The AI director's plan (media/direct.mjs) is kept only when it is sound: known looks, zooms within range, a short caption.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {prompt, validatePlan} from '../scripts/media/direct.mjs';
+import {prompt, validatePlan} from '../../media/direct.mjs';
 
 const looks = ['#jobs-body', '#job-panel'];
 const good = {zooms: {'#jobs-body': 1.35, '#job-panel': 1}, caption: 'Jobs ranked by how they fit', shows: 'The job list', alt: 'A list of jobs with fit scores'};

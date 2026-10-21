@@ -1,4 +1,4 @@
-// /admin/operations/schedules: every scheduled CI job we run, in any repo, grouped by area, with its last run and health (owner, 20 Oct 2026). A collector (tools/schedules-snapshot.mjs,
+// /admin/operations/schedules: every scheduled CI job we run, in any repo, grouped by area, with its last run and health (owner, 20 Oct 2026). A collector (jobs/schedules-snapshot.mjs,
 // schedules-snapshot.yml, hourly) reads each repo's workflow files and latest runs and sends ONE snapshot (PUT /ops/data?kind=schedules, Bearer SELFHEAL_PUBLISH_KEY); the site keeps it in one row
 // (schedules_snapshot) and this page reads that row: no GitHub call and no table scan per page load (D1 free plan). A job that moves to another repo just shows its new repo. No AI.
 // Pure parts: shared/schedules-model.js. Guard: test/schedules.test.js.

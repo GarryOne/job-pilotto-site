@@ -1,4 +1,4 @@
-// The site's files from a rendered master (desktop/scripts/media): MP4 (H.264, every browser) and WebM (VP9) within the piece's byte budget,
+// The site's files from a rendered master (media): MP4 (H.264, every browser) and WebM (VP9) within the piece's byte budget,
 // a phone copy, a GIF, a poster (the first frame, or the scene's poster hold), and WebP stills. ffmpeg from PATH (brew on the CI runner).
 import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';

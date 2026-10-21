@@ -3,15 +3,15 @@
 //   POST /api/controls (api/recipes.js) hands {questions, flows} here.   GET /api/knowledge (owner): what the proposers work from.
 import {installsNeeded} from './learning-floor.js';   // 1 for now: shared/learning-floor.js
 import {familyOf, familyOfInstall} from './engines.js';
-import {ANSWER_COUNTS, ANSWER_ENGINES, MS_BUCKETS} from '../../desktop/lib/answer-counts.js';
-import {cleanLabel} from '../../extension/alias-schema.js';
+import {ANSWER_COUNTS, ANSWER_ENGINES, MS_BUCKETS} from '../desktop/lib/answer-counts.js';
+import {cleanLabel} from '../extension/alias-schema.js';
 import {digestOf} from './guard.js';
 import {isOwner} from './auth.js';
-import {cleanUse} from '../../desktop/lib/proposal-use.js';
+import {cleanUse} from '../desktop/lib/proposal-use.js';
 
 export {cleanLabel};
 export const LEFT_REASONS = ['proposed', 'no_answer', 'not_taken', 'menu_not_clicked', 'menu_not_opened', 'menu_not_selected', 'menu_not_read', 'menu_other_choice', 'not_kept_after_tries', 'real_click', 'no_option', 'unread', 'by_you', 'by_you_unread', 'page_error', 'other'];   // desktop/lib/question-labels.js
-import {RESULT_STATES} from '../../desktop/lib/application-result.js';
+import {RESULT_STATES} from '../desktop/lib/application-result.js';
 export const FLOW_STATES = ['filled', 'fill-error', 'account', 'no-form', 'no-form-after-apply', ...RESULT_STATES];   // the last ones: how an application ended (desktop/lib/application-result.js)
 export const OUTCOMES = ['reply', 'screening', 'offer', 'rejected', 'no_response'], DAY_BUCKETS = ['', '0-3', '4-7', '8-14', '15-30', '31+'];
 export const MS_COLUMNS = [...MS_BUCKETS.map(edge => `ms_${edge}`), 'ms_more'];   // form_answers' time buckets

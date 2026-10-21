@@ -1,6 +1,6 @@
 # RANDOM DRAW EVERY 2ND DAY (owner, 18 Oct 2026, "daily CI job", cut to every 2nd day after the first two draws cost $1.69; Lab Job Search sketch https://claude.ai/artifact/7CCeNanG2kxhGqqRTCAQ3P): one random role family in one random European city,
 # a fictional CV (tools/persona-search/draw.py, lists in draws.json), a fresh throwaway install through the first "Find jobs" (tools/persona-search/run.mjs --engine api: its own
-# temp folder, no Keychain/Notion/Telegram, telemetry and sharing off), and the counts go to /admin/lab-job-search "Random draws" (tools/persona-search/draw-upload.mjs, main only).
+# temp folder, no Keychain/Notion/Telegram, telemetry and sharing off), and the counts go to /admin/lab-job-search "Random draws" (jobs/persona-search/draw-upload.mjs, main only).
 # - Synthetic only: nothing is read from or written to a real user's data; its rows are tagged CI and are never mixed with the Real installs tab.
 # - AI: the Anthropic API on its OWN key (secret RANDOM_DRAWS_ANTHROPIC_KEY, Keychain job-pilotto.anthropic.random_draws_key, the Job Pilotto Tests org), one draw every 2nd day. The
 #   monthly cap is that key's workspace spend limit; the job also stops at 25 minutes. OFF until the repository variable RANDOM_DRAWS_ON is "true" (the owner turns it on after
@@ -8,7 +8,7 @@
 # - Sites: data-centre IPs are refused by many boards; a refusal shows as "not reached" and is never retried or worked around (never past a login wall, captcha or 401/403/429).
 # - A re-run of a bad day: Run workflow with that day's seed (YYYY-MM-DD).
 # - The kept artifact is counts only (counts.json, draw.json): the search's top-10 job titles stay out of it.
-# Guard: tests/test_draw.py, site/test/admin/search-lab-draws.test.js.
+# Guard: tests/test_draw.py, test/admin/search-lab-draws.test.js.
 name: CI · Random draw (every 2nd day)
 
 on:
@@ -71,7 +71,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           REPLAYS_PUBLISH_KEY: ${{ secrets.REPLAYS_PUBLISH_KEY }}
-        run: node tools/persona-search/draw-upload.mjs "$RUNNER_TEMP/draw-out" --build "$PUBLIC_SHA" --branch main
+        run: node jobs/persona-search/draw-upload.mjs "$RUNNER_TEMP/draw-out" --build "$PUBLIC_SHA" --branch main
       - name: Keep the numbers (counts only, no job titles, companies or log)
         if: always()
         run: |

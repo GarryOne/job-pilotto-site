@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs a command inside the overlaid tree (public main + this repo's files), for the tools that read the site's admin code: tools/site-run.sh node tools/needs-fix-causes.mjs
+# Runs a command inside the overlaid tree (public main + this repo's files), for the tools that read the site's admin code: tools/site-run.sh node jobs/needs-fix-causes.mjs
 # The overlay is rebuilt when older than an hour; set SITE_OVERLAY_FRESH=1 to rebuild now.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

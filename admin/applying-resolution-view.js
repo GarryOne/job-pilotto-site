@@ -1,7 +1,7 @@
 // The client side of /admin/lab-form-filling's Outcomes tab, inside admin/applying.js's page (it uses that page's el, tile, heads, sortRows, ago and its s-*/st-* pill colours): the headline tile,
 // the ending pills (counts; a press shows that ending's rows in the Sites tab's pool table) and Week by week. "Every pool row" went into the pool table (each row's Last result carries its ending: endingLine)
 // and "How the weighted number is built" into the Platform scorecard (admin/applying-coverage-view.js), 15 Oct 2026. Words come from extension/ladder/endings.js; guard: test/admin/applying-resolution.test.js.
-import {CAUSES, ENDING_MEANS, WORST_FIRST} from '../../extension/ladder/endings.js';
+import {CAUSES, ENDING_MEANS, WORST_FIRST} from '../extension/ladder/endings.js';
 
 export const RESOLUTION_CSS = '.resolution .endings{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 6px}.resolution button.pill{border:0;cursor:pointer;font-family:inherit}'
   + '.resolution button.pill.on{outline:2px solid var(--text);outline-offset:1px}.resolution .key{font-size:12px;margin:0 0 10px}.resolution .key b{color:var(--text)}'

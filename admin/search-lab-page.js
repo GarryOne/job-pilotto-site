@@ -36,7 +36,7 @@ export function table(rows) {
 <td><span class="state ${tone}">${word}</span>${row.why.length ? `<div class="why">${row.why.map(esc).join('<br>')}</div>` : ''}</td>
 <td class="num">${failed ? '–' : cell(row, 'first_s', clock, true)}</td><td class="num">${failed ? '–' : cell(row, 'tenth_s', clock, true)}</td><td class="num">${failed ? '–' : cell(row, 'fit_s', clock, true)}</td>
 <td class="num">${failed ? '–' : `${cell(row, 'in_places', num)} · ${num(row.now.scored)} · ${cell(row, 'fit70', num)}`}</td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="muted">No search replayed yet. Upload the persona harness\'s presses with <code>node tools/persona-search/lab-upload.mjs &lt;out&gt;</code> (REPLAYS_PUBLISH_KEY set).</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="muted">No search replayed yet. Upload the persona harness\'s presses with <code>node jobs/persona-search/lab-upload.mjs &lt;out&gt;</code> (REPLAYS_PUBLISH_KEY set).</td></tr>';
   return `<div class="scroll"><table><tr><th>Candidate</th><th>State</th><th class="num">${TIME_NAMES.first_s}</th><th class="num">${TIME_NAMES.tenth_s}</th><th class="num">${TIME_NAMES.fit_s}</th><th class="num">In places · scored · 70+</th></tr>${body}</table></div>`;
 }
 

@@ -1,4 +1,4 @@
-// Why an e2e suite went red (owner, 18 Oct 2026: "facts first, $0"): ONE pure function from facts to a cause, shared by the collector (tools/e2e-intel.mjs) and the page. No AI;
+// Why an e2e suite went red (owner, 18 Oct 2026: "facts first, $0"): ONE pure function from facts to a cause, shared by the collector (jobs/e2e-intel.mjs) and the page. No AI;
 // when "unknown" grows past 20% of the reds, an AI step with a fixed answer may take only those. Guard: test/admin/e2e-causes.test.js.
 import {isTest} from './ops-categories.js';
 

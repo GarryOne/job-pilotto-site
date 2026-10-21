@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Collects every workflow of our repos (files, schedules, latest runs) into ONE snapshot and sends it to /admin/operations/schedules (schedules-snapshot.yml, hourly).
 // A job that moves to another repo just shows under its new repo. Needs gh with SCHEDULES_READ_TOKEN (read-only: Actions + Contents on each repo; the Actions token reads only its own repo)
-// and SELFHEAL_PUBLISH_KEY to publish. Pure parts: site/src/schedules-model.js. Guard: site/test/schedules.test.js.
-//   node tools/schedules-snapshot.mjs [--dry [--out snapshot.json]]     --dry reads and prints the counts without publishing
+// and SELFHEAL_PUBLISH_KEY to publish. Pure parts: site/src/schedules-model.js. Guard: test/schedules.test.js.
+//   node jobs/schedules-snapshot.mjs [--dry [--out snapshot.json]]     --dry reads and prints the counts without publishing
 import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
-import {billedWeight, parseWorkerCrons, parseWorkflow, RUN_DOTS} from '../site/shared/schedules-model.js';
+import {billedWeight, parseWorkerCrons, parseWorkflow, RUN_DOTS} from '../shared/schedules-model.js';
 
 const REPOS = (process.env.SCHEDULES_REPOS || 'GarryOne/job-pilotto,GarryOne/job-pilotto-site,GarryOne/job-pilotto-internal').split(',');
 const WORKER_REPO = 'GarryOne/job-pilotto', WORKER_FILE = 'worker/src/scheduler.js';

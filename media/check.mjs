@@ -1,4 +1,4 @@
-// The product media's checks (desktop/scripts/media): fictional data only, the dark theme, the extension really filled the form. Pure where it can
+// The product media's checks (media): fictional data only, the dark theme, the extension really filled the form. Pure where it can
 // be; a failed check stops the run, so no picture with a real address or a broken scene reaches the site. Guard: desktop/test/media-check.test.js.
 
 // E-mail addresses on screen must be on reserved test domains (example.com/.org/.net, .example, .test, .invalid): anything else may be real.

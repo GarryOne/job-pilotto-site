@@ -1,7 +1,7 @@
 // The hosted Always on runner Worker (spec 2026-10-16-hosted-always-on.md §1): consumes the Queue "hosted-runs" and starts one engine container per message (api/hosted-consume.js has the logic).
 // A separate Worker because the Container class needs @cloudflare/containers, which the site's tests cannot load. Deployed by .github/workflows/site.yml next to the site.
 import {Container, getContainer} from '@cloudflare/containers';
-import {consume} from '../api/hosted-consume.js';
+import {consume} from '../../api/hosted-consume.js';
 
 export class HostedRunner extends Container {
   defaultPort = 8080;

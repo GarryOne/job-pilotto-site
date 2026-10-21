@@ -3,7 +3,7 @@
 // ONE row with the last 10 runs (the D1 free plan: 11 Oct 2026); the page reads that one row. Names, a short note and the build's sha only. Guard: test/admin/applying-replays.test.js.
 import {dropSnapshot} from './applying-store.js';
 import {equal} from '../shared/guard.js';
-import {ORIGINS} from '../../desktop/e2e/lib/recorded-origin.mjs';
+import {ORIGINS} from '../desktop/e2e/lib/recorded-origin.mjs';
 
 const KEEP = 10;
 const HASH = /^[0-9a-f]{7,40}$/;

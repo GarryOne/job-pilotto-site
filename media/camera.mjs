@@ -1,4 +1,4 @@
-// The product videos' camera and cursor, as pure functions of the recorder's click log (desktop/scripts/media): where the view zooms, where the
+// The product videos' camera and cursor, as pure functions of the recorder's click log (media): where the view zooms, where the
 // cursor glides, when a click ring shows. The renderer (render.cjs) draws real recorded frames through this camera, so the app's pixels are never redrawn.
 // Coordinates are the page's CSS pixels. Guard: desktop/test/media-camera.test.js.
 

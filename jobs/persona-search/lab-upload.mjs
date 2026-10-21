@@ -1,11 +1,11 @@
 // Sends the persona harness's first press of each candidate to /admin/lab-job-search (owner, 18 Oct 2026; PR 1 of the Job Search lab, by hand until the CI replay exists).
-//   REPLAYS_PUBLISH_KEY=... node tools/persona-search/lab-upload.mjs <out> [--build <sha>] [--branch main] [--tape <folder>] [--dry]
+//   REPLAYS_PUBLISH_KEY=... node jobs/persona-search/lab-upload.mjs <out> [--build <sha>] [--branch main] [--tape <folder>] [--dry]
 // --tape <folder>: the replay's tape; a tape that lacks what the build asks turns the row into Tape stale (tape-store.mjs staleNote). <out> is run.mjs's output folder (<out>/<name>/presses.jsonl). Counts, seconds and the build sha only; the site refuses any branch but main, so a hand upload says --branch main only for main's build.
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {rowFromPress} from '../../site/admin/search-lab-store.js';
-import {replayMisses, staleNote} from './tape-store.mjs';
+import {rowFromPress} from '../../admin/search-lab-store.js';
+import {replayMisses, staleNote} from '../../tools/persona-search/tape-store.mjs';
 
 const CANDIDATES = {finance: 'Finance · Amsterdam', music: 'Music producer · Berlin', driver: 'CE driver · Nuremberg', sre: 'SRE (control) · Zurich',
   cluj: 'Software engineer · Cluj', chisinau: 'Software engineer · Chisinau'};
@@ -14,7 +14,7 @@ const option = (flag, fallback) => { const at = process.argv.indexOf(flag); retu
 const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
 
 const out = process.argv[2];
-if (!out || out.startsWith('--')) { console.error('usage: REPLAYS_PUBLISH_KEY=... node tools/persona-search/lab-upload.mjs <out> [--build <sha>] [--branch main] [--dry]'); process.exit(2); }
+if (!out || out.startsWith('--')) { console.error('usage: REPLAYS_PUBLISH_KEY=... node jobs/persona-search/lab-upload.mjs <out> [--build <sha>] [--branch main] [--dry]'); process.exit(2); }
 const build = option('--build', git('rev-parse', 'HEAD')), branch = option('--branch', git('branch', '--show-current'));
 const rows = [];
 for (const [name, label] of Object.entries(CANDIDATES)) {

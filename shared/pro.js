@@ -1,6 +1,6 @@
 // Pro accounts and the AI credit ledger (spec docs/superpowers/specs/2026-10-16-pro-plan.md §1, §3): who is Pro, how much credit is left,
 // the devices (3 per account), GET /api/pro/status for the app. Money is micro-USD; the app only ever sees a percent and a warning step, never dollars.
-// Guards: site/test/shared/pro-credit.test.js. Payments (Stripe) are the next PR: they call addCredit/refund/link here. Switch: env.PRO_PLAN = off | test | live.
+// Guards: test/shared/pro-credit.test.js. Payments (Stripe) are the next PR: they call addCredit/refund/link here. Switch: env.PRO_PLAN = off | test | live.
 import {authorize, digestOf, flag} from './guard.js';
 
 // The key ai_calls.who has for an install (aicost.js digests the install's digest again, keeps 8 characters): join pro_devices.install to ai_calls through it.

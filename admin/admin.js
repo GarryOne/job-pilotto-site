@@ -37,7 +37,7 @@ export const PAGES = [
   {path: '/admin/ai-cost', group: 'Intelligence', question: 'What does the AI cost us, and for which jobs?', old: '/ai-cost', name: 'AI cost', icon: '💸'},
   {path: '/admin/access', group: 'Operations', question: 'Who can open these admin pages?', name: 'Access', icon: '🔐', superadmin: true},
 ];
-// Old addresses of a page (one or more), and the digest downloads that moved with Real Form Filling: the ONLY place the old paths may still be written (site/test/web/form-pages.test.js).
+// Old addresses of a page (one or more), and the digest downloads that moved with Real Form Filling: the ONLY place the old paths may still be written (test/web/form-pages.test.js).
 const OLD = {...Object.fromEntries(PAGES.flatMap(page => [page.old].flat().filter(Boolean).map(old => [old, page.path]))),
   '/admin/form-filling/digest.json': '/admin/real-form-filling/digest.json', '/admin/form-filling/digest.md': '/admin/real-form-filling/digest.md'};
 

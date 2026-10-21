@@ -8,7 +8,7 @@
 import {installsNeeded} from '../shared/learning-floor.js';   // 1 for now: shared/learning-floor.js
 import {betaOf, reaches, staged} from './canary-reach.js';
 import {MIN_PEOPLE, hints} from '../shared/intelligence.js';
-import {BUTTON_KEYS, FILE_KEYS, KEYS, SENSITIVE, aliasKey, cleanLabel, fileKind, validateAlias} from '../../extension/alias-schema.js';
+import {BUTTON_KEYS, FILE_KEYS, KEYS, SENSITIVE, aliasKey, cleanLabel, fileKind, validateAlias} from '../extension/alias-schema.js';
 import {authorize, digestOf, flag} from '../shared/guard.js';
 import {benchmarks, report} from '../shared/knowledge.js';
 import {isOwner} from '../shared/auth.js';
@@ -64,7 +64,7 @@ export async function pack(request, env, now = new Date()) {
   const install = request.headers.get('X-Install-Id') || '';
   const access = await authorize(env, install, (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, ''), 'recipes');
   if (!access.ok) return json({ok: false, error: 'unauthorized'}, 401);
-  if (request.method === 'POST') {   // what this install's AI said public wordings mean (site/api/meanings.js vote), once a day at most
+  if (request.method === 'POST') {   // what this install's AI said public wordings mean (api/meanings.js vote), once a day at most
     if (env.WAITLIST) {
       const key = `meanings-post:${install}:${day(now)}`;
       if (await env.WAITLIST.get(key)) return json({ok: false, error: 'limit reached for today'}, 429);

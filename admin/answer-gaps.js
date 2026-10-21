@@ -1,7 +1,7 @@
 // "No answer", split by what the fill card's meaning words say (Missing answers, 15 Oct 2026): suggested and waiting for the person, left on purpose, a true gap; each with
 // its count and its top meanings. Built from fill_cards.gaps ("meaning:cause:design|gap" counts, extension/fill-meaning.js), for real use and the pool apart. Drawn inside the
-// "Why fields were left empty" section (admin/left-empty-view.js). Guarded by site/test/admin/left-empty.test.js: a meaning word without a title fails there.
-import {MEANINGS} from '../../extension/fill-meaning.js';
+// "Why fields were left empty" section (admin/left-empty-view.js). Guarded by test/admin/left-empty.test.js: a meaning word without a title fails there.
+import {MEANINGS} from '../extension/fill-meaning.js';
 
 export const BUCKETS = [
   {key: 'suggested', title: 'Suggested, waiting for the person', note: 'the AI proposed an answer and the app did not type it (a knockout, a contact detail or a low-confidence guess)'},

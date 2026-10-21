@@ -1,9 +1,9 @@
-// The product media's manifest (desktop/scripts/media/manifest.mjs), the shape the site redesign reads, and the scenes it describes: every
+// The product media's manifest (media/manifest.mjs), the shape the site redesign reads, and the scenes it describes: every
 // piece the site places has its words and sizes; captions stay short and in the manifest, never in the video.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {manifest, stillEntry, VERSION, videoEntry} from '../scripts/media/manifest.mjs';
-import {SNIPS, STILLS, VIDEOS} from '../scripts/media/scenes.mjs';
+import {manifest, stillEntry, VERSION, videoEntry} from '../../media/manifest.mjs';
+import {SNIPS, STILLS, VIDEOS} from '../../media/scenes.mjs';
 
 test('a video entry carries the agreed fields; a partial run keeps the other entries', () => {
   const hero = videoEntry({name: 'hero', piece: VIDEOS.hero, files: {mp4: 'hero.mp4', webm: 'hero.webm', poster: 'hero-poster.jpg', phone: 'hero-720.mp4'}, bytes: {mp4: 1}, seconds: 14.44});

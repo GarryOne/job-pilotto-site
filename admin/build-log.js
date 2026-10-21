@@ -1,4 +1,4 @@
-// /admin/operations/build-log: the daily build digest, a day-by-day history (spec docs/superpowers/specs/2026-10-16-daily-digest.md). tools/daily-digest.mjs (daily-digest.yml, hourly) writes it:
+// /admin/operations/build-log: the daily build digest, a day-by-day history (spec docs/superpowers/specs/2026-10-16-daily-digest.md). jobs/daily-digest.mjs (daily-digest.yml, hourly) writes it:
 // GET /digest/data?day= says what is stored for a day (so CI skips an unchanged set), PUT /digest/data stores a draft or the final one (Bearer SELFHEAL_PUBLISH_KEY). One row per day (digest_days); a closed day ignores later drafts.
 // The page draws the groups itself (never markdown parsed from a string). No AI here. Guard: test/admin/build-log.test.js.
 import {viewer} from '../shared/auth.js';

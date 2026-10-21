@@ -1,7 +1,7 @@
 # The landing page (public/, Workers static assets), POST /api/waitlist, and Connect with Notion (api/notion.js).
-# Deploy: cd site && npx wrangler@4 deploy   (CI: .github/workflows/site.yml on changes under site/)
+# Deploy: cd workers/www && npx wrangler@4 deploy   (CI: .github/workflows/site.yml on changes under workers/www/)
 name = "www"   # https://www.jobpilotto.top; also https://www.jobpilotto.workers.dev, which never changes (installed apps call it; the account's workers.dev subdomain is "jobpilotto")
-main = "worker/index.js"
+main = "index.js"
 compatibility_date = "2026-09-01"
 
 # Hosts: jobadabra.top (19 Oct 2026, the new main address) and jobpilotto.top are aliases of this worker; workers.dev stays on (installed apps and old engine tags call it, forever); jobpilotto.top is an alias on the same worker
@@ -23,7 +23,7 @@ binding = "AI"
 name = "EMAIL"
 
 [assets]
-directory = "./web/public"
+directory = "../../web/public"
 binding = "ASSETS"
 # The worker runs first for the pages, so the old host can redirect them (shared/hosts.js legacyPageRedirect); every other path is served as before.
 run_worker_first = ["/", "/changelog", "/compare", "/coverage", "/download", "/faq", "/features", "/friends", "/how-it-works", "/intelligence", "/platforms", "/pricing", "/privacy", "/ready-live", "/research", "/terms", "/trust", "/*.html", "/media/*", "/images/app/*", "/old/images/app/*"]
@@ -39,19 +39,19 @@ id = "a871d4644b614266b5bfa7f1b5e811c1"
 # Notion URL for optional template) hold https://adaptable-bit-846.notion.site/Job-Pilotto-3e862be8fd868143b431df70d505ed7c,
 # so Notion's consent page offers "Use a template provided by the developer" and the token carries duplicated_template_id.
 [vars]
-# Staged rollout of learned recipes, wording and page meanings (site/api/canary-reach.js). OFF for now (owner, 9 Oct 2026): with few installs a
+# Staged rollout of learned recipes, wording and page meanings (api/canary-reach.js). OFF for now (owner, 9 Oct 2026): with few installs a
 # learned item reaches every install at once, still validated and rolled back on failure. Set to "on" again once the user base is larger.
 LEARNING_CANARY = "off"
-# /admin/ai-cost counts from this day (site/admin/jobcost.js): every product key was replaced on 8 Oct 2026 (~13:15 UTC), measuring starts that day.
+# /admin/ai-cost counts from this day (admin/jobcost.js): every product key was replaced on 8 Oct 2026 (~13:15 UTC), measuring starts that day.
 AI_COST_SINCE = "2026-10-08"
 GITHUB_REPO = "GarryOne/job-pilotto"
 # Sentry errors to the separate "Job Pilotto Sentry" Telegram bot (admin/sentry-alert.js); needs the secrets SENTRY_TELEGRAM_TOKEN and SENTRY_TELEGRAM_CHAT. "off" = kill switch.
 SENTRY_TELEGRAM = "on"
 # Free AI (shared/free-ai.js): Workers AI for every install; limits in code, the daily lines here. FREE_AI = "off" is the kill switch.
-# The account whose Workers AI usage the daily allowance reads (site/shared/free-ai-usage.js); the read token is the Worker secret CF_ANALYTICS_TOKEN (Account Analytics: Read).
+# The account whose Workers AI usage the daily allowance reads (shared/free-ai-usage.js); the read token is the Worker secret CF_ANALYTICS_TOKEN (Account Analytics: Read).
 CF_ACCOUNT_ID = "f192582d62c440f34f9ca7997558cee3"
 # Free AI limits. EARLY-ADOPTER values (owner, 16 Oct 2026: "in the first period, we can be more generous"): per install 50 calls/min, $0.50/day, $5/month;
-# global $5/day alert, $10/day stop, $200/month stop with an alert at $100 (owner, 16 Oct 2026: default-on hosted Always on for trials hits the old $100 at ~200 new installs a month). With traction go back to the TIGHT set (also the code defaults in site/shared/free-ai.js):
+# global $5/day alert, $10/day stop, $200/month stop with an alert at $100 (owner, 16 Oct 2026: default-on hosted Always on for trials hits the old $100 at ~200 new installs a month). With traction go back to the TIGHT set (also the code defaults in shared/free-ai.js):
 # per install 30 calls/min, $0.30/day, $3/month; global $3/day alert, $10/day stop, $60/month stop, alert at $40. A config change only: edit these vars.
 FREE_AI_TRIAL_USD = "2"   # the lifetime budget of one trial install (owner, 16 Oct 2026: "$2 per free user"); Pro credit is a separate lane and never counts here
 FREE_AI_INSTALL_MINUTE_CALLS = "50"
@@ -96,7 +96,7 @@ LINKEDIN_CLIENT_ID = "77cda0c4oymws4"
 # The central employer index (api/employers.js): GET /api/index for every app, PUT from the private central scout
 # (GarryOne/job-pilotto-internal) with the Worker secret INDEX_PUBLISH_KEY (Keychain job-pilotto.site.index_publish_key). Stored in WAITLIST as "index:employers".
 
-# Website stats (api/downloads.js): page views, Download clicks, the private /stats page. Tables: migrations/ (apply: npx wrangler@4 d1 migrations apply www-stats --remote).
+# Website stats (api/downloads.js): page views, Download clicks, the private /stats page. Tables: db/migrations/ (apply: npx wrangler@4 d1 migrations apply www-stats --remote).
 # Secrets: STATS_KEY (opens /stats; Keychain job-pilotto.site.stats_key) and STATS_SALT (hashes visitors).
 # "Report this form" (docs/superpowers/specs/2026-10-15-report-this-form.md §4): the private bucket for encrypted reports (created 15 Oct 2026, 30-day expiry rule `expire-30d`).
 [[r2_buckets]]
@@ -132,15 +132,15 @@ service = "www-ready-runner"
 binding = "STATS"
 database_name = "www-stats"
 database_id = "61f8d0f7-82c2-4afe-a6e5-508aaaf2cfa0"
-migrations_dir = "migrations"
+migrations_dir = "../../db/migrations"
 
 # Daily at 05:30 UTC: app reports (shared/telemetry.js) older than 90 days are dropped, and the top problems of the last
 # day are queued (D1 triage_queue) for the private repo's triage to pull (one issue per problem).
 [triggers]
-crons = ["30 5 * * *", "*/5 * * * *"]   # daily, and every 5 minutes for the Sentry alerts (admin/sentry-alert.js). The learning judges also run when fill data arrives (worker/index.js judgeSoon): the account has no cron triggers left
+crons = ["30 5 * * *", "*/5 * * * *"]   # daily, and every 5 minutes for the Sentry alerts (admin/sentry-alert.js). The learning judges also run when fill data arrives (workers/www/index.js judgeSoon): the account has no cron triggers left
 
 # Workers Logs (11 Oct 2026: the D1 limit was hit and nothing recorded who called what): one invocation log per request, every request (about 5k a day).
-# Kept here so a deploy never switches them off; worker/index.js adds one JSON line per D1-touching request with its rows (worker/d1-meter.js).
+# Kept here so a deploy never switches them off; workers/www/index.js adds one JSON line per D1-touching request with its rows (workers/www/d1-meter.js).
 [observability]
 enabled = true
 head_sampling_rate = 1

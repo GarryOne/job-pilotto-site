@@ -1,4 +1,4 @@
-// The temp folder one recording runs on (desktop/scripts/media): desktop/demo, the persona's own files laid over it, and every date moved to the
+// The temp folder one recording runs on (media): desktop/demo, the persona's own files laid over it, and every date moved to the
 // recording's week, so a calendar shows near-future interviews whenever main re-records. Pure parts guarded by desktop/test/media-persona.test.js.
 import fs from 'node:fs';
 import os from 'node:os';

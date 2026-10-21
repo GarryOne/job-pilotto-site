@@ -1,5 +1,5 @@
 // /admin/form-learning (Intelligence): is the learning loop working: the learned-fix funnel, the AI's answers per family, what people did with proposed answers. Real fills are on /admin/real-form-filling,
-// the lab's sites on /admin/lab-form-filling. Guard: site/test/web/form-pages.test.js.
+// the lab's sites on /admin/lab-form-filling. Guard: test/web/form-pages.test.js.
 import {bestCaseSection} from './best-case.js';
 import {answersSection} from './answer-metrics.js';
 import {proposalCard} from '../shared/proposal-digest.js';

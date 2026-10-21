@@ -2,7 +2,7 @@
 // the engine (api: Anthropic key, cli: Claude Code, openai: OpenAI key, codex: Codex) for the installs count, and its family (claude | openai)
 // for every other metric (owner, 9 Oct 2026: a family's CLI and API run the same models, so metrics split by family; installs by engine to see
 // plan vs API). An install with no health report, or none naming an engine: 'unknown'. Nothing new is sent by the app. Guarded by
-// site/test/shared/engines.test.js.
+// test/shared/engines.test.js.
 export const ENGINES = {api: 'Anthropic API key', cli: 'Claude Code (Claude plan)', openai: 'OpenAI API key', codex: 'Codex (ChatGPT plan)'};
 export const FAMILIES = {claude: 'Claude', openai: 'OpenAI'};
 export const familyOf = engine => (engine === 'openai' || engine === 'codex' ? 'openai' : engine === 'api' || engine === 'cli' ? 'claude' : 'unknown');

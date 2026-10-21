@@ -1,4 +1,4 @@
-// What the extension's stand-in app hands the fictional form in the product videos (desktop/scripts/media/record-extension.mjs): the page with the
+// What the extension's stand-in app hands the fictional form in the product videos (media/record-extension.mjs): the page with the
 // persona's job in it, and the persona's answers to the form's own questions, as Claude would give them. Pure. Guard: desktop/test/media-options.test.js.
 
 // The fictional form's address: the persona's employer on a reserved .example host ("Institut Cardio Rhône" -> careers.institut-cardio-rhone.example). Pure.

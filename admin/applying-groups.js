@@ -1,4 +1,4 @@
-// "Needs a fix" by cause, in ONE place: the page embeds GROUPS_SOURCE (the function's own source) as its "By cause" tab and tools/needs-fix-causes.mjs imports the function, so the page
+// "Needs a fix" by cause, in ONE place: the page embeds GROUPS_SOURCE (the function's own source) as its "By cause" tab and jobs/needs-fix-causes.mjs imports the function, so the page
 // and the command cannot disagree. needsFixGroups leans on needsFixOrder (admin/applying-order.js): the page defines that name before this source, the module imports it.
 // No backticks, template or backslash characters: the source is pasted into the page. Guard: test/needs-fix-causes.test.js.
 import {needsFixOrder} from './applying-order.js';

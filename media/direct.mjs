@@ -1,7 +1,7 @@
-// The AI director of the product videos (desktop/scripts/media): Claude looks at a recorded piece (its click log and one picture per hold) and
+// The AI director of the product videos (media): Claude looks at a recorded piece (its click log and one picture per hold) and
 // chooses how far each hold zooms and the manifest's words. Saved as plans/<piece>.json, which every later render reuses, so CI never calls an AI:
 // run it once per new or changed scene, on the Claude Code subscription (owner, 20 Oct 2026: "Code + Claude"; no API key, never in CI).
-//   node scripts/media/media.mjs hero --keep && node scripts/media/direct.mjs hero          (--work <dir>: the .work folder of that run)
+//   node media/media.mjs hero --keep && node media/direct.mjs hero          (--work <dir>: the .work folder of that run)
 // Guard: desktop/test/media-direct.test.js (validatePlan).
 import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -79,7 +79,7 @@ function main() {
   const names = args.length ? args : Object.keys(VIDEOS);
   for (const name of names) {
     if (!VIDEOS[name]) throw new Error(`direct: ${name} is not a video piece`);
-    if (!fs.existsSync(path.join(work, name, 'log.json'))) throw new Error(`direct: no recording of ${name} in ${work} (run: node scripts/media/media.mjs ${name} --keep)`);
+    if (!fs.existsSync(path.join(work, name, 'log.json'))) throw new Error(`direct: no recording of ${name} in ${work} (run: node media/media.mjs ${name} --keep)`);
     direct(name, work);
   }
 }

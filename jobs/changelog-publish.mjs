@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Publishes the What's new entry of every released app version by itself (owner, 18 Oct 2026; changelog-publish.yml: when a release run ends, hourly as backup). A version is a stable release or a build the beta gate approved
 // ("Beta-approved:" in its notes); the entry covers the commits since the previous such version, so a stable rolls up the builds in between. The AI (Haiku, DIGEST_ANTHROPIC_KEY) sorts them into new features / improvements /
-// bug fixes in plain words; site/admin/changelog.js checks the answer, the site checks it again (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). A version whose draft fails stays unpublished and is retried at the next run.
-//   node tools/changelog-publish.mjs [--plan] [--backfill] [--dry [--tag desktop-v0.7.28]] [--cost cost.json]   --plan: $0 table of what a run would read and cost; --backfill: also drafts versions older than the newest stored one and the 0.0.1 entry (an automatic run does neither);    --cost: {usd, calls} for desktop/e2e/ai-cost-report.mjs --job changelog-publish; --dry drafts and prints, publishes nothing. Guard: site/test/admin/changelog-publish.test.js (fake model, fake site).
+// bug fixes in plain words; admin/changelog.js checks the answer, the site checks it again (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). A version whose draft fails stays unpublished and is retried at the next run.
+//   node jobs/changelog-publish.mjs [--plan] [--backfill] [--dry [--tag desktop-v0.7.28]] [--cost cost.json]   --plan: $0 table of what a run would read and cost; --backfill: also drafts versions older than the newest stored one and the 0.0.1 entry (an automatic run does neither);    --cost: {usd, calls} for desktop/e2e/ai-cost-report.mjs --job changelog-publish; --dry drafts and prints, publishes nothing. Guard: test/admin/changelog-publish.test.js (fake model, fake site).
 import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
-import {MODEL, ask} from '../site/admin/build-digest.js';
-import {MERGE_PROMPT, MODEL_PROMPT, cleanGroups, problems, versionOf} from '../site/admin/changelog.js';
+import {MODEL, ask} from '../admin/build-digest.js';
+import {MERGE_PROMPT, MODEL_PROMPT, cleanGroups, problems, versionOf} from '../admin/changelog.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
 const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';

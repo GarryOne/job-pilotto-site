@@ -1,11 +1,11 @@
 // The meanings pack (owner, 8 Oct 2026): wording -> fixed answer per topic, served in GET /api/packs/aliases beside the label meanings.
-// The seed (the keyword lists the code used before; site/migrations/0039_meanings_seed.sql, tools/meanings_seed.py) also ships with the
+// The seed (the keyword lists the code used before; db/migrations/0039_meanings_seed.sql, tools/meanings_seed.py) also ships with the
 // app as its offline floor, so the pack sends only what the app lacks: learned rows running for this install, and seed rows switched off
 // here ('off'), which the app then leaves out. Topics and answers: config/meanings_schema.json, checked here and again in the engine.
 import {installsNeeded} from '../shared/learning-floor.js';   // 1 for now: shared/learning-floor.js
 import {reaches} from './canary-reach.js';
-import SCHEMA from '../../config/meanings_schema.json' with {type: 'json'};
-import BOXES from '../../config/country_boxes.json' with {type: 'json'};   // cc -> name + bounding box, also read by src/geo.py
+import SCHEMA from '../config/meanings_schema.json' with {type: 'json'};
+import BOXES from '../config/country_boxes.json' with {type: 'json'};   // cc -> name + bounding box, also read by src/geo.py
 
 const TOPICS = Object.fromEntries(Object.entries(SCHEMA).filter(([topic]) => !topic.startsWith('_')));
 const fits = (spec, answer) => Boolean(spec) && (spec.answers.includes(answer)

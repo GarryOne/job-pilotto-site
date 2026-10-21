@@ -1,6 +1,6 @@
 // Small server-drawn charts for /admin/scouting (owner, 19 Oct 2026: "It's too much of raw numbers/text/tables"): sparklines, a heat-map
 // colour scale, horizontal bars, columns and one hover tooltip. Plain SVG/HTML strings on the admin's dark surface; no library, no data
-// beyond what the caller passes. Tests: site/test/scoutingcharts.test.js.
+// beyond what the caller passes. Tests: test/scoutingcharts.test.js.
 
 export const esc = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 export const n = value => Number(value || 0).toLocaleString('en-US');

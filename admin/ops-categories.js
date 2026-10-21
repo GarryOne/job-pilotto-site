@@ -1,5 +1,5 @@
 // Where an engineering change belongs (owner, 15 Oct 2026: "where do we spend our time, operational-wise"): the ONE map from a changed file to a category, and a merged PR's row
-// (its main category, lines, open→merge hours). Pure: tools/ops-overview.mjs feeds it from GitHub, admin/ops-overview.js stores and draws it. Guard: test/admin/ops-overview.test.js
+// (its main category, lines, open→merge hours). Pure: jobs/ops-overview.mjs feeds it from GitHub, admin/ops-overview.js stores and draws it. Guard: test/admin/ops-overview.test.js
 // (fails when a tracked file, or a new top-level path, has no category).
 
 export const CATEGORIES = [
@@ -14,7 +14,7 @@ export const CATEGORIES = [
   {id: 'tests', label: 'Tests only', color: '#c9a227', hint: 'a PR that changes nothing but tests'},
   {id: 'mixed', label: 'Mixed', color: '#e377c2', hint: 'no category holds half of the changed lines'},
 ];
-// Bump when a rule above changes: CI then re-reads the stored PRs (tools/ops-overview.mjs) so old rows get the new category.
+// Bump when a rule above changes: CI then re-reads the stored PRs (jobs/ops-overview.mjs) so old rows get the new category.
 export const RULES_VERSION = 3;
 export const CATEGORY_IDS = CATEGORIES.map(category => category.id);
 
@@ -32,16 +32,16 @@ const RULES = [
   [is(/^\.github\/workflows\/(record-sites|site-replays[^/]*|page-cases|pool-[^/]*)\.yml$/), 'replay'],
   [is(/^tools\/(replay[^/]*|recorded[^/]*|pool-[^/]*)$/), 'replay'],
   [is(/^desktop\/(e2e|scripts)\//), 'ci'],
-  [is(/^(\.github|tools|\.claude\/(hooks|settings[^/]*|worktrees))\//), 'ci'],
+  [is(/^(\.github|tools|jobs|\.claude\/(hooks|settings[^/]*|worktrees))\//), 'ci'],
   [is(/^\.claude\/(skills|agents|commands)\//), 'docs'],
-  [is(/^(site|site-next)\//), 'site'],
+  [is(/^(site|preview|web|admin|api|shared|workers|db|media)\//), 'site'],
   [is(/^desktop\//), 'app'],
   [is(/^(src|worker|config|templates)\//), 'engine'],
   [is(/^(docs|brand)\//), 'docs'],
   [is(/\.(md|txt)$|^LICENSE/), 'docs'],
 ];
 // A new top-level path must be added here (the test lists the repo's own): the fallback for files no rule above names.
-export const TOP_LEVEL = {'.claude': 'ci', '.github': 'ci', brand: 'docs', config: 'engine', desktop: 'app', docs: 'docs', extension: 'forms', hosted: 'engine', site: 'site', 'site-next': 'site',
+export const TOP_LEVEL = {'.claude': 'ci', '.github': 'ci', brand: 'docs', config: 'engine', desktop: 'app', docs: 'docs', extension: 'forms', hosted: 'engine', site: 'site', preview: 'site', 'site-next': 'site', web: 'site', admin: 'site', api: 'site', shared: 'site', workers: 'site', db: 'site', media: 'site', jobs: 'ci', test: 'site',
   src: 'engine', templates: 'engine', tests: 'engine', tools: 'ci', worker: 'engine'};
 const ROOT_FILES = {'.env.example': 'ci', '.gitattributes': 'ci', '.gitignore': 'ci', 'eslint.config.mjs': 'ci', 'requirements.txt': 'engine', 'requirements-render.txt': 'engine', 'requirements-transcribe.txt': 'engine'};
 

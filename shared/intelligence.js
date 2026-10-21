@@ -3,7 +3,7 @@
 // The page is admin/intelligence.js. Guarded by test/shared/intelligence.test.js.
 import {report as aiCost} from './aicost.js';
 import {REGIONS, ROLES} from './pool-labels.js';
-import {cleanLabel} from '../../extension/alias-schema.js';
+import {cleanLabel} from '../extension/alias-schema.js';
 import {digestOf} from './guard.js';
 import {load as loadScouting} from './scouting.js';
 import {LEFT_REASONS} from './knowledge.js';
@@ -97,7 +97,7 @@ export async function store(env, intel, now = new Date(), install = '') {
       ON CONFLICT (day) DO UPDATE SET filled = filled + excluded.filled, corrected = corrected + excluded.corrected`).bind(d, filled, corrected).run();
     out.fixes++;
   }
-  out.facts = await factAsks.store(env.STATS, intel.facts, install, now);   // which facts forms asked: fixed ids (site/shared/fact-asks.js)
+  out.facts = await factAsks.store(env.STATS, intel.facts, install, now);   // which facts forms asked: fixed ids (shared/fact-asks.js)
   return out;
 }
 
@@ -110,7 +110,7 @@ export async function tidy(db, now = new Date()) {
     try { count = JSON.parse(row.installs).length; } catch { /* unreadable: drop */ }
     if (count < MIN_PEOPLE) { await db.prepare('DELETE FROM intel_fixes WHERE label = ?').bind(row.label).run(); dropped++; }
   }
-  await factAsks.tidy(db, now).catch(() => {});   // old fact reports (site/shared/fact-asks.js)
+  await factAsks.tidy(db, now).catch(() => {});   // old fact reports (shared/fact-asks.js)
   return {dropped};
 }
 

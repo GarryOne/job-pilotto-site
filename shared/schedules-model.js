@@ -1,5 +1,5 @@
 // Pure parts of /admin/operations/schedules: read a workflow file (name, first comment, crons, hand-only, runner), say a cron in words, find its next and previous start,
-// group a job into an area, judge its health. No network, no D1; the collector (tools/schedules-snapshot.mjs) and the page (src/schedules.js) both use it. Guard: test/schedules.test.js.
+// group a job into an area, judge its health. No network, no D1; the collector (jobs/schedules-snapshot.mjs) and the page (src/schedules.js) both use it. Guard: test/schedules.test.js.
 
 export const AREAS = [
   {id: 'healing', label: 'Self-healing', hint: 'UI Finder, form-filling loop, Sentry fixer', link: '/admin/self-healing'},
