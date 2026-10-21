@@ -63,9 +63,7 @@
       <span class="downloads-note">Free to start · Free AI included · Mac with Apple silicon, Windows 10 or 11</span>
     </div>
     <div class="hero-visual">
-      <figure class="mac-window">
-        <div class="mac-bar" aria-hidden="true"><span class="mac-dots"><i></i><i></i><i></i></span><span class="mac-title">Jobadabra</span></div>
-        <!-- media: four short clips (media/manifest.json), played in turn by hero-carousel.js; without it, or with reduced motion, the first clip's poster -->
+              <!-- media: four short clips (media/manifest.json), a coverflow driven by hero-carousel.js: the centred clip big, its neighbours smaller and fading at the edges; without it, or with reduced motion, the first clip's poster -->
         <div class="hero-clips" id="hero-carousel" role="group" aria-roledescription="carousel" aria-label="Jobadabra in four short clips">
           <video class="slide is-on" muted playsinline preload="auto" poster="/media/hero-onboarding-poster.jpg" width="1600" height="1000" aria-label="The Jobadabra setup: the search strategy proposed from your CV (made-up example)">
             <source src="/media/hero-onboarding-720.mp4" type="video/mp4" media="(max-width: 720px)">
@@ -89,7 +87,6 @@
           </video>
           <div class="dots" role="group" aria-label="Choose a clip"><button type="button" aria-label="Set up" aria-current="true"></button><button type="button" aria-label="Find jobs"></button><button type="button" aria-label="Fill the form"></button><button type="button" aria-label="Keep track"></button></div>
         </div>
-      </figure>
     </div>
   </header>
 

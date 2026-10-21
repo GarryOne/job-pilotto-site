@@ -20,3 +20,11 @@ export function timeFor(index, t, n, period = PERIOD, lead = 0.4) {
   const target = here + ((((index - here) % n) + n) % n);
   return Math.max(t, (target - lead) * period);
 }
+
+// Where a slide sits when it is `away` slides from the centre (offset above): the centred one full size, the neighbours smaller, dimmer and further back,
+// the ones beyond them fade out (the page's mask cuts and fades the edges). `step` is the distance between neighbours in slide widths. Pure.
+export function place(away, step = 58) {
+  const near = Math.abs(away), side = Math.min(near, 1);
+  const fade = near <= 1 ? 1 - 0.35 * near : Math.max(0, 0.65 * (1 - (near - 1) / 0.6));
+  return {x: away * step, scale: 1 - 0.28 * side, opacity: fade, z: 20 - Math.round(near * 8)};
+}

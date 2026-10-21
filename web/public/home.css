@@ -1,28 +1,33 @@
 /* The short landing (owner, 20 Oct 2026): hero beside its video, the live numbers, three steps, "you stay in control", the closing download.
    Builds on styles.css tokens and parts (.hero, .btn, .mac-window, section.block); only what those lack lives here. Guarded by site/test/landing.test.js. */
 
-/* Hero: the words on top, the clips as wide as the page below. */
-.hero.split { grid-template-columns: minmax(0, 1fr); justify-items: stretch; align-items: start; text-align: left; gap: 32px; padding-block: 36px 48px; }   /* words on top, the clips as wide as the page below */
-.hero.split .hero-copy { justify-items: start; gap: 16px; }
-.hero.split h1 { font-size: clamp(2.2rem, 4vw, 3.3rem); max-width: 22ch; }
-.hero.split .lede { max-width: 56ch; }
+/* Hero: words left, the clips right on one row (stacked on phones). */
+.hero.split { grid-template-columns: minmax(440px, 4.8fr) minmax(0, 8fr); justify-items: stretch; align-items: center; text-align: left; gap: 40px; padding-block: 56px 56px; }
+.hero.split .hero-copy { justify-items: start; gap: 18px; }
+.hero.split h1 { font-size: clamp(2.2rem, 3.6vw, 3.2rem); }
 .hero.split .eyebrow { justify-content: flex-start; }
-.hero.split .hero-visual { max-width: none; width: 100%; }
-.hero.split .demo { aspect-ratio: 1600 / 985; height: auto; object-fit: cover; object-position: left top; }   /* the hero's own shape, not the old demo video's */
+.hero.split .hero-visual { max-width: none; width: auto; margin-right: calc(-1 * min(9vw, max(0px, (100vw - 1160px) / 2))); }   /* the clips may run past the text's right edge into the page margin */
+.hero.split .downloads { display: flex; flex-wrap: wrap; }   /* Mac and Windows side by side while they fit */
+.hero.split .downloads .btn { white-space: nowrap; padding-inline: 18px; font-size: .95rem; }
 
-/* The hero carousel: four clips stacked, the one that plays fades in over the last; dots under the picture. */
-.hero-clips { position: relative; aspect-ratio: 1600 / 1000; background: var(--surface); overflow: hidden; }
-.hero-clips .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; opacity: 0; transition: opacity .7s ease; }
+/* The hero's coverflow: the clip in the middle is big, the one before and the one after sit smaller behind it, half cut off and fading at the
+   edges (hero-carousel.js sets each slide's place on the track). --sw is a slide's width, --step the distance between neighbours in slide widths. */
+.hero-clips { --sw: 66%; --step: 58; position: relative; aspect-ratio: 1.8; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 11%, #000 89%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 11%, #000 89%, transparent 100%); }
+.hero-clips .slide { position: absolute; left: 50%; top: 46%; width: var(--sw); height: auto; aspect-ratio: 1600 / 1000; object-fit: cover; transform: translate(-50%, -50%);
+  border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .7s ease; }
 .hero-clips .slide.is-on { opacity: 1; }
-.hero-clips.is-moving .slide { opacity: 1; will-change: transform; transition: none; }   /* the script places every slide on the track */
+.hero-clips.is-moving .slide { will-change: transform, opacity; transition: none; }   /* the script places every slide on the track */
+.hero-clips.is-still { -webkit-mask-image: none; mask-image: none; }
 .hero-clips.is-still .slide:not(:first-of-type) { display: none; }
-.hero-clips .dots { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 8px; z-index: 2; }
+.hero-clips .dots { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; justify-content: center; gap: 8px; z-index: 20; }
 .hero-clips .dots button { width: 22px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: rgb(255 255 255 / .35); cursor: pointer; transition: background .2s, width .2s; }
 .hero-clips .dots button[aria-current] { width: 34px; background: var(--amber, #ffb224); }
 .hero-clips .dots button:focus-visible { outline: 2px solid var(--amber, #ffb224); outline-offset: 3px; }
 .hero-clips.is-still .dots { display: none; }
 @media (prefers-reduced-motion: reduce) { .hero-clips .slide { transition: none; } }
-@media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 36px; padding-block: 48px; } }
+@media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 40px 40px; }
+  .hero-clips { --sw: 100%; --step: 112; aspect-ratio: 1.7; -webkit-mask-image: none; mask-image: none; } }   /* a phone: the middle clip only */
 
 /* Mac and Windows: two identical buttons, side by side; full width on phones. */
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 12px; }

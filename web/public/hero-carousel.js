@@ -1,7 +1,7 @@
-// The landing hero's carousel (index.html #hero-carousel): four short clips on one track. It never stops: a slide comes in fast, drifts slowly while it is
-// centred and its clip plays, then leaves fast (the easing is hero-track.js). Hover or keyboard focus holds it, the dots jump to a clip, a hidden tab
+// The landing hero's carousel (index.html #hero-carousel): four short clips as a coverflow on one track: the centred one big, its neighbours smaller and fading at
+// the edges. It never stops: a slide comes in fast, drifts slowly while it is centred and its clip plays, then leaves fast (the easing is hero-track.js). Hover or keyboard focus holds it, the dots jump to a clip, a hidden tab
 // holds it, and with reduced motion (or a browser without modules) the first clip's poster stays. Guarded by test/web/landing.test.js.
-import {offset, position, timeFor} from './hero-track.js';
+import {offset, place, position, timeFor} from './hero-track.js';
 
 const root = document.getElementById('hero-carousel');
 const clips = root ? [...root.querySelectorAll('video.slide')] : [];
@@ -9,7 +9,9 @@ const dots = root ? [...root.querySelectorAll('.dots button')] : [];
 if (root && (matchMedia('(prefers-reduced-motion: reduce)').matches || clips.length < 2)) root.classList.add('is-still');
 else if (root) {
   const n = clips.length, playing = new Set();
-  let t = 0, last = null, held = false, shown = -1;
+  let t = 0, last = null, held = false, shown = -1, step = 58;
+  const measure = () => { step = parseFloat(getComputedStyle(root).getPropertyValue('--step')) || 58; };   // 58 slide widths on a row, 112 on a phone (css)
+  measure(); addEventListener('resize', measure);
   root.classList.add('is-moving');
   const hold = on => { held = on; if (on) clips.forEach(clip => clip.pause()); else playing.forEach(i => clips[i].play().catch(() => {})); };
 
@@ -17,7 +19,10 @@ else if (root) {
     const p = position(t);
     clips.forEach((clip, i) => {
       const away = offset(i, p, n);
-      clip.style.transform = `translate3d(${(away * 100).toFixed(2)}%, 0, 0)`;
+      const spot = place(away, step);
+      clip.style.transform = `translate(calc(-50% + ${spot.x.toFixed(2)}%), -50%) scale(${spot.scale.toFixed(3)})`;
+      clip.style.opacity = spot.opacity.toFixed(3);
+      clip.style.zIndex = String(spot.z);
       if (Math.abs(away) < 1.6 && clip.preload !== 'auto') { clip.preload = 'auto'; clip.load(); }   // the next clip is fetched as it nears
       if (Math.abs(away) < 0.55 && !playing.has(i)) { playing.add(i); clip.currentTime = 0; if (!held) clip.play().catch(() => {}); }
       else if (Math.abs(away) >= 1 && playing.has(i)) { playing.delete(i); clip.pause(); }
