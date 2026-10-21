@@ -8,14 +8,24 @@ The website, `/admin`, and the CI jobs that feed them. Moved out of the public `
 ## Work here
 - `tools/site-run.sh <cmd>`: runs a command in `.overlay` (public tree + this repo), rebuilt when older than an hour.
 - `tools/overlay.sh <out> [ref]`: build that tree by hand. `tools/tree.sh`: the same, for CI.
-- `tools/site-guards.sh <tree> [<this repo>]`: the public tests that read `site/` plus this repo's own tests.
+- `tools/site-guards.sh <tree> [<this repo>]`: the public tests that read site files plus this repo's own tests.
 - No `ship.sh` here: open a normal PR; the required check is the job "All checks passed" (`tests.yml`).
 
-## Layout
-`site/web` (public pages), `site/admin` (/admin), `site/api` (what the apps call), `site/shared`, `site/worker` (router): see `site/README.md`.
+## Layout (top level, by audience; 21 Oct 2026)
+| Folder | What |
+|---|---|
+| `web/` `admin/` `api/` `shared/` | the public pages, /admin, what the apps call, what both use (see `web/README.md`) |
+| `workers/` | `www` (the ONE Worker serving web + admin + api), `hosted-runner`, `ready-runner` |
+| `db/migrations/` | D1 migrations |
+| `test/` | mirrors the folders above; `test/boundary.test.js` guards the import directions. Run: `node --test "test/**/*.test.js"` |
+| `media/` | the product-media recorder (videos and stills for the site) |
+| `preview/` | the next website, reviewed before it goes live |
+| `jobs/` | scheduled jobs that feed /admin (digest, ops overview, changelog, e2e intel, hosted e2e, Lab uploads) |
+| `tools/` | the dev kit (overlay, tree, site-run, site-guards, legacy-paths, staging) |
+| `tests/`, `desktop/test/` | tests that run inside the public tree's own harness (python / desktop) |
 
 ## Contract with the public repo
-`docs/site-routes.json` (public) lists every route the app calls. Two tests keep it true: `site/test/site-routes.test.js` (here) and `desktop/test/site-routes.test.js` (public).
+`docs/site-routes.json` (public) lists every route the app calls. Two tests keep it true: `test/site-routes.test.js` (here) and `desktop/test/site-routes.test.js` (public).
 
 ## CI
 `tests.yml` (PRs, push, daily against newest public main), `site.yml` / `site-next.yml` (deploys), `public-watch.yml` (every 6 hours: a public change that a deploy bundles dispatches the deploy), `product-media.yml` (daily: when the public screens changed, a Mac run re-records the site's media and opens the PR `media-refresh`), plus the scheduled jobs moved from public (digest, changelog, ops overview, e2e intel, hosted e2e, random draw, search lab).

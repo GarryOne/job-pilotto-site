@@ -8,7 +8,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 WORKFLOW = (ROOT / '.github' / 'workflows' / 'search-lab.yml').read_text(encoding='utf-8')
-UPLOAD = (ROOT / 'tools' / 'persona-search' / 'lab-upload.mjs').read_text(encoding='utf-8')
+UPLOAD = (ROOT / 'jobs' / 'persona-search' / 'lab-upload.mjs').read_text(encoding='utf-8')
 
 
 def node(code):

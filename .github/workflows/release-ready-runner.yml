@@ -1,14 +1,14 @@
 name: Release · Ready to send runner
 # (In the private site repo since 20 Oct 2026; a change to the public files it builds from starts it through public-watch.yml.)
-# Deploys the Ready to send runner Worker and its container image (site/ready-runner, hosted/ready-fill) when they change on main, after one night
+# Deploys the Ready to send runner Worker and its container image (workers/ready-runner, hosted/ready-fill) when they change on main, after one night
 # in the built image passes (hosted/ready-fill/image-check.mjs). Was a deploy by hand from a Mac (18 Oct 2026, owner: shorten the loop).
 # Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID (the same as Release · Website). The image carries no secret and no user data.
 on:
   push:
     branches: [main]
     paths:
-      - 'site/ready-runner/**'
-      - 'site/api/ready-consume.js'
+      - 'workers/ready-runner/**'
+      - 'api/ready-consume.js'
       - '.github/workflows/release-ready-runner.yml'
   workflow_dispatch:
 permissions:
@@ -43,5 +43,5 @@ jobs:
         run: docker build -f hosted/ready-fill/Dockerfile -t ready-fill:check . && node hosted/ready-fill/image-check.mjs ready-fill:check
       - name: Deploy the runner and its image
         if: env.CLOUDFLARE_API_TOKEN != ''
-        working-directory: site/ready-runner
+        working-directory: workers/ready-runner
         run: npm install --no-audit --no-fund && ../../tools/cf-retry.sh npx --yes wrangler@4 deploy

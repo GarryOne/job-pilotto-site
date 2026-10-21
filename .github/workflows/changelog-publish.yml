@@ -1,7 +1,7 @@
 name: CI · Changelog publish
 # The What's new page publishes itself (owner, 18 Oct 2026): every stable release and every build the beta gate approved gets an entry, drafted by Haiku in plain words (new features / improvements / bug fixes),
-# checked by site/admin/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. A failed draft is not published and is retried at the next run.
-# This run drafts only versions NEWER than the newest on the page; the one-time backfill of older versions (+ the 0.0.1 start entry) was run once from the owner's Mac, `node tools/changelog-publish.mjs --plan|--backfill`, never from here.
+# checked by admin/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. A failed draft is not published and is retried at the next run.
+# This run drafts only versions NEWER than the newest on the page; the one-time backfill of older versions (+ the 0.0.1 start entry) was run once from the owner's Mac, `node jobs/changelog-publish.mjs --plan|--backfill`, never from here.
 # Runs hourly at :23 (the public repo cannot start a workflow here), or by hand: `gh workflow run changelog-publish.yml`.
 on:
   schedule:
@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: '22'
       - name: Draft and publish the new versions
-        run: node tools/changelog-publish.mjs --cost "$RUNNER_TEMP/cost.json" 2>&1 | tee "$RUNNER_TEMP/changelog.log"
+        run: node jobs/changelog-publish.mjs --cost "$RUNNER_TEMP/cost.json" 2>&1 | tee "$RUNNER_TEMP/changelog.log"
       - name: Report the AI cost
         if: always()
         env:

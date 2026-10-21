@@ -1,16 +1,16 @@
-// The product media's personas (desktop/scripts/media/persona-copy.mjs, personas/): a persona lays its files over desktop/demo, its dates move to the
+// The product media's personas (media/persona-copy.mjs, personas/): a persona lays its files over desktop/demo, its dates move to the
 // recording's week, and no persona folder holds the default person's words it forbids.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
-import {leftWords} from '../scripts/media/check.mjs';
-import {loadPersona} from '../scripts/media/options.mjs';
-import {personaCopy, shiftDates, weekShift} from '../scripts/media/persona-copy.mjs';
-import {formHost} from '../scripts/media/stand-in.mjs';
+import {leftWords} from '../../media/check.mjs';
+import {loadPersona} from '../../media/options.mjs';
+import {personaCopy, shiftDates, weekShift} from '../../media/persona-copy.mjs';
+import {formHost} from '../../media/stand-in.mjs';
 
-const media = path.join(import.meta.dirname, '..', 'scripts', 'media');
+const media = path.join(import.meta.dirname, '..', '..', 'media');
 const demo = path.join(import.meta.dirname, '..', 'demo');
 
 test('dates move by whole weeks, so weekday names stay right; no anchor, no move', () => {

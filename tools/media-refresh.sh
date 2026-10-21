@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# The product-media run's last step (.github/workflows/product-media.yml): copies a fresh media set over the files site/web/public/media already holds
+# The product-media run's last step (.github/workflows/product-media.yml): copies a fresh media set over the files web/public/media already holds
 # (the site picks which pieces it shows; a new piece is listed, never added), records the public screens it was made from (.public-media), commits
 # on the branch media-refresh and opens or updates its PR for the owner. Guarded by tests/test_media_refresh.py.
 # Usage, from this repo's root: tools/media-refresh.sh <media set> <public tree> <public sha> [--no-push]
 set -euo pipefail
 set_dir="$1"; tree="$2"; sha="$3"; push=yes
 [ "${4:-}" = --no-push ] && push=no
-dest=site/web/public/media
+dest=web/public/media
 [ -f "$set_dir/manifest.json" ] || { echo "media-refresh: $set_dir has no manifest.json: not a media set"; exit 1; }
 updated=(); missing=()
 for file in "$dest"/*; do

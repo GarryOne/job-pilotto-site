@@ -89,7 +89,7 @@ jobs:
       - name: Post the numbers to /admin/lab-job-search
         run: |
           if [ -z "$REPLAYS_PUBLISH_KEY" ]; then echo "search-lab: REPLAYS_PUBLISH_KEY not set: nothing posted" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
-          node tools/persona-search/lab-upload.mjs "$RUNNER_TEMP/out" --tape "$RUNNER_TEMP/tape" --build "$PUBLIC_SHA" --branch main 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          node jobs/persona-search/lab-upload.mjs "$RUNNER_TEMP/out" --tape "$RUNNER_TEMP/tape" --build "$PUBLIC_SHA" --branch main 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: End red when the search crashed
         if: steps.replay.outcome == 'failure'
         run: exit 1
