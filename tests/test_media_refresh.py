@@ -105,6 +105,22 @@ class MediaRefreshTests(unittest.TestCase):
         self.assertEqual(git(self.repo, 'branch', '--show-current').strip(), 'media-refresh')
         self.assertIn('.public-media', git(self.repo, 'show', '--name-only', '--format=', 'HEAD'))
 
+    def test_the_refresh_branch_is_cut_from_the_newest_origin_main(self):
+        # site#33 conflicted: the earlier refresh was merged after the run cut its branch
+        remote = self.tmp / 'remote.git'
+        git(self.tmp, 'clone', '-q', '--bare', str(self.repo), str(remote))
+        git(self.repo, 'remote', 'add', 'origin', str(remote))
+        git(self.repo, 'fetch', '-q', 'origin')
+        other = self.tmp / 'other'
+        git(self.tmp, 'clone', '-q', str(remote), str(other))
+        (other / 'web/public/media/hero.mp4').write_text('merged meanwhile')
+        git(other, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-qam', 'earlier refresh merged')
+        git(other, 'push', '-q', 'origin', 'HEAD:main')
+        run = self.refresh()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(git(self.repo, 'rev-parse', 'media-refresh~1').strip(), git(other, 'rev-parse', 'HEAD').strip(), 'cut from the tip main has now')
+        self.assertEqual((self.repo / 'web/public/media/hero.mp4').read_text(), 'new hero', 'the new set wins')
+
     def test_a_folder_without_a_manifest_is_refused(self):
         (self.set / 'manifest.json').unlink()
         run = self.refresh()
