@@ -43,11 +43,24 @@ test('the list is well formed: unique paths, a known kind, methods only where a 
   }
 });
 
-test('every route in worker/index.js is in the list (add a new one there, with its kind)', () => {
-  const listed = new Set(manifest.routes.map(route => route.path));
-  const routes = [...source.matchAll(/pathname === '(\/[^']*)'/g)].map(match => match[1]).filter(path => path !== '/');
-  const prefixes = [...source.matchAll(/pathname\.startsWith\('(\/[^']*)'\)/g)].map(match => match[1]);
-  assert.deepEqual([...routes, ...prefixes].filter(path => !listed.has(path)), []);
+// One way (owner, 21 Oct 2026: "the site lands first"): a route the Worker has that public does not list yet is the normal state of a pair in flight, so it is told, not failed.
+// SITE_ROUTES_STRICT=1 (the daily run against the newest public main) fails it: by then the public half has to list it, with its kind. The other direction (public lists a route the Worker lacks) always fails, below.
+const workerRoutes = text => [
+  ...[...text.matchAll(/pathname === '(\/[^']*)'/g)].map(match => match[1]).filter(path => path !== '/'),
+  ...[...text.matchAll(/pathname\.startsWith\('(\/[^']*)'\)/g)].map(match => match[1]),
+];
+const aheadOfList = (routes, listedRoutes) => routes.filter(path => !listedRoutes.some(route => route.path === path));
+
+test('a Worker route public does not list yet is told, and fails only in the strict daily run', t => {
+  const ahead = aheadOfList(workerRoutes(source), manifest.routes);
+  if (ahead.length) t.diagnostic(`site ahead of docs/site-routes.json (list them in the public repo, with a kind): ${ahead.join(', ')}`);
+  if (process.env.SITE_ROUTES_STRICT) assert.deepEqual(ahead, []);
+});
+
+test('the site ahead of the list is not a failure, a listed route the Worker lacks is (both directions)', async () => {
+  const fake = "if (url.pathname === '/api/brand-new-thing') return x;";
+  assert.deepEqual(aheadOfList(workerRoutes(fake), manifest.routes), ['/api/brand-new-thing']);   // told above, not failed
+  assert.equal(await answered('/api/listed-but-not-built-yet', 'GET'), false);   // what the "answers every listed route" test turns red on
 });
 
 test('the Worker answers every listed route, with every method listed for it', async () => {
