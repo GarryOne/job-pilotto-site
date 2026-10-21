@@ -48,8 +48,11 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ endsWith(github.actor, '[bot]') && '' || github.event.pull_request.title }}   # the "[xx] " session tag (public tools/pr-body-check.py)
         run: printf '%s' "$BODY" | python3 tools/pr-body-check.py   # the public repo's own check, from the joined tree: the same layout the owner reads in 2-5 seconds
       - name: Site tests
+        env:
+          SITE_ROUTES_STRICT: ${{ github.event_name == 'schedule' && '1' || '' }}   # a route the Worker has but public never listed fails the daily run, not a pair in flight
         run: bash tools/check.sh --area site
       - name: Tests that read site files, and the tests of this repo
         run: bash .private/tools/site-guards.sh . .private
