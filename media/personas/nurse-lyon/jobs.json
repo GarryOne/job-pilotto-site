@@ -19,6 +19,21 @@
    "first_seen_at": "2026-10-01"
   },
   {
+   "id": 10,
+   "code": "d10",
+   "url": "https://example.com/jobs/10",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Telemetry Nurse",
+   "company": "Clinique Belvédère",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 88,
+   "rank": 98.5,
+   "reason": "Telemetry ward, the monitoring you do today; day shifts, permanent contract."
+  },
+  {
    "id": 2,
    "code": "d2",
    "title": "ICU Nurse (Réanimation)",
@@ -47,6 +62,21 @@
    "first_seen_at": "2026-10-01"
   },
   {
+   "id": 11,
+   "code": "d11",
+   "url": "https://example.com/jobs/11",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Cardiac Rehabilitation Nurse",
+   "company": "Centre de Réadaptation Saône",
+   "location": "Villeurbanne",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 84,
+   "rank": 97.5,
+   "reason": "Rehab after cardiac surgery: patient education is the core of the role."
+  },
+  {
    "id": 3,
    "code": "d3",
    "title": "Day-Surgery Nurse",
@@ -61,6 +91,21 @@
    "url": "https://example.com/jobs/3",
    "posted_at": "2026-10-01",
    "first_seen_at": "2026-10-01"
+  },
+  {
+   "id": 12,
+   "code": "d12",
+   "url": "https://example.com/jobs/12",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Nurse, Cardiology Day Hospital",
+   "company": "Hôpital de Jour Cardio Confluence",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 83,
+   "rank": 96.5,
+   "reason": "Day hospital, no nights or weekends; echo and stress-test support."
   },
   {
    "id": 4,
@@ -78,6 +123,24 @@
    "first_seen_at": "2026-10-01"
   },
   {
+   "id": 13,
+   "code": "d13",
+   "url": "https://example.com/jobs/13",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Intensive Care Nurse",
+   "company": "Clinique Saint-Exupéry",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "applied",
+   "fit": 80,
+   "rank": 95.5,
+   "reason": "ICU with 1:2 staffing; a step up from your cardiology experience.",
+   "stage": "Interview scheduled",
+   "next_interview": "2026-10-20T14:00:00+02:00",
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a013"
+  },
+  {
    "id": 5,
    "code": "d5",
    "title": "Home-Care Nurse",
@@ -91,6 +154,24 @@
    "url": "https://example.com/jobs/5",
    "posted_at": "2026-10-01",
    "first_seen_at": "2026-10-01"
+  },
+  {
+   "id": 14,
+   "code": "d14",
+   "url": "https://example.com/jobs/14",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Stroke Unit Nurse",
+   "company": "Institut Neuro Lyon-Est",
+   "location": "Bron",
+   "work_mode": "On-site",
+   "status": "applied",
+   "fit": 79,
+   "rank": 94.5,
+   "reason": "Neuro-vascular unit with telemetry; training provided for the stroke scale.",
+   "stage": "Screening",
+   "next_interview": "2026-10-15T09:30:00+02:00",
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a014"
   },
   {
    "id": 6,
@@ -108,6 +189,21 @@
    "first_seen_at": "2026-10-01"
   },
   {
+   "id": 15,
+   "code": "d15",
+   "url": "https://example.com/jobs/15",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Dialysis Nurse",
+   "company": "Néphro Services Rhône",
+   "location": "Vénissieux",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 74,
+   "rank": 93.5,
+   "reason": "Fixed morning shifts, small team; new to you but close to your skills."
+  },
+  {
    "id": 7,
    "code": "d7",
    "title": "Night Nurse, Emergency Department",
@@ -123,6 +219,24 @@
    "first_seen_at": "2026-10-01"
   },
   {
+   "id": 16,
+   "code": "d16",
+   "url": "https://example.com/jobs/16",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Emergency Nurse",
+   "company": "Hôpital Rive-Ouest",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "applied",
+   "fit": 72,
+   "rank": 92.5,
+   "reason": "Emergency triage and resuscitation bay; rotating shifts.",
+   "stage": "Interview scheduled",
+   "next_interview": "2026-10-22T11:00:00+02:00",
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a016"
+  },
+  {
    "id": 8,
    "code": "d8",
    "title": "Operating Room Nurse",
@@ -136,6 +250,66 @@
    "url": "https://example.com/jobs/8",
    "posted_at": "2026-10-01",
    "first_seen_at": "2026-10-01"
+  },
+  {
+   "id": 17,
+   "code": "d17",
+   "url": "https://example.com/jobs/17",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Palliative Care Nurse",
+   "company": "Maison Beauséjour",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 70,
+   "rank": 91.5,
+   "reason": "Eight-bed unit, calm pace, strong team; emotionally demanding."
+  },
+  {
+   "id": 18,
+   "code": "d18",
+   "url": "https://example.com/jobs/18",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "Nurse Educator, Cardiology",
+   "company": "Institut Cardio Rhône",
+   "location": "Lyon",
+   "work_mode": "Hybrid",
+   "status": "unreviewed",
+   "fit": 82,
+   "rank": 90.5,
+   "reason": "Teach patients and juniors; two days a week from home."
+  },
+  {
+   "id": 9,
+   "code": "d9",
+   "title": "Occupational Health Nurse",
+   "company": "Rhône Logistique",
+   "location": "Vénissieux",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 66,
+   "rank": 90,
+   "reason": "Monday to Friday, days only; less clinical than the roles you want.",
+   "url": "https://example.com/jobs/9",
+   "posted_at": "2026-10-01",
+   "first_seen_at": "2026-10-01"
+  },
+  {
+   "id": 19,
+   "code": "d19",
+   "url": "https://example.com/jobs/19",
+   "posted_at": "2026-10-02",
+   "first_seen_at": "2026-10-02",
+   "title": "School Nurse",
+   "company": "Académie Santé Lyon",
+   "location": "Lyon",
+   "work_mode": "On-site",
+   "status": "unreviewed",
+   "fit": 66,
+   "rank": 89.5,
+   "reason": "Term-time only; very different from hospital work."
   },
   {
    "id": null,
@@ -158,23 +332,8 @@
    "via": "Example Santé Recrutement",
    "next_step": "Reply to the recruiter",
    "first_seen_at": "2026-10-01"
-  },
-  {
-   "id": 9,
-   "code": "d9",
-   "title": "Occupational Health Nurse",
-   "company": "Rhône Logistique",
-   "location": "Vénissieux",
-   "work_mode": "On-site",
-   "status": "unreviewed",
-   "fit": 66,
-   "rank": 90,
-   "reason": "Monday to Friday, days only; less clinical than the roles you want.",
-   "url": "https://example.com/jobs/9",
-   "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
   }
  ],
- "total": 186,
+ "total": 196,
  "filtered": 29
 }

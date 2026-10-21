@@ -2,41 +2,56 @@
 // cursor glides, when a click ring shows. The renderer (render.cjs) draws real recorded frames through this camera, so the app's pixels are never redrawn.
 // Coordinates are the page's CSS pixels. Guard: desktop/test/media-camera.test.js.
 
-export const MAX_ZOOM = 1.7;
-export const FILL = 0.85;          // a zoomed box fills this share of the view
+export const MAX_ZOOM = 2.4;
+export const FILL = 0.9;           // a zoomed box fills this share of the view
 export const LOOK_HEIGHT = 0.6;    // a tall box (a drawer, a list) is framed by its top part: where the action is
-export const ZOOM_IN_DELAY = 0.35; // a hold shows the whole screen this long, then zooms
-export const ZOOM_IN = 0.9;        // seconds a zoom takes
+export const CLICK_ZOOM = 2;       // a click zooms onto its target (owner, 21 Oct 2026: "when there is a click, zoom on that click")
+export const CONTEXT = 0.4;        // a first hold with no box (a context look) shows the whole screen this long (output seconds); the lead-in before the first look is context too
+export const ZOOM_IN = 0.55;       // output seconds a camera move takes (a sped-up clip stretches it in recorded time)
+export const SETTLE = 0.25;        // output seconds the camera stays on a click's target after the press, so the click is seen
 export const RING = 0.6;           // seconds a click ring grows and fades
 
 export const ease = x => { const u = Math.max(0, Math.min(1, x)); return u * u * (3 - 2 * u); };
 
-// log: {viewport: {w, h}, events: [{t, type: 'click'|'press'|'hold', box?, zoom?}]} -> [{t, cx, cy, z}], time-ordered.
-// A click pulls back to the whole view (the cursor's trip stays visible); a hold with a box zooms there after a short look at the whole screen.
-// A hold may carry its own zoom (the director's plan); 1 keeps the whole view.
-export function cameraKeys({viewport, events}) {
+// The camera state that frames `box` at zoom z: centred on it, so a box in a corner puts the camera in that corner (cameraAt keeps the view on the page).
+// A box wider than the zoomed view is read from its left edge (names and scores first), not cropped on both sides.
+const frame = (box, z, viewport) => ({cx: box.width > viewport.w / z ? box.x + viewport.w / z / 2 : box.x + box.width / 2, cy: box.y + Math.min(box.height, viewport.h / z) / 2, z});
+
+// log: {viewport: {w, h}, events: [{t, type: 'click'|'press'|'hold', box?, zoom?}]} -> [{t, cx, cy, z}], time-ordered; a key is where the camera has ARRIVED at t.
+// The whole screen shows only at the start (context). A click zooms onto its target while the cursor glides there; a hold with a box zooms onto that box
+// (its own zoom, else the box fitted); the camera never pulls back to the whole screen between steps. `speed`: the clip is played faster, so moves are
+// stretched in recorded time to last the same on screen.
+export function cameraKeys({viewport, events, speed = 1}) {
   const full = {cx: viewport.w / 2, cy: viewport.h / 2, z: 1};
   const keys = [{t: 0, ...full}];
-  for (const event of events) {
-    if (event.type === 'click') keys.push({t: event.t, ...full});
-    if (event.type !== 'hold' || !event.box) continue;
+  const move = (t, state) => { if (t > keys.at(-1).t) keys.push({t, ...state}); };
+  const dur = ZOOM_IN * speed;
+  events.forEach((event, i) => {
+    if (event.type === 'click' && event.box) {
+      const press = events.slice(i + 1).find(next => next.type === 'press');
+      const fit = 0.6 * Math.min(viewport.w / event.box.width, viewport.h / event.box.height);
+      move(press ? press.t : event.t + 0.7, frame(event.box, Math.max(1.4, Math.min(event.zoom ?? CLICK_ZOOM, fit, MAX_ZOOM)), viewport));
+    }
+    if (event.type !== 'hold') return;
+    const first = !events.slice(0, i).some(prev => prev.type === 'hold' || prev.type === 'click');   // the piece's first look: the whole screen shows a moment first
+    if (!event.box || event.zoom === 1) { if (first || event.zoom === 1) move(event.t + (first ? CONTEXT * speed : dur), full); return; }
     const box = {...event.box, height: Math.min(event.box.height, viewport.h * LOOK_HEIGHT)};
     const fit = FILL * Math.min(viewport.w / box.width, viewport.h / box.height);
-    const z = Math.max(1, Math.min(MAX_ZOOM, event.zoom ?? fit));
-    const cx = box.x + box.width / 2, cy = box.y + Math.min(box.height, viewport.h / z) / 2;
-    keys.push({t: event.t + ZOOM_IN_DELAY, ...full}, {t: event.t + ZOOM_IN_DELAY + ZOOM_IN, cx, cy, z});
-  }
+    const after = events.slice(0, i).reverse().find(prev => prev.type === 'press');
+    const start = first ? 0 : (after ? Math.max(0, after.t + SETTLE * speed - event.t) : 0);
+    move(event.t + start + dur, frame(box, Math.max(1, Math.min(MAX_ZOOM, event.zoom ?? fit)), viewport));
+  });
   return keys.sort((a, b) => a.t - b.t);
 }
 
-// The camera at time t: eased between the key before t and the next one; zoom eases geometrically (feels even); the view never leaves the page.
-// -> {x, y, w, h}: the page area shown, in CSS px.
-export function cameraAt(keys, t, viewport) {
+// The camera at time t: eased from the key before t to the next one, the move filling the last `dur` seconds before the next key; zoom eases geometrically
+// (feels even); the view never leaves the page. -> {x, y, w, h}: the page area shown, in CSS px.
+export function cameraAt(keys, t, viewport, speed = 1) {
   let i = 0;
   while (i + 1 < keys.length && keys[i + 1].t <= t) i++;
   const a = keys[i], b = keys[i + 1] || a;
-  const span = Math.max(0.6, Math.min(ZOOM_IN, b.t - a.t));
-  const u = b === a ? 1 : t <= a.t ? 0 : ease((t - a.t) / span);
+  const span = Math.max(0.05, Math.min(ZOOM_IN * speed, b.t - a.t));
+  const u = b === a ? 1 : ease((t - (b.t - span)) / span);
   const z = a.z * (b.z / a.z) ** u, cx = a.cx + (b.cx - a.cx) * u, cy = a.cy + (b.cy - a.cy) * u;
   const w = viewport.w / z, h = viewport.h / z;
   return {x: Math.min(Math.max(cx - w / 2, 0), viewport.w - w), y: Math.min(Math.max(cy - h / 2, 0), viewport.h - h), w, h};
@@ -67,11 +82,11 @@ export function posterTime(events = []) {
   return hold ? Number((hold.t + hold.s * 0.9).toFixed(2)) : 0;
 }
 
-export function renderPlan(log, fps = 30) {
-  const keys = cameraKeys(log), end = log.frames.at(-1).t, cursor = log.events.some(event => event.type === 'click');
+export function renderPlan(log, fps = 30, speed = 1) {
+  const keys = cameraKeys({...log, speed}), end = log.frames.at(-1).t, cursor = log.events.some(event => event.type === 'click');
   const out = [];
   for (let i = 0; i <= Math.floor(end * fps); i++) {
-    const t = i / fps, view = cameraAt(keys, t, log.viewport), at = cursorAt(log.events, t, log.viewport);
+    const t = i / fps, view = cameraAt(keys, t, log.viewport, speed), at = cursorAt(log.events, t, log.viewport);
     out.push({file: log.frames[frameAt(log.frames, t)].file, ...view, cx: at.x, cy: at.y, press: at.press, cursor});
   }
   return out;

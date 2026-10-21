@@ -58,3 +58,15 @@ test('the default person\'s words are found as whole words only; the form lives 
   assert.equal(formHost({company: 'Institut Cardio Rhône'}), 'careers.institut-cardio-rhone.example');
   assert.equal(formHost({}), 'careers.employer.example');
 });
+
+test('the nurse persona has enough data for every screen the videos zoom into: a long job list, interviews, calendar events', () => {
+  const folder = path.join(media, 'personas', 'nurse-lyon');
+  const {jobs} = JSON.parse(fs.readFileSync(path.join(folder, 'jobs.json'), 'utf8'));
+  const interviews = JSON.parse(fs.readFileSync(path.join(folder, 'interviews.json'), 'utf8'));
+  assert.ok(jobs.filter(job => job.status !== 'dismissed').length >= 15, 'a list worth zooming into');
+  assert.ok(jobs.filter(job => job.next_interview).length >= 5, 'a calendar with events');
+  assert.ok(interviews.saved.length >= 5, 'an interview library with several rows');
+  assert.ok(Object.keys(interviews.records).length >= 1, 'a review to open');
+  const text = JSON.stringify([jobs, interviews]);
+  assert.deepEqual(leftWords(text, loadPersona(folder).forbid), [], 'no default-demo words in the new data');
+});
