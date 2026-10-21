@@ -52,3 +52,14 @@ test('a frame\'s width is read from its JPEG header', () => {
   const sof = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x08, 0xca, 0x0e, 0x10]);
   assert.equal(jpegWidth(sof), 3600);
 });
+
+test('the hero clips play at most 2x and every zoomed view stays on screen long enough to read (owner, 21 Oct 2026)', () => {
+  for (const [name, piece] of Object.entries(VIDEOS)) {
+    if (!piece.slide) continue;
+    assert.ok((piece.speed || 1) <= 2, `${name} plays at ${piece.speed}x`);
+    for (const step of piece.steps.filter(item => item.look)) {
+      const seen = step.hold / (piece.speed || 1);
+      assert.ok(seen >= 1.1, `${name}: ${step.look} is on screen ${seen.toFixed(1)} s`);
+    }
+  }
+});
