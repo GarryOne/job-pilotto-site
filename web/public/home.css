@@ -84,7 +84,8 @@ section.block.tight { padding-block: 56px; }
 .hero.split h1 .accent { font-size: 1.12em; line-height: .9; }
 .title-spark { font-size: .42em; margin-left: .08em; vertical-align: .9em; }
 .hero.split .hero-visual { position: relative; }
-.hero.split .hero-visual::before { content: ""; position: absolute; inset: -18% -10% -10% 0; z-index: -1; pointer-events: none;
+.hero.split .hero-visual::before { content: ""; position: absolute; inset: -18% 0 -10% 0;   /* never past the clips' sides: on a phone that widened the page */
+  z-index: -1; pointer-events: none;
   background: radial-gradient(ellipse at 55% 45%, rgb(244 173 38 / .16) 0%, rgb(142 114 50 / .07) 28%, transparent 62%); }
 .hero-spark { position: absolute; z-index: 25; }
 .hero-spark.one { top: 2%; right: 13%; font-size: 26px; }
@@ -156,6 +157,20 @@ section.block.tight { padding-block: 56px; }
   .journey-row .who { font-size: .54rem; letter-spacing: .08em; }
   .journey-row b { font-size: .74rem; }
   .journey-detail { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+/* Phones (owner, 21 Oct 2026: "vertical list on phones"): one step per line on a vertical rule, the open step's words right under it (journey.js moves them). */
+@media (max-width: 560px) {
+  .journey-row { --node: 40px; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .journey-row::before, .journey-row:last-of-type::before { left: calc(var(--node) / 2); right: auto; top: calc(var(--node) / 2); bottom: calc(var(--node) / 2); width: 1px; height: auto;
+    background: linear-gradient(180deg, var(--teal), var(--teal) 55%, var(--signal)); }
+  .journey-row button { grid-template-columns: var(--node) minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-items: center; column-gap: 14px; row-gap: 0; padding: 0; text-align: left; }
+  .journey-row .node { grid-row: 1 / 3; margin: 0; }
+  .journey-row .who { align-self: end; font-size: .6rem; letter-spacing: .12em; }
+  .journey-row b { align-self: start; font-size: .95rem; }
+  .journey-row .journey-detail { position: relative; margin: 10px 0 6px calc(var(--node) + 14px); padding-block: 4px 12px; border: 0; }
+  .journey-row .journey-detail .tile-icon { display: none; }
+  .journey-row .journey-detail h3 { font-size: 1.1rem; }
+  .journey-row .journey-detail .kicker { letter-spacing: .08em; }
 }
 .closing.glow-panel { position: relative; }
 .big-spark { position: absolute; right: 5%; top: -20px; font-size: 150px; color: rgb(255 178 36 / .16); z-index: -1; }

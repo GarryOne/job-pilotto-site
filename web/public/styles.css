@@ -74,8 +74,9 @@ body { counter-reset: gate; }
 @media (max-width: 800px) { .topnav .links, .topnav .gh { display: none; } .topnav .btn { margin-left: auto; } }
 /* Home: the nav is part of the dark hall (full width, even once scrolled). */
 .topnav.on-dark { background: #0d131a; color: #f1ede4; }
-/* Full-bleed bar without clip-path, so the Product menu can hang below it (body clips the sideways overflow) */
-.topnav.on-dark::before { content: ""; position: absolute; inset: 0 -100vmax; background: #0d131a; z-index: -1; }
+/* Full-bleed bar without clip-path, so the Product menu can hang below it. Painted by border-image outset, which never widens the page:
+   "inset: 0 -100vmax" made a phone's page 390 + 844 px wide, so it could be pinched out sideways (21 Oct 2026). */
+.topnav.on-dark::before { content: ""; position: absolute; inset: 0; z-index: -1; border-image: conic-gradient(#0d131a 0 0) fill 0 / / 0 100vmax; }
 .topnav.on-dark.scrolled { border-bottom-color: #1f2a36; }
 .topnav.on-dark .links, .topnav.on-dark .gh { color: #9aa7b5; }
 .topnav.on-dark .links a:hover, .topnav.on-dark .gh:hover { color: #fff; }
