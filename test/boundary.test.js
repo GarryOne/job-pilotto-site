@@ -32,7 +32,7 @@ test('admin, api and shared never import each other the wrong way', () => {
 });
 
 test('the public pages in web/ import nothing from the Worker folders', () => {
-  const wrong = files('web').flatMap(file => importsOf(file).map(t => `${relative(site, file)} imports ${relative(site, t)}`));
+  const wrong = files('web').flatMap(file => importsOf(file).filter(t => relative(site, t).split(sep)[0] !== 'web').map(t => `${relative(site, file)} imports ${relative(site, t)}`));   // a page's own modules (hero-carousel.js > hero-track.js) are fine
   assert.deepEqual(wrong, []);
 });
 

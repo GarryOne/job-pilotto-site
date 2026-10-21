@@ -94,7 +94,7 @@ test('the landing stays short: one hero, the numbers, three steps, control, one 
 
 test('the hero is a carousel of four clips: the first loads, the rest wait; each has a poster and a phone copy; reduced motion keeps a still', () => {
   const html = read('index.html');
-  const carousel = html.match(/<div class="hero-clips"[\s\S]*?<\/div>\s*<\/div>\s*<\/figure>/)[0];
+  const carousel = html.match(/<div class="hero-clips"[\s\S]*?<div class="dots"[\s\S]*?<\/div>/)[0];
   const clips = [...carousel.matchAll(/<video class="slide[^>]*>[\s\S]*?<\/video>/g)].map(match => match[0]);
   assert.equal(clips.length, 4);
   clips.forEach((clip, i) => {
@@ -104,6 +104,34 @@ test('the hero is a carousel of four clips: the first loads, the rest wait; each
     assert.doesNotMatch(clip, /autoplay|loop/, `clip ${i + 1}: the script plays and advances it`);
   });
   assert.equal((carousel.match(/<button /g) || []).length, 4, 'one dot per clip');
-  assert.match(html, /<script src="hero-carousel\.js" defer>/);
+  assert.match(html, /<script type="module" src="hero-carousel\.js">/);
   assert.match(read('hero-carousel.js'), /prefers-reduced-motion: reduce/);
+});
+
+test('the carousel track eases: fast as a slide comes in, slow while it is centred, fast as it leaves, one continuous motion', async () => {
+  const {PERIOD, offset, position, timeFor} = await import(new URL('hero-track.js', dir));
+  const at = u => position(u * PERIOD), speed = u => (at(u + 0.001) - at(u)) / 0.001;
+  for (let k = 0; k < 4; k++) assert.ok(Math.abs(at(k) - k) < 1e-9, `slide ${k} is centred at the start of its period`);
+  assert.ok(speed(0.5) > 6 * speed(0.02), 'the middle of a move is much faster than the centred rest');
+  assert.ok(speed(0.02) > 0 && speed(0.98) > 0, 'never stops dead: a centred slide still drifts');
+  for (let u = 0; u < 3; u += 0.01) assert.ok(at(u + 0.01) >= at(u), 'never moves backwards');
+  assert.equal(offset(0, 0, 4), 0);
+  assert.equal(offset(3, 0, 4), -1, 'the last slide waits on the left of the first');
+  assert.equal(offset(1, 3.6, 4), 1.4, 'wraps from the fourth slide to the first');
+  assert.ok(Math.abs(position(timeFor(2, 0, 4) + 0.4 * PERIOD) - 2) < 1e-9, 'a dot click glides to its slide and lands centred');
+  assert.match(read('hero-carousel.js'), /prefers-reduced-motion: reduce/);
+});
+
+test('the coverflow: the centred clip is full size and opaque, neighbours smaller and dimmer, the ones beyond fade out', async () => {
+  const {place} = await import(new URL('hero-track.js', dir));
+  const centre = place(0), next = place(1), far = place(1.6), gone = place(2);
+  assert.deepEqual([centre.x, centre.scale, centre.opacity], [0, 1, 1]);
+  assert.ok(next.scale < 0.75 && next.opacity < 0.7 && next.x > 0, 'a neighbour is smaller, dimmer and to the side');
+  assert.equal(place(-1).x, -next.x, 'the previous one mirrors the next');
+  assert.ok(far.opacity < 0.01 && gone.opacity === 0, 'beyond the neighbours nothing shows');
+  const phone = place(0.5, 0, true);
+  assert.deepEqual([phone.x, phone.scale], [0, 1], 'a phone never shows two slides side by side');
+  assert.ok(place(0, 0, true).opacity === 1 && place(1, 0, true).opacity === 0 && phone.opacity > 0 && phone.opacity < 1, 'a phone crossfades');
+  assert.ok(centre.z > next.z && next.z > far.z, 'the centre is in front');
+  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
 });
