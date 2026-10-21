@@ -2,6 +2,7 @@
 // POST /api/waitlist which keeps Pro early-access
 // sign-ups in Cloudflare KV (binding WAITLIST). List them: npx wrangler@4 kv key list --binding WAITLIST --remote
 // Optional: with TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID set as secrets, each new sign-up is also sent to Telegram.
+import {mediaRange} from './range.js';
 import {videoIngest, videoView} from '../admin/lab-video.js';
 import * as sentryAlert from '../admin/sentry-alert.js';
 import {replaysIngest} from '../admin/applying-replays.js';
@@ -259,6 +260,7 @@ async function route(request, env, ctx) {
   if (pathname === '/api/linkedin/start') return linkedin.start(request, env);
   if (pathname === linkedin.CALLBACK) return linkedin.callback(request, env);
   if (pathname === '/api/linkedin/token') return linkedin.collect(request, env);
+  if (/^\/(old\/)?(media|images\/app)\//.test(pathname)) return mediaRange(request, env);   // videos need 206 for Safari (worker/range.js)
   return env.ASSETS.fetch(request);
 }
 
