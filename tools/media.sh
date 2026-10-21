@@ -8,6 +8,7 @@
 # MEDIA_REF=<branch> runs this repo's tools from a branch (to try a change before it is merged). Runs in its own worktree (default ~/job-pilotto-site-media-run, MEDIA_RUN_DIR) so no checkout changes branch. Demo data only, no AI (the director's
 # plans are committed), nothing of the owner's app. Guard: tests/test_media_refresh.py.
 set -euo pipefail
+trap 'echo "media: FAILED at line $LINENO (see the lines above)" >&2' ERR   # a silent stop is never success
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cache="$HOME/.cache/jobadabra-media"; mkdir -p "$cache"
 run="${MEDIA_RUN_DIR:-$HOME/job-pilotto-site-media-run}"

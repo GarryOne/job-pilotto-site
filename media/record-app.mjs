@@ -26,7 +26,7 @@ export async function launchApp({persona = {folder: path.join(desktop, 'demo')},
     args: [desktop],
     env: {...process.env, JOB_PILOTTO_DEMO: '1', JOB_PILOTTO_USER_DATA: data, JOB_PILOTTO_CONFIG_DIR: data, JOB_PILOTTO_DATA_DIR: data, JOB_PILOTTO_DEMO_DIR: data,
       JOB_PILOTTO_THEME: 'dark', JOB_PILOTTO_E2E: '1', JOB_PILOTTO_E2E_HIDDEN: '1', JOB_PILOTTO_NO_DOTENV: '1', TZ: persona.tz || 'Europe/Zurich'},
-    timeout: 90000,
+    timeout: 240000,   // a busy Mac (load 60+, 21 Oct 2026) took over 90 s to start the window
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
