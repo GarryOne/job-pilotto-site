@@ -5,7 +5,7 @@
 //   node media/media.mjs --persona <folder>             another search profile (default: personas/nurse-lyon): files laid over desktop/demo + media.json
 //   node media/media.mjs --keep                         keep the frames and logs (<out>/.work) for the director (direct.mjs) or a look
 // Zooms and captions the AI director chose are in plans/<piece>.json (direct.mjs); without one, the camera frames each hold's `look`.
-// CI: .github/workflows/product-media.yml runs it on main after a screen, extension or demo change. Guards: desktop/test/media-*.test.js.
+// Run by hand with tools/media.sh (the one local command; CI never records, owner 21 Oct 2026). Guards: desktop/test/media-*.test.js.
 import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +33,7 @@ async function makeVideo(name, persona, work, out) {
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));
   const scale = jpegWidth(first) / log.viewport.w;
-  const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS), scale, width: piece.width, height: piece.height, fps: FPS, ring: RING,
+  const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS, piece.speed || 1), scale, width: piece.width, height: piece.height, fps: FPS, ring: RING,
     out: path.join(dir, 'master.mp4'), ffmpeg: 'ffmpeg'};
   fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(job));
   const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), path.join(dir, 'job.json')], {stdio: 'inherit', timeout: 15 * 60000});

@@ -1,4 +1,4 @@
-"""product-media.yml + tools/media-refresh.sh: the site's media re-record when the public screens change, and only the files the site shows are refreshed."""
+"""tools/media.sh + tools/media-refresh.sh: the site's media are made by one local command, and only the files the site shows are refreshed."""
 import os
 import pathlib
 import re
@@ -8,32 +8,52 @@ import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-FLOW = (ROOT / '.github/workflows/product-media.yml').read_text()
-CODE = re.sub(r'(?m)^\s*#.*$', '', FLOW)
+MEDIA = (ROOT / 'tools/media.sh').read_text()
+MEDIA_CODE = re.sub(r'(?m)^\s*#.*$', '', MEDIA)
 
 
 def git(cwd, *args):
     return subprocess.run(['git', *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
 
 
-class MediaWorkflowTests(unittest.TestCase):
-    def test_the_mac_job_runs_only_when_the_cheap_check_says_so(self):
-        self.assertIn("if: needs.watch.outputs.record == 'yes'", CODE)
-        self.assertIn('runs-on: ubuntu-24.04', CODE.split('media:')[0])
-        self.assertIn('tools/media-paths.txt', CODE)
-        self.assertIn("--ref '${{ needs.watch.outputs.sha }}'", CODE)   # the commit the check saw, not a newer main
+class LocalMediaCommandTests(unittest.TestCase):
+    """The site's media are made by ONE local command (owner, 21 Oct 2026: "Local only, one command"); CI never records them."""
+
+    def test_no_workflow_that_records_media_runs_by_itself(self):
+        for flow in sorted((ROOT / '.github/workflows').glob('*.yml')):
+            code = re.sub(r'(?m)^\s*#.*$', '', flow.read_text())
+            if 'media.mjs' in code or 'media-refresh' in code or 'tools/media.sh' in code:
+                self.assertNotRegex(code, r'(?m)^\s*(schedule|push|pull_request):', f'{flow.name} records media from CI')
+
+    def test_the_refresh_pr_title_has_a_tag_for_the_description_check(self):
+        # site#31 was red on "PR description laid out": a title needs an "[xx] " tag (tools/pr-body-check.py)
+        self.assertIn('--title "[media] ', (ROOT / 'tools/media-refresh.sh').read_text())
+
+    def test_the_old_ci_recorder_is_gone(self):
+        self.assertFalse((ROOT / '.github/workflows/product-media.yml').exists())
+
+    def test_the_command_records_checks_and_opens_the_refresh_pr(self):
+        self.assertIn('media/media.mjs', MEDIA_CODE)
+        self.assertIn('tools/media-refresh.sh', MEDIA_CODE)
+        self.assertIn('tools/overlay.sh', MEDIA_CODE)           # the public tree at origin/main, not a stale one
+        self.assertIn('heavy-lock.sh', MEDIA_CODE)              # one heavy run at a time on this Mac
+        self.assertIn('--background', MEDIA_CODE)
 
     def test_webp_comes_from_ffmpeg_full_and_whole_encoder_names(self):
-        self.assertIn('brew install ffmpeg-full', CODE)
-        self.assertIn("grep -qE ' libwebp '", CODE)
+        self.assertIn('brew install ffmpeg-full', MEDIA)
+        self.assertIn("grep -qE \" $encoder \"", MEDIA_CODE)
 
-    def test_the_record_hash_works_on_the_mac_runner(self):
-        # run 39458753406: macos-14 has no sha256sum; the refresh step died with exit 127 after a good recording
+    def test_the_record_hash_works_without_sha256sum(self):
         self.assertIn('shasum -a 256', (ROOT / 'tools/public-watch.sh').read_text())
 
-    def test_no_ai_key_in_the_run(self):
-        self.assertNotIn('ANTHROPIC', CODE)
-        self.assertNotIn('direct.mjs', CODE)
+    def test_no_ai_in_the_command(self):
+        self.assertNotIn('ANTHROPIC', MEDIA_CODE)
+        self.assertNotIn('direct.mjs', MEDIA_CODE)
+        self.assertNotIn('claude', MEDIA_CODE)
+
+    def test_the_command_never_touches_the_owners_app(self):
+        self.assertNotIn('Application Support', MEDIA_CODE)
+        self.assertNotIn('security find', MEDIA_CODE)
 
     def test_every_watched_path_exists_in_the_public_tree_names(self):
         paths = (ROOT / 'tools/media-paths.txt').read_text().split()

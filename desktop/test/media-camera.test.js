@@ -9,13 +9,37 @@ const box = {x: 250, y: 500, width: 1200, height: 540};
 const log = {viewport, frames: [0, 0.5, 1, 2, 3, 4, 5].map((t, i) => ({t, file: `f${i}.jpg`})),
   events: [{t: 0.2, type: 'hold', box}, {t: 2.5, type: 'click', box: {x: 10, y: 100, width: 100, height: 30}}, {t: 3.2, type: 'press', box: {x: 10, y: 100, width: 100, height: 30}}]};
 
-test('a hold zooms onto its box after a look at the whole screen; a click pulls back to the whole screen', () => {
+test('a hold zooms onto its box; a click zooms onto its target and the camera never pulls back to the whole screen between steps', () => {
   const keys = cameraKeys(log);
-  const zoomed = keys.find(key => key.z > 1);
-  assert.ok(zoomed && zoomed.z <= MAX_ZOOM, 'the hold zooms, within the cap');
-  assert.equal(cameraAt(keys, 0.3, viewport).w, viewport.w, 'the whole screen first');
+  assert.ok(keys.some(key => key.z > 1 && key.z <= MAX_ZOOM), 'zoomed, within the cap');
+  assert.equal(cameraAt(keys, 0, viewport).w, viewport.w, 'the whole screen first, for context');
   assert.ok(cameraAt(keys, 2, viewport).w < viewport.w, 'zoomed during the hold');
-  assert.equal(cameraAt(keys, 3.6, viewport).w, viewport.w, 'pulled back for the click');
+  const click = {x: 10, y: 100, width: 100, height: 30};
+  const view = cameraAt(keys, 3.2, viewport);
+  assert.ok(view.w < viewport.w && view.x === 0 && click.x >= view.x && click.x + click.width <= view.x + view.w, 'zoomed on the click, in the left corner');
+  for (let t = 0.8; t < 5; t += 0.1) assert.ok(cameraAt(keys, t, viewport).w < viewport.w, `no full screen at ${t.toFixed(1)} s`);
+});
+
+test('a click in a corner puts the camera in that corner; a later hold glides to its own box after the click was seen', () => {
+  const events = [{t: 1, type: 'click', box: {x: 1700, y: 1050, width: 80, height: 40}}, {t: 1.7, type: 'press', box: {x: 1700, y: 1050, width: 80, height: 40}},
+    {t: 2, type: 'hold', box: {x: 50, y: 100, width: 400, height: 300}, zoom: 2}];
+  const keys = cameraKeys({viewport, events});
+  const atClick = cameraAt(keys, 1.7, viewport);
+  assert.ok(atClick.x + atClick.w === viewport.w && atClick.y + atClick.h === viewport.h, 'bottom-right corner');
+  const later = cameraAt(keys, 4, viewport);
+  assert.ok(later.x === 0 && later.y < 200, 'then the top-left box');
+  assert.ok(cameraAt(keys, 1.8, viewport).x >= viewport.w / 2, 'still on the click just after the press');
+});
+
+test('a box wider than the zoomed view is framed from its left edge', () => {
+  const wide = {x: 200, y: 600, width: 1500, height: 60};
+  const view = cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', box: wide, zoom: 1.5}]}), 3, viewport);
+  assert.ok(Math.abs(view.x - wide.x) < 1, `the view starts at the box's left edge (${view.x})`);
+});
+
+test('a sped-up clip stretches camera moves in recorded time, so on screen they last as long', () => {
+  const slow = cameraKeys({viewport, events: [{t: 5, type: 'hold', box}]}).at(-1).t, fast = cameraKeys({viewport, events: [{t: 5, type: 'hold', box}], speed: 3}).at(-1).t;
+  assert.ok(fast > slow);
 });
 
 test('the view stays inside the page at every moment, and a hold may carry its own zoom (the director\'s plan)', () => {
@@ -26,7 +50,7 @@ test('the view stays inside the page at every moment, and a hold may carry its o
   }
   const own = cameraKeys({viewport, events: [{t: 0, type: 'hold', box, zoom: 1.2}]});
   assert.equal(own.at(-1).z, 1.2);
-  const none = cameraKeys({viewport, events: [{t: 0, type: 'hold', box, zoom: 1}]});
+  const none = cameraKeys({viewport, events: [{t: 1, type: 'hold', box, zoom: 1}]});
   assert.equal(none.at(-1).z, 1, 'zoom 1 keeps the whole screen');
 });
 

@@ -34,8 +34,8 @@ test('the demo folder is a persona; a folder with a real key or no profile is re
 
 test('the director\'s plan sets a zoom per look and the manifest\'s words; no plan keeps the scene', () => {
   assert.equal(withPlan(VIDEOS.hero, null), VIDEOS.hero);
-  const planned = withPlan(VIDEOS.hero, {zooms: {'#jobs-body': 1.3}, caption: 'Jobs that fit you'});
-  assert.equal(planned.steps.find(step => step.look === '#jobs-body').zoom, 1.3);
+  const planned = withPlan(VIDEOS.hero, {zooms: {'section.card.is-lit': 1.3}, caption: 'Jobs that fit you'});
+  assert.equal(planned.steps.find(step => step.look === 'section.card.is-lit').zoom, 1.3);
   assert.equal(planned.caption, 'Jobs that fit you');
   assert.equal(planOf('no-such-piece', os.tmpdir()), null);
 });
