@@ -8,8 +8,6 @@ ref="${2:-main}"
 rm -rf "$out"
 git clone --quiet --depth 1 --branch "$ref" "${PUBLIC_REPO_URL:-https://github.com/GarryOne/job-pilotto.git}" "$out"
 rsync -a --exclude '.git' --exclude '.overlay/' --exclude 'node_modules/' --exclude '.gitignore' --exclude 'README.md' --exclude 'CLAUDE.md' --exclude 'AGENTS.md' --exclude '.claude/' --exclude '.public-*' "$here"/ "$out"/
-# the public repo still names site/src/x.js and site/public: keep them readable (tools/legacy-paths.sh)
-"$here/tools/legacy-paths.sh" "$out"
 # tests that list files with `git ls-files` must see this repo's files too
 (cd "$out" && git ls-files -o --exclude-standard -z | xargs -0 -n 500 git add -N --)
 echo "overlay: $(git -C "$out" rev-parse --short HEAD) of job-pilotto/$ref + $(git -C "$here" rev-parse --short HEAD 2>/dev/null || echo local) of job-pilotto-site -> $out"

@@ -3,7 +3,7 @@
 //   api    -> shared                (what the installed apps call; their URLs never change)
 //   shared -> shared                (used by both sides, so it can use neither)
 //   workers -> every folder         (the router, the cron and the queue: workers/www)
-// A file straight in site/src is refused: the old flat folder must not grow back.
+// A folder site/ in the joined tree is refused: the old flat layout must not grow back.
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {dirname, join, relative, resolve, sep} from 'node:path';
@@ -36,8 +36,6 @@ test('the public pages in web/ import nothing from the Worker folders', () => {
   assert.deepEqual(wrong, []);
 });
 
-test('every module sits in a folder: no real file is left in the old site/src', () => {
-  // (the joined tree keeps site/src as links to the new folders for the public repo's tests: tools/legacy-paths.sh)
-  const real = existsSync(join(site, 'site', 'src')) ? readdirSync(join(site, 'site', 'src'), {withFileTypes: true}).filter(e => !e.isSymbolicLink()).map(e => e.name) : [];
-  assert.deepEqual(real, [], 'put a new file in admin/, api/, shared/ or workers/www, never in site/src');
+test('no site/ folder is left in the joined tree: the website sits at the top level', () => {
+  assert.equal(existsSync(join(site, 'site', 'src')), false, 'put a new file in admin/, api/, shared/ or workers/www, never in site/src');
 });

@@ -10,10 +10,9 @@ One Worker (`www`, `workers/www/wrangler.toml`) serves the pages, `/admin` and t
 | `shared/` | used by both: auth, guard, mail, free AI, the data behind the pages | `shared/` only |
 | `workers/www/` | `index.js`: the router, cron and queue; the only file that imports from every folder | all |
 
-`test/` mirrors them (`test/admin`, `test/api`, `test/shared`, `test/web`, `test/workers`); `test/boundary.test.js` fails when a file imports the wrong way, or a module is left in the old `site/src`.
+`test/` mirrors them (`test/admin`, `test/api`, `test/shared`, `test/web`, `test/workers`); `test/boundary.test.js` fails when a file imports the wrong way, or a module is left outside its folder.
 The rest of the repo: `db/migrations/` (D1), `workers/{hosted-runner,ready-runner}` (the two container Workers), `media/` (the product-media recorder), `preview/` (the next website, reviewed before it goes live), `jobs/` (scheduled jobs), `tools/` (the dev kit).
 A page and its data are two files: the data in `shared/`, the page in `admin/` (e.g. `shared/telemetry.js`, `api/telemetry.js`, `admin/telemetry.js`).
-The joined tree (`tools/overlay.sh`) keeps the old `site/...` paths as links to the new places (`tools/legacy-paths.sh`), so the public repo's tests that still name them run unchanged.
 
 `workers/www/index.js` also serves `POST /api/waitlist`, which keeps Pro early-access sign-ups in Cloudflare KV.
 
