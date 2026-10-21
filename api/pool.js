@@ -32,6 +32,7 @@ export const boardOf = (board, url, host) => {
 // What a user's browser met on a site that refused the engine (src/sources/refused_reads.py shared; owner, 20 Oct 2026: one install teaches all):
 // a fixed word and, for a page that opened, its job count and kinds of work. Anything else is dropped.
 const OUTCOMES = ['opened', 'refused', 'bot', 'login'];
+const READ_STEPS = ['engine', 'download', 'tab'];   // the ladder step that read the site (src/sources/refused_reads.py STEPS): shared so other installs start there
 export const ROUTES = ['jobposting', 'api', 'main', 'browser_only', 'refused'];   // how a site's posting text is read (src/sources/read_routes.py)
 export const routeOf = route => ROUTES.includes(route) ? JSON.stringify(route) : null;
 export const readOf = read => {
@@ -39,7 +40,7 @@ export const readOf = read => {
   const jobs = Number.isInteger(read.jobs) && read.jobs >= 0 && read.jobs <= 100000 ? read.jobs : null;
   const kinds = read.kinds && typeof read.kinds === 'object' ? Object.fromEntries(Object.entries(read.kinds)
     .filter(([kind, share]) => ROLES.includes(kind) && typeof share === 'number' && share >= 0 && share <= 1)) : {};
-  return JSON.stringify({outcome: read.outcome, ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
+  return JSON.stringify({outcome: read.outcome, ...(READ_STEPS.includes(read.step) ? {step: read.step} : {}), ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
     ...(read.outcome === 'opened' && Object.keys(kinds).length ? {kinds} : {})});
 };
 const DEAD_OUTCOMES = ['no_feed', 'refused', 'unreachable'], OUTCOME_MIN_INSTALLS = 3;   // why a dead end has no feed; the last two are served after this many installs agree

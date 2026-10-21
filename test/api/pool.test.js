@@ -227,6 +227,15 @@ test('a browser read of a refused site: fixed shape in, served after one install
   assert.ok(!JSON.stringify(served).includes('why') && !JSON.stringify(served).includes('nonsense'), 'only the fixed shape goes out');
 });
 
+test('a browser read keeps the ladder step that opened it (engine, download, tab) and drops any other word (owner, 21 Oct 2026: the step is shared so other installs start there)', async () => {
+  const {agreedSites} = await import('../../api/employers.js');
+  const env = setup();
+  await post(env, {...body('install-a', []), v: 2, sites: [{host: 'jobs.coop.ch', kind: 'browser_read', read: {outcome: 'opened', jobs: 3, step: 'tab'}},
+    {host: 'jobs.manor.ch', kind: 'browser_read', read: {outcome: 'bot', step: 'tab'}}, {host: 'jobs.spar.ch', kind: 'browser_read', read: {outcome: 'refused', step: 'hacked'}}]});
+  const served = Object.fromEntries((await agreedSites(env)).filter(fact => fact.kind === 'browser_read').map(fact => [fact.host, fact.read]));
+  assert.deepEqual([served['jobs.coop.ch'].step, served['jobs.manor.ch'].step, served['jobs.spar.ch'].step], ['tab', 'tab', undefined]);
+});
+
 test('how a site is read: five fixed words in, a positive route served after one install, refused or browser-only after three, one per host', async () => {
   const {agreedSites} = await import('../../api/employers.js');
   const env = setup();
