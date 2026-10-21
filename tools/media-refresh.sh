@@ -8,6 +8,10 @@ set_dir="$1"; tree="$2"; sha="$3"; push=yes
 [ "${4:-}" = --no-push ] && push=no
 dest=web/public/media
 [ -f "$set_dir/manifest.json" ] || { echo "media-refresh: $set_dir has no manifest.json: not a media set"; exit 1; }
+# The refresh PR is ONE commit on the newest origin/main, whatever commit the recording ran from: a refresh merged meanwhile (same files) would
+# otherwise leave the new PR CONFLICTING (site#33, 21 Oct 2026). The files are copied after this, so the set always wins.
+git fetch -q origin main 2>/dev/null || true
+git checkout -q -f -B media-refresh "$(git rev-parse --verify -q origin/main || echo HEAD)"
 updated=(); missing=()
 for file in "$dest"/*; do
   name="$(basename "$file")"
@@ -22,8 +26,6 @@ tools/public-watch.sh "$tree" media $(cat tools/media-paths.txt) >/dev/null
 echo "media-refresh: ${#updated[@]} refreshed: ${updated[*]:-none}"
 [ ${#missing[@]} -eq 0 ] || echo "media-refresh: the site shows files this set did not make (kept as they were): ${missing[*]}"
 [ ${#extra[@]} -eq 0 ] || echo "media-refresh: made but not on the site (add one by hand to show it): ${extra[*]}"
-# the refresh PR is always one commit on origin/main, whatever commit the recording ran from
-git checkout -q -B media-refresh "$(git rev-parse --verify -q origin/main || echo HEAD)"
 git add "$dest"
 [ ! -f .public-media ] || git add .public-media
 if git diff --cached --quiet; then echo "media-refresh: nothing changed"; exit 0; fi
