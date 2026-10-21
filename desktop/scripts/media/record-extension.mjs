@@ -30,6 +30,7 @@ export async function recordExtensionVideo({persona, piece, dir}) {
     const host = formHost(persona.job);
     await context.route(`https://${host}/**`, route => route.fulfill({status: 200, contentType: 'text/html', body: formHtml(template, persona.job)}));
     await page.setViewportSize(VIEW);
+    await page.emulateMedia({colorScheme: 'dark'});   // Playwright emulates light unless told: the form (form.html) and the extension's panel both follow it
     const cdp = await context.newCDPSession(page);
     await cdp.send('Emulation.setDeviceMetricsOverride', {width: VIEW.width, height: VIEW.height, deviceScaleFactor: 2, mobile: false});
     await page.goto(`https://${host}/jobs/apply`);

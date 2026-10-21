@@ -91,3 +91,19 @@ test('the landing stays short: one hero, the numbers, three steps, control, one 
     assert.ok(existsSync(new URL(pageOf(href[1]), dir)), `link to missing page ${href[1]}`);
   }
 });
+
+test('the hero is a carousel of four clips: the first loads, the rest wait; each has a poster and a phone copy; reduced motion keeps a still', () => {
+  const html = read('index.html');
+  const carousel = html.match(/<div class="carousel"[\s\S]*?<\/div>\s*<\/div>\s*<\/figure>/)[0];
+  const clips = [...carousel.matchAll(/<video class="slide[^>]*>[\s\S]*?<\/video>/g)].map(match => match[0]);
+  assert.equal(clips.length, 4);
+  clips.forEach((clip, i) => {
+    assert.match(clip, new RegExp(`preload="${i === 0 ? 'auto' : 'none'}"`), `clip ${i + 1} preload`);
+    assert.match(clip, /poster="\/media\/[^"]+-poster\.jpg"/, `clip ${i + 1} poster`);
+    assert.match(clip, /-720\.mp4" type="video\/mp4" media="\(max-width: 720px\)"/, `clip ${i + 1} phone copy`);
+    assert.doesNotMatch(clip, /autoplay|loop/, `clip ${i + 1}: the script plays and advances it`);
+  });
+  assert.equal((carousel.match(/<button /g) || []).length, 4, 'one dot per clip');
+  assert.match(html, /<script src="hero-carousel\.js" defer>/);
+  assert.match(read('hero-carousel.js'), /prefers-reduced-motion: reduce/);
+});

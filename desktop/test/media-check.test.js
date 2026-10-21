@@ -33,3 +33,20 @@ test('a run stops before recording when ffmpeg lacks an encoder the pieces need'
   assert.deepEqual(missingEncoders(list.replace('libwebp', 'png')), ['libwebp']);
   assert.deepEqual(missingEncoders(list.replace(' libwebp ', ' libwebp_anim ')), ['libwebp'], 'the animated-only encoder is not enough');
 });
+
+test('every piece in scenes.mjs is checked for a light picture, whatever it records', async () => {
+  const {VIDEOS} = await import('../scripts/media/scenes.mjs');
+  const frames = Array.from({length: 100}, (_, i) => ({t: i / 10}));
+  for (const [name, piece] of Object.entries(VIDEOS)) {
+    const log = {frames, text: '', filled: ['first_name', 'last_name', 'email', 'resume', 'permit', 'privacy']};
+    assert.deepEqual(pieceProblems({name, source: piece.source, log, posterBrightness: 0.1}), [], name);
+    assert.match(pieceProblems({name, source: piece.source, log, posterBrightness: 0.8}).join(), /not dark/, `${name}: a light picture passed`);
+  }
+});
+
+test('the fictional form and its recorder are dark', async () => {
+  const fs = await import('node:fs');
+  const read = file => fs.readFileSync(new URL(`../scripts/media/${file}`, import.meta.url), 'utf8');
+  assert.match(read('form.html'), /prefers-color-scheme: dark/);
+  assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'\}\)/);
+});

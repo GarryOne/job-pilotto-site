@@ -22,6 +22,16 @@
   input[type=file] { font-size: 13px; }
   .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #3e4c59; font-weight: 400; }
   button { margin-top: 10px; background: #0f766e; color: #fff; border: 0; border-radius: 8px; padding: 11px 22px; font: 600 14px/1 inherit; }
+  /* Dark like the app and the site (the videos are dark only): the same page, the recording tells the browser it is dark. */
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; }
+    body { background: #0b1220; color: #e6edf5; }
+    header { background: #111c2b; border-bottom-color: #263548; }
+    header span, .sub { color: #94a3b8; }
+    input[type=text], input[type=email], input[type=tel], input[type=url], select, textarea { background: #111c2b; border-color: #2d3d52; color: #e6edf5; }
+    .check { color: #b6c3d3; }
+    label em { color: #f87171; }
+  }
 </style></head>
 <body>
 <header><div class="logo">✦</div><div><b>{{company}}</b><br><span>Careers · {{city}}</span></div></header>

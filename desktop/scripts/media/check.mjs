@@ -20,19 +20,19 @@ export const leftWords = (text, words = []) => words.filter(word => new RegExp(`
 export const MUST_FILL = ['first_name', 'last_name', 'email', 'resume', 'permit', 'privacy'];
 export const missingFills = filled => MUST_FILL.filter(field => !(filled || []).includes(field));
 
-// The app's screens are dark (the site is dark-only): a mean brightness over this is the light theme or a blank window.
+// Every picture is dark (the site is dark-only; the app, the fictional form and the extension's panel all run dark): a mean brightness over this is the light theme or a blank window.
 export const DARK_MAX = 0.35;
 
 // -> list of problems (empty = fine) for one recorded piece.
-export function pieceProblems({name, source, log, posterBrightness, forbid = []}) {
+export function pieceProblems({name, source, log, posterBrightness, forbid = [], quiet = false}) {
   const problems = [];
   const left = leftWords(log.text, forbid);
   if (left.length) problems.push(`${name}: the default demo person shows through: ${left.join(', ')}`);
   const emails = realEmails(log.text);
   if (emails.length) problems.push(`${name}: an e-mail address that may be real is on screen: ${emails.join(', ')}`);
-  if (source === 'app' && posterBrightness > DARK_MAX) problems.push(`${name}: the window is not dark (brightness ${posterBrightness.toFixed(2)})`);
+  if (posterBrightness > DARK_MAX) problems.push(`${name}: the window is not dark (brightness ${posterBrightness.toFixed(2)})`);
   if (source === 'extension') { const missing = missingFills(log.filled); if (missing.length) problems.push(`${name}: the extension did not fill ${missing.join(', ')}`); }
   const seconds = log.frames.at(-1)?.t || 0;
-  if (log.frames.length < seconds * 5) problems.push(`${name}: only ${log.frames.length} frames in ${seconds.toFixed(1)} s (the capture stalled)`);
+  if (quiet ? log.frames.length < 2 : log.frames.length < seconds * 5) problems.push(`${name}: only ${log.frames.length} frames in ${seconds.toFixed(1)} s (the capture stalled)`);   // a quiet piece (a still page that changes only on a click) sends a frame per change, so it needs two
   return problems;
 }

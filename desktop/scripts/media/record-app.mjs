@@ -15,8 +15,12 @@ const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.j
 export const WINDOW = {width: 1440, height: 900};   // 16:10, the site's hero shape; the app's own zoom lays it out wider, Retina capture is 2x
 
 // The app on a temp copy of the persona (persona-copy.mjs); demo mode reads its data from there too (JOB_PILOTTO_DEMO_DIR, lib/demo.js).
-export async function launchApp({persona = {folder: path.join(desktop, 'demo')}} = {}) {
+export async function launchApp({persona = {folder: path.join(desktop, 'demo')}, settings = null} = {}) {
   const data = personaCopy(persona, {demo: path.join(desktop, 'demo')});
+  if (settings) {   // a piece may start the app in another state (the first-run wizard: setupDone false), on the temp copy only
+    const file = path.join(data, 'settings.json');
+    fs.writeFileSync(file, JSON.stringify({...JSON.parse(fs.readFileSync(file, 'utf8')), ...settings}, null, 1));
+  }
   const app = await electron.launch({
     executablePath: path.join(desktop, 'node_modules', '.bin', 'electron'),   // a Mac (here or the CI runner): the site shows the Mac app
     args: [desktop],
@@ -62,7 +66,7 @@ async function step(page, item, log) {
 
 // A video piece: frames + log.json in `dir`. -> the log.
 export async function recordAppVideo({persona, piece, dir}) {
-  const {page, close} = await launchApp({persona});
+  const {page, close} = await launchApp({persona, settings: piece.settings});
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock);
