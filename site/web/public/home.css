@@ -1,12 +1,13 @@
 /* The short landing (owner, 20 Oct 2026): hero beside its video, the live numbers, three steps, "you stay in control", the closing download.
    Builds on styles.css tokens and parts (.hero, .btn, .mac-window, section.block); only what those lack lives here. Guarded by site/test/landing.test.js. */
 
-/* Hero: words left, the app right (stacked on phones). */
-.hero.split { grid-template-columns: minmax(0, 4.4fr) minmax(0, 8fr); justify-items: stretch; align-items: center; text-align: left; gap: 44px; padding-block: 72px 64px; }
-.hero.split .hero-copy { justify-items: start; gap: 22px; }
-.hero.split h1 { font-size: clamp(2.3rem, 3.8vw, 3.4rem); }
+/* Hero: the words on top, the clips as wide as the page below. */
+.hero.split { grid-template-columns: minmax(0, 1fr); justify-items: stretch; align-items: start; text-align: left; gap: 32px; padding-block: 36px 48px; }   /* words on top, the clips as wide as the page below */
+.hero.split .hero-copy { justify-items: start; gap: 16px; }
+.hero.split h1 { font-size: clamp(2.2rem, 4vw, 3.3rem); max-width: 22ch; }
+.hero.split .lede { max-width: 56ch; }
 .hero.split .eyebrow { justify-content: flex-start; }
-.hero.split .hero-visual { max-width: none; }
+.hero.split .hero-visual { max-width: none; width: 100%; }
 .hero.split .demo { aspect-ratio: 1600 / 985; height: auto; object-fit: cover; object-position: left top; }   /* the hero's own shape, not the old demo video's */
 
 /* The hero carousel: four clips stacked, the one that plays fades in over the last; dots under the picture. */
@@ -25,8 +26,6 @@
 /* Mac and Windows: two identical buttons, side by side; full width on phones. */
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 12px; }
 .downloads .btn svg { flex: none; }
-.hero.split .downloads { display: flex; flex-wrap: wrap; }   /* two buttons side by side when there is room, else stacked */
-.hero.split .downloads .btn { white-space: nowrap; }
 @media (max-width: 520px) { .downloads { grid-template-columns: minmax(0, 1fr); width: 100%; } }
 .hero .downloads-note { font: 400 .76rem var(--mono); color: #8a97a6; }
 
