@@ -7,7 +7,7 @@ import {familyOfInstall} from '../shared/engines.js';
 import {COUNTRIES, METROS, FAMILIES} from '../shared/pool-tags.js';
 import {REGIONS, ROLES} from '../shared/pool-labels.js';
 
-const SYSTEMS = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'teamtailor', 'join', 'workday', 'umantis', 'successfactors', 'oracle', 'phenom', 'careers', 'amazon', 'netflix', 'jobsch'];
+const SYSTEMS = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'teamtailor', 'join', 'workday', 'umantis', 'successfactors', 'oracle', 'phenom', 'eightfold', 'careers', 'amazon', 'netflix', 'jobsch'];
 // A learned page layout, checked and in one canonical form (identical layouts from several installs are counted together): a CSS selector of
 // plain selector characters, small line numbers, and how to reach the next page. Anything else, or any other field, is dropped. The same
 // check runs in the engine before a served layout is used (src/sources/visits.py layout_ok).
