@@ -4,6 +4,7 @@ import {FAMILIES, familyLinks, familyParam} from '../shared/engines.js';
 import {viewer} from '../shared/auth.js';
 import {section as nightly} from '../shared/scouting.js';
 import {section as closedSites} from './closed-sites.js';
+import {section as botChecks} from './bot-checks.js';
 import {EUROPE} from '../shared/pool-tags.js';
 import {CHART_STYLE, TOOLTIP} from '../shared/scoutingcharts.js';
 import {floorFor, cellsOf, gaps, heatmap, history, runs, sources, tiles, topKind, trends} from '../shared/scoutingvisual.js';
@@ -103,6 +104,7 @@ ${fold('📋 Job boards by kind of role', `<section class="card"><small class="m
 ${fold('🧑‍🏫 Advice shown → taken', `<section class="card"><small class="muted">What the app recommended (Strategy cards, "Few new jobs" chips) and how often people took it, last 90 days.</small>
 <table><tr><th>Advice</th><th>Where</th><th>Shown</th><th>Taken</th><th>Dismissed</th><th>Installs</th></tr>${rows(data.advice || [], row => [esc(row.advice), esc(row.place), n(row.shown), n(row.taken), n(row.dismissed), n(row.installs)], 'No advice reported yet.')}</table></section>`)}
 ${closedSites(data.closed, today)}
+${botChecks(data.botChecks)}
 ${fold(`🕳️ Dead ends · ${n(data.deadTotal)}`, `<section class="card"><small class="muted">Employers installs found with no readable job site: skipped for 30 days by everyone.</small>
 <table><tr><th>Employer</th><th>Website</th><th>Installs</th><th>Last</th></tr>${rows(data.dead, row => [esc(row.company), esc(row.host || ''), n(row.installs), esc(row.last)], 'None reported yet.')}</table></section>`)}
 ${fold('🧭 The central scout\'s own numbers', nightly(data.central))}

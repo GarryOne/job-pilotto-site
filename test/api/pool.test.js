@@ -227,6 +227,34 @@ test('a browser read of a refused site: fixed shape in, served after one install
   assert.ok(!JSON.stringify(served).includes('why') && !JSON.stringify(served).includes('nonsense'), 'only the fixed shape goes out');
 });
 
+test('a browser read keeps the ladder step that opened it (engine, download, tab) and drops any other word (owner, 21 Oct 2026: the step is shared so other installs start there)', async () => {
+  const {agreedSites} = await import('../../api/employers.js');
+  const env = setup();
+  await post(env, {...body('install-a', []), v: 2, sites: [{host: 'jobs.coop.ch', kind: 'browser_read', read: {outcome: 'opened', jobs: 3, step: 'tab'}},
+    {host: 'jobs.manor.ch', kind: 'browser_read', read: {outcome: 'bot', step: 'tab'}}, {host: 'jobs.spar.ch', kind: 'browser_read', read: {outcome: 'refused', step: 'hacked'}}]});
+  const served = Object.fromEntries((await agreedSites(env)).filter(fact => fact.kind === 'browser_read').map(fact => [fact.host, fact.read]));
+  assert.deepEqual([served['jobs.coop.ch'].step, served['jobs.manor.ch'].step, served['jobs.spar.ch'].step], ['tab', 'tab', undefined]);
+});
+
+// Every field the engine puts in a browser read (src/sources/refused_reads.py shared) must come out the other side; this list is that set. A field the engine adds goes here, or this
+// site silently drops it (21 Oct 2026: `step` and `route` were both dropped for a day, so "start where it worked" never reached other installs).
+const ENGINE_READ = {outcome: 'opened', jobs: 7, kinds: {creative_media: 0.5}, step: 'tab', route: {system: 'greenhouse', account: 'acme'}};
+test('every field the engine shares in a browser read is kept, and a malformed route is dropped', async () => {
+  const {agreedSites} = await import('../../api/employers.js');
+  const env = setup();
+  await post(env, {...body('install-a', []), v: 2, sites: [{host: 'jobs.coop.ch', kind: 'browser_read', read: ENGINE_READ}]});
+  const kept = (await agreedSites(env)).find(fact => fact.kind === 'browser_read' && fact.host === 'jobs.coop.ch').read;
+  for (const field of Object.keys(ENGINE_READ)) assert.deepEqual(kept[field], ENGINE_READ[field], `the site dropped "${field}"`);
+  const feed = 'https://jobs.coop.ch/feed.xml';
+  for (const [route, expected] of [[{feed}, {feed}], [{feed: `${feed}?q=1`}, undefined], [{feed: 'http://jobs.coop.ch/x'}, undefined], [{system: 'nonsense', account: 'a'}, undefined],
+    [{system: 'greenhouse', account: 'a b'}, undefined], [{system: 'greenhouse', account: 'acme', feed}, undefined], ['greenhouse', undefined], [{feed: `https://user@jobs.coop.ch/x`}, undefined]]) {
+    const host = `r${Math.abs(JSON.stringify(route).length * 7 + (expected ? 1 : 0))}.ch`;
+    await post(env, {...body(`install-${host.replace(/\W/g, '')}`, []), v: 2, sites: [{host, kind: 'browser_read', read: {outcome: 'opened', route}}]});
+    const read = (await agreedSites(env)).find(fact => fact.kind === 'browser_read' && fact.host === host)?.read;
+    assert.deepEqual(read?.route, expected, `${JSON.stringify(route)} -> ${JSON.stringify(read)} (${host})`);
+  }
+});
+
 test('how a site is read: five fixed words in, a positive route served after one install, refused or browser-only after three, one per host', async () => {
   const {agreedSites} = await import('../../api/employers.js');
   const env = setup();

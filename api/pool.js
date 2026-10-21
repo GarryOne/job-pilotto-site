@@ -32,6 +32,18 @@ export const boardOf = (board, url, host) => {
 // What a user's browser met on a site that refused the engine (src/sources/refused_reads.py shared; owner, 20 Oct 2026: one install teaches all):
 // a fixed word and, for a page that opened, its job count and kinds of work. Anything else is dropped.
 const OUTCOMES = ['opened', 'refused', 'bot', 'login'];
+// The route a read came from (src/sources/refused_reads.py valid_route): {system, account} or {feed}. The engine re-checks it on every served fact (its own slug rule per system), so this is the shape gate: a known
+// job system and a slug-like account, or one https address of at most 300 characters with no query and no fragment. Never a title, a link list or a text.
+export const readRouteOf = route => {
+  if (!route || typeof route !== 'object' || Array.isArray(route)) return null;
+  const keys = Object.keys(route).sort().join();
+  if (keys === 'account,system') return SYSTEMS.includes(route.system) && typeof route.account === 'string' && /^[\w.-]{1,120}$/.test(route.account) ? {system: route.system, account: route.account} : null;
+  if (keys === 'feed' && typeof route.feed === 'string' && route.feed.length <= 300) {
+    try { const url = new URL(route.feed); return url.protocol === 'https:' && url.hostname && !url.search && !url.hash && !url.username ? {feed: route.feed} : null; } catch { return null; }
+  }
+  return null;
+};
+const READ_STEPS = ['engine', 'download', 'tab'];   // the ladder step that read the site (src/sources/refused_reads.py STEPS): shared so other installs start there
 export const ROUTES = ['jobposting', 'api', 'main', 'browser_only', 'refused'];   // how a site's posting text is read (src/sources/read_routes.py)
 export const routeOf = route => ROUTES.includes(route) ? JSON.stringify(route) : null;
 export const readOf = read => {
@@ -39,7 +51,7 @@ export const readOf = read => {
   const jobs = Number.isInteger(read.jobs) && read.jobs >= 0 && read.jobs <= 100000 ? read.jobs : null;
   const kinds = read.kinds && typeof read.kinds === 'object' ? Object.fromEntries(Object.entries(read.kinds)
     .filter(([kind, share]) => ROLES.includes(kind) && typeof share === 'number' && share >= 0 && share <= 1)) : {};
-  return JSON.stringify({outcome: read.outcome, ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
+  return JSON.stringify({outcome: read.outcome, ...(READ_STEPS.includes(read.step) ? {step: read.step} : {}), ...(read.outcome === 'opened' && readRouteOf(read.route) ? {route: readRouteOf(read.route)} : {}), ...(read.outcome === 'opened' && jobs !== null ? {jobs} : {}),
     ...(read.outcome === 'opened' && Object.keys(kinds).length ? {kinds} : {})});
 };
 const DEAD_OUTCOMES = ['no_feed', 'refused', 'unreachable'], OUTCOME_MIN_INSTALLS = 3;   // why a dead end has no feed; the last two are served after this many installs agree
