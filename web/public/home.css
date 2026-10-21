@@ -14,6 +14,7 @@
 .hero-clips { position: relative; aspect-ratio: 1600 / 1000; background: var(--surface); overflow: hidden; }
 .hero-clips .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; opacity: 0; transition: opacity .7s ease; }
 .hero-clips .slide.is-on { opacity: 1; }
+.hero-clips.is-moving .slide { opacity: 1; will-change: transform; transition: none; }   /* the script places every slide on the track */
 .hero-clips.is-still .slide:not(:first-of-type) { display: none; }
 .hero-clips .dots { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 8px; z-index: 2; }
 .hero-clips .dots button { width: 22px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: rgb(255 255 255 / .35); cursor: pointer; transition: background .2s, width .2s; }
