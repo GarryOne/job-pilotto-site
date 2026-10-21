@@ -82,6 +82,10 @@ test('the whole journey: up to Submit, then after it, then back to the start; on
   assert.match(panel, /It never presses Submit/);
   assert.match(html, /<script src="journey\.js" defer><\/script>/);
   assert.match(read('home.css'), /\.journey-detail\[hidden\] \{ display: none; \}/, 'a panel\'s display: grid must not undo hidden');
+  // Phones (owner, 21 Oct 2026: "vertical list on phones"): the script and the stylesheet switch at the same width.
+  const width = read('journey.js').match(/matchMedia\('\(max-width: (\d+)px\)'\)/)[1];
+  assert.match(read('home.css'), new RegExp(`@media \\(max-width: ${width}px\\) \\{\\n  \\.journey-row \\{ --node: \\d+px; grid-template-columns: minmax\\(0, 1fr\\)`), 'one step per line on a phone');
+  assert.match(read('journey.js'), /narrow\.matches \? tabs\[i\]\.parentElement\.append\(panel\)/, 'a step\'s words open right under it on a phone');
 });
 
 test('the landing\'s three cards: icon, kicker, title, words, and a footer line to the detail', () => {
