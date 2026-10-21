@@ -16,6 +16,7 @@ import {ingestRoute as searchLabDrawIngest} from '../../admin/search-lab-draws.j
 import {discoveryInput} from '../../shared/discovery-candidates.js';
 import {meter, newTally, requestLine} from './d1-meter.js';
 import {apexRedirect, legacyPageRedirect} from '../../shared/hosts.js';
+import {hopIn, hopOut} from '../../shared/admin-hop.js';
 import * as linkedin from '../../api/linkedin.js';
 import * as notion from '../../api/notion.js';
 import * as downloads from '../../api/downloads.js';
@@ -166,7 +167,10 @@ async function route(request, env, ctx) {
   if (alias) return alias;
   const legacy = legacyPageRedirect(request);   // a page on the old www.jobpilotto.top -> www.jobadabra.top; its API paths are served as before
   if (legacy) return legacy;
+  const hop = await hopOut(request, env);   // the owner's sign-in carried from the old host to www.jobadabra.top (shared/admin-hop.js)
+  if (hop) return hop;
   const {pathname} = new URL(request.url);
+  if (pathname === '/admin/hop') return hopIn(request, env);
   if (pathname.startsWith('/download/')) return downloads.download(request, env, ctx);
   if (pathname === '/install') return install(request, env, ctx, downloads.record);
   if (pathname === '/api/hit') return downloads.hit(request, env);
