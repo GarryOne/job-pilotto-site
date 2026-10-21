@@ -129,6 +129,9 @@ test('the coverflow: the centred clip is full size and opaque, neighbours smalle
   assert.ok(next.scale < 0.75 && next.opacity < 0.7 && next.x > 0, 'a neighbour is smaller, dimmer and to the side');
   assert.equal(place(-1).x, -next.x, 'the previous one mirrors the next');
   assert.ok(far.opacity < 0.01 && gone.opacity === 0, 'beyond the neighbours nothing shows');
+  const phone = place(0.5, 0, true);
+  assert.deepEqual([phone.x, phone.scale], [0, 1], 'a phone never shows two slides side by side');
+  assert.ok(place(0, 0, true).opacity === 1 && place(1, 0, true).opacity === 0 && phone.opacity > 0 && phone.opacity < 1, 'a phone crossfades');
   assert.ok(centre.z > next.z && next.z > far.z, 'the centre is in front');
-  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(440px, 4\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
+  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
 });

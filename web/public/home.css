@@ -2,18 +2,18 @@
    Builds on styles.css tokens and parts (.hero, .btn, .mac-window, section.block); only what those lack lives here. Guarded by site/test/landing.test.js. */
 
 /* Hero: words left, the clips right on one row (stacked on phones). */
-.hero.split { grid-template-columns: minmax(440px, 4.8fr) minmax(0, 8fr); justify-items: stretch; align-items: center; text-align: left; gap: 40px; padding-block: 56px 56px; }
+.hero.split { grid-template-columns: minmax(420px, 3.8fr) minmax(0, 8fr); justify-items: stretch; align-items: center; text-align: left; gap: 40px; padding-block: 56px 56px; }
 .hero.split .hero-copy { justify-items: start; gap: 18px; }
 .hero.split h1 { font-size: clamp(2.2rem, 3.6vw, 3.2rem); }
 .hero.split .eyebrow { justify-content: flex-start; }
 .hero.split .hero-visual { max-width: none; width: auto; margin-right: calc(-1 * min(9vw, max(0px, (100vw - 1160px) / 2))); }   /* the clips may run past the text's right edge into the page margin */
 .hero.split .downloads { display: flex; flex-wrap: wrap; }   /* Mac and Windows side by side while they fit */
-.hero.split .downloads .btn { white-space: nowrap; padding-inline: 18px; font-size: .95rem; }
+.hero.split .downloads .btn { white-space: nowrap; padding-inline: 14px; font-size: .88rem; }
 
 /* The hero's coverflow: the clip in the middle is big, the one before and the one after sit smaller behind it, half cut off and fading at the
    edges (hero-carousel.js sets each slide's place on the track). --sw is a slide's width, --step the distance between neighbours in slide widths. */
-.hero-clips { --sw: 66%; --step: 58; position: relative; aspect-ratio: 1.8; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 11%, #000 89%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 11%, #000 89%, transparent 100%); }
+.hero-clips { --sw: 72%; --step: 58; position: relative; aspect-ratio: 1.8; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%); }
 .hero-clips .slide { position: absolute; left: 50%; top: 46%; width: var(--sw); height: auto; aspect-ratio: 1600 / 1000; object-fit: cover; transform: translate(-50%, -50%);
   border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .7s ease; }
 .hero-clips .slide.is-on { opacity: 1; }
@@ -27,7 +27,7 @@
 .hero-clips.is-still .dots { display: none; }
 @media (prefers-reduced-motion: reduce) { .hero-clips .slide { transition: none; } }
 @media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 40px 40px; }
-  .hero-clips { --sw: 100%; --step: 112; aspect-ratio: 1.7; -webkit-mask-image: none; mask-image: none; } }   /* a phone: the middle clip only */
+  .hero-clips { --sw: 100%; --step: 0; --flow: fade; aspect-ratio: 1.7; -webkit-mask-image: none; mask-image: none; } }   /* a phone: the middle clip only */
 
 /* Mac and Windows: two identical buttons, side by side; full width on phones. */
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 12px; }

@@ -9,8 +9,8 @@ const dots = root ? [...root.querySelectorAll('.dots button')] : [];
 if (root && (matchMedia('(prefers-reduced-motion: reduce)').matches || clips.length < 2)) root.classList.add('is-still');
 else if (root) {
   const n = clips.length, playing = new Set();
-  let t = 0, last = null, held = false, shown = -1, step = 58;
-  const measure = () => { step = parseFloat(getComputedStyle(root).getPropertyValue('--step')) || 58; };   // 58 slide widths on a row, 112 on a phone (css)
+  let t = 0, last = null, held = false, shown = -1, step = 58, fade = false;
+  const measure = () => { const css = getComputedStyle(root); step = parseFloat(css.getPropertyValue('--step')) || 58; fade = css.getPropertyValue('--flow').trim() === 'fade'; };   // css: a row is a coverflow, a phone crossfades one clip
   measure(); addEventListener('resize', measure);
   root.classList.add('is-moving');
   const hold = on => { held = on; if (on) clips.forEach(clip => clip.pause()); else playing.forEach(i => clips[i].play().catch(() => {})); };
@@ -19,7 +19,7 @@ else if (root) {
     const p = position(t);
     clips.forEach((clip, i) => {
       const away = offset(i, p, n);
-      const spot = place(away, step);
+      const spot = place(away, step, fade);
       clip.style.transform = `translate(calc(-50% + ${spot.x.toFixed(2)}%), -50%) scale(${spot.scale.toFixed(3)})`;
       clip.style.opacity = spot.opacity.toFixed(3);
       clip.style.zIndex = String(spot.z);
