@@ -31,8 +31,9 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@400..600&family=Space+Grotesk:wght@500..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@400..600&family=Space+Grotesk:wght@500..700&family=Instrument+Serif:ital@1&display=swap">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="effects.css">
 <link rel="stylesheet" href="home.css">
 </head>
 <body data-page="home">
@@ -54,7 +55,7 @@
   <header class="hero split" id="top">
     <div class="hero-copy">
       <span class="eyebrow">Any role · across Europe</span>
-      <h1>Your job search on <span class="flightpath">autopilot</span>. Powered by AI.</h1>
+      <h1>Your job search on <span class="flightpath accent">autopilot</span>.<span class="spark title-spark" aria-hidden="true"></span> Powered by AI.</h1>
       <p class="lede">Jobadabra finds the jobs that fit you, fills in the application forms and keeps track of every reply. You check each one and press Submit.</p>
       <div class="downloads">
         <a class="btn btn-primary" href="/download/mac?from=hero"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M11.2 8.5c0-1.6 1.3-2.4 1.4-2.4-.8-1.1-2-1.3-2.4-1.3-1-.1-2 .6-2.5.6s-1.3-.6-2.2-.6C4.4 4.8 3.3 5.5 2.7 6.6c-1.2 2.1-.3 5.2.9 6.9.6.8 1.2 1.7 2.1 1.7.9 0 1.2-.5 2.2-.5s1.3.5 2.2.5 1.5-.9 2-1.7c.6-.9.9-1.8.9-1.9 0 0-1.8-.7-1.8-2.6zM9.6 3.6c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.8 2.1.8.1 1.6-.4 2.2-1z"/></svg>Download for Mac</a>
@@ -63,6 +64,7 @@
       <span class="downloads-note">Free to start · Free AI included · Mac with Apple silicon, Windows 10 or 11</span>
     </div>
     <div class="hero-visual">
+        <span class="spark hero-spark one" aria-hidden="true"></span><span class="spark hero-spark two" aria-hidden="true"></span>
               <!-- media: four short clips (media/manifest.json), a coverflow driven by hero-carousel.js: the centred clip big, its neighbours smaller and fading at the edges; without it, or with reduced motion, the first clip's poster -->
         <div class="hero-clips" id="hero-carousel" role="group" aria-roledescription="carousel" aria-label="Jobadabra in four short clips">
           <video class="slide is-on" muted playsinline preload="auto" poster="/media/hero-onboarding-poster.jpg" width="1600" height="1000" aria-label="The Jobadabra setup: the search strategy proposed from your CV (made-up example)">
@@ -85,7 +87,7 @@
             <source src="/media/hero-track.webm" type="video/webm">
             <source src="/media/hero-track.mp4" type="video/mp4">
           </video>
-          <div class="dots" role="group" aria-label="Choose a clip"><button type="button" aria-label="Set up" aria-current="true"></button><button type="button" aria-label="Find jobs"></button><button type="button" aria-label="Fill the form"></button><button type="button" aria-label="Keep track"></button></div>
+          <div class="dots" role="group" aria-label="Choose a clip"><button type="button" aria-label="Set up" aria-current="true"><span>01</span>Set up</button><button type="button" aria-label="Find jobs"><span>02</span>Find</button><button type="button" aria-label="Fill the form"><span>03</span>Apply</button><button type="button" aria-label="Keep track"><span>04</span>Track</button></div>
         </div>
     </div>
   </header>
@@ -100,31 +102,66 @@
   </section>
 
   <section class="block reveal" id="steps">
-    <div class="head-row"><h2>Three steps, one app</h2><a href="/how-it-works">How it works →</a></div>
+    <div class="head-row"><h2>Good things come in <span class="accent">three</span>.</h2><a class="arrow-link" href="/features">All the features<i aria-hidden="true">→</i></a></div>
     <ol class="steps">
-      <li><div class="pic"><img src="/media/still-jobs.webp" width="1600" height="1000" loading="lazy" alt="The job list, each job with its fit score (made-up example)"></div>
-        <div class="words"><h3>It finds the jobs</h3><p>Every few hours it reads employers' own job pages and ranks each job by how well it fits your CV.</p><a class="more" href="/how-it-works#find">More info →</a></div></li>
-      <li><div class="pic"><video src="/media/extension-fill.mp4" poster="/media/extension-fill-poster.jpg" autoplay muted loop playsinline preload="none" aria-label="The browser extension fills a job application, then shows Ready to submit (made-up example)"></video></div>
-        <div class="words"><h3>It fills the form</h3><p>In your browser, from your CV and your answers. Anything it is unsure of, it asks you once.</p><a class="more" href="/how-it-works#fill">More info →</a></div></li>
-      <li><div class="pic"><img src="/media/still-interviews.webp" width="1600" height="1000" loading="lazy" alt="Interviews: each call with its review (made-up example)"></div>
-        <div class="words"><h3>It keeps track</h3><p>Replies, interviews and your next step, in one place.</p><a class="more" href="/how-it-works#track">More info →</a></div></li>
+      <li><div class="card-top"><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg><span class="spark solid" aria-hidden="true"></span></span><span class="card-no">01</span></div>
+        <span class="kicker">The right jobs</span><h3>Find your kind of job.</h3><p>Fresh openings from employers’ own job pages and job boards, scored out of 100 against your CV, with the reason.</p>
+        <a class="card-foot arrow-link" href="/how-it-works#find">Less searching. More finding.<i aria-hidden="true">→</i></a></li>
+      <li><div class="card-top"><span class="tile-icon tilt-right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 11-11 3 3L7 23M13 11l3 3M5 3v4M3 5h4M19 1v4m-2-2h4M20 15v4m-2-2h4" transform="translate(0 -1)"/></svg><span class="spark solid" aria-hidden="true"></span></span><span class="card-no">02</span></div>
+        <span class="kicker">The repetitive bits, handled</span><h3>Make the form disappear.</h3><p>A cover letter, a CV tailored to the job and the form filled in your browser, all from your own facts. Unsure? It asks you once.</p>
+        <a class="card-foot arrow-link" href="/how-it-works#fill">A little less copy. A lot less paste.<i aria-hidden="true">→</i></a></li>
+      <li><div class="card-top"><span class="tile-icon teal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v13a3 3 0 0 0 3 3h13M8 14l4-4 4 2 5-7m-5 0h5v5"/></svg><span class="spark solid" aria-hidden="true"></span></span><span class="card-no">03</span></div>
+        <span class="kicker">Every next step, in view</span><h3>Keep the story moving.</h3><p>Replies and interviews land on the right application, with what to do next and what each interview taught you.</p>
+        <a class="card-foot arrow-link" href="/how-it-works#track">From “sent” to what’s next.<i aria-hidden="true">→</i></a></li>
     </ol>
   </section>
 
-  <section class="block reveal" id="control">
-    <div class="head-row"><h2>You stay in control</h2><a href="/trust">Your data and safety →</a></div>
-    <ul class="facts">
-      <li><b>It never presses Submit</b><span>You read each application and send it yourself.</span></li>
-      <li><b>Your data stays yours</b><span>Your CV and applications stay on your computer. Nothing about you is stored on our servers.</span></li>
-      <li><b>Only your own facts</b><span>Answers and CVs use what you wrote. Nothing is made up.</span></li>
-    </ul>
+  <!-- The whole journey (owner, 21 Oct 2026): row 1 up to Submit, row 2 after it, then again for the next job. journey.js makes the steps tabs. -->
+  <section class="block reveal" id="journey">
+    <div class="glow-panel journey">
+      <div class="head-row"><h2>The whole <span class="accent">journey</span>, in one app.</h2><p class="note">It does the legwork.<br>You make the moves that matter.</p></div>
+      <div class="journey-rows" role="tablist" aria-label="A job search, step by step">
+        <span class="row-name">Apply</span>
+        <ol class="journey-row" role="none">
+          <li role="none" class=""><button type="button" role="tab" id="j-find" aria-controls="jp-find" aria-selected="true"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><span class="who">Auto</span><b>Find a match</b></button></li>
+          <li role="none" class=""><button type="button" role="tab" id="j-kit" aria-controls="jp-kit" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h6"/></svg></span><span class="who">Auto</span><b>Prepare the kit</b></button></li>
+          <li role="none" class=""><button type="button" role="tab" id="j-fill" aria-controls="jp-fill" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 11-11 3 3L7 23M13 11l3 3M5 3v4M3 5h4M19 1v4m-2-2h4M20 15v4m-2-2h4" transform="translate(0 -1)"/></svg></span><span class="who">Auto</span><b>Fill the form</b></button></li>
+          <li role="none" class="you"><button type="button" role="tab" id="j-consent" aria-controls="jp-consent" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></svg></span><span class="who">You</span><b>Checks and terms</b></button></li>
+          <li role="none" class="you"><button type="button" role="tab" id="j-submit" aria-controls="jp-submit" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 11-7 1-3 7ZM12 15l5 7"/></svg></span><span class="who">You</span><b>Review and Submit</b></button></li>
+        </ol>
+        <span class="row-name">After you apply</span>
+        <ol class="journey-row" role="none">
+          <li role="none" class=""><button type="button" role="tab" id="j-replies" aria-controls="jp-replies" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></span><span class="who">Auto</span><b>Read the replies</b></button></li>
+          <li role="none" class=""><button type="button" role="tab" id="j-prep" aria-controls="jp-prep" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v16M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/></svg></span><span class="who">Auto</span><b>Prepare the interview</b></button></li>
+          <li role="none" class=""><button type="button" role="tab" id="j-calendar" aria-controls="jp-calendar" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4M8 14h3"/></svg></span><span class="who">Auto</span><b>Keep the calendar</b></button></li>
+          <li role="none" class="both"><button type="button" role="tab" id="j-review" aria-controls="jp-review" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg></span><span class="who">You + auto</span><b>Record and review</b></button></li>
+          <li role="none" class="again"><button type="button" role="tab" id="j-again" aria-controls="jp-again" aria-selected="false" tabindex="-1"><span class="node"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></span><span class="who">Auto</span><b>Next job, smarter</b></button></li>
+        </ol>
+        <svg class="journey-loop" aria-hidden="true"><path class="line" d=""/><path class="head" d=""/><text text-anchor="middle">Again, for the next job</text></svg>
+      </div>
+      <div class="journey-detail" role="tabpanel" id="jp-find" aria-labelledby="j-find"><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><div><span class="kicker">A shortlist with your name on it</span><h3>The search keeps going. You don’t have to.</h3><p>Every few hours it reads employers’ own job pages and job boards, keeps the jobs that match where and how you want to work, and scores each one against your CV, with the reason.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-kit" aria-labelledby="j-kit" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h6"/></svg></span><div><span class="kicker">Your experience, for this job</span><h3>A fresh application. The same you.</h3><p>A CV reordered toward the job from your own facts, a cover letter in your voice and an answer for every question. Every change is shown to you.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-fill" aria-labelledby="j-fill" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 11-11 3 3L7 23M13 11l3 3M5 3v4M3 5h4M19 1v4m-2-2h4M20 15v4m-2-2h4" transform="translate(0 -1)"/></svg></span><div><span class="kicker">Goodbye, repetitive typing</span><h3>The fields fill. Your evening stays free.</h3><p>The browser extension (Chrome or Edge) fills the employer’s form from your kit. Anything it doesn’t know, it asks you once, then reuses the answer on every later form.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-consent" aria-labelledby="j-consent" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></svg></span><div><span class="kicker">A moment that needs you</span><h3>Some clicks stay human.</h3><p>A check only a person may do, or terms to accept: it stops and asks, and you tick.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-submit" aria-labelledby="j-submit" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 11-7 1-3 7ZM12 15l5 7"/></svg></span><div><span class="kicker">Your application, your final say</span><h3>Looks like you? Then send it.</h3><p>Read the filled form, change anything you like and press Submit yourself. It never presses Submit.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-replies" aria-labelledby="j-replies" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></span><div><span class="kicker">Every answer, on the right job</span><h3>No reply gets lost.</h3><p>With Gmail connected (read-only), each reply lands on its application: a rejection, an invitation, a question, with your next step.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-prep" aria-labelledby="j-prep" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v16M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2Z"/></svg></span><div><span class="kicker">Walk in ready</span><h3>Practise what will be asked.</h3><p>The evening before, a message with what to practise: likely questions, what from your CV to answer, your gaps and what to ask them.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-calendar" aria-labelledby="j-calendar" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4M8 14h3"/></svg></span><div><span class="kicker">Every call in one place</span><h3>Never miss a screening.</h3><p>Every screening and interview from your email, on one calendar. Click a call to open its job.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-review" aria-labelledby="j-review" hidden><span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"/></svg></span><div><span class="kicker">Learn from every interview</span><h3>Hear what went well.</h3><p>Once you confirm everyone on the call agreed, it records on your computer, tells the speakers apart, then reviews every question: how you answered and what to improve.</p></div></div>
+      <div class="journey-detail" role="tabpanel" id="jp-again" aria-labelledby="j-again" hidden><span class="tile-icon teal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></span><div><span class="kicker">It learns you</span><h3>Every round makes the next one better.</h3><p>Your weak spots come back in the next prep, each rejection is reviewed, and every answer you gave is reused on the next form.</p></div></div>
+      <ul class="journey-promises">
+        <li>It never presses Submit</li><li>Your CV and applications stay on your computer</li><li>Only your own facts, nothing made up</li>
+      </ul>
+      <a class="panel-foot arrow-link" href="/how-it-works">The full walkthrough<i aria-hidden="true">→</i></a>
+    </div>
   </section>
 
   <section class="block reveal" id="start">
-    <div class="closing">
+    <div class="glow-panel closing">
+      <span class="spark big-spark" aria-hidden="true"></span>
       <div>
-        <h2>Free to start.</h2>
-        <p class="lede">The whole app for your first 20 applications or 60 days. Pro, coming soon: $29 once, no subscription. <a href="/pricing">Pricing</a></p>
+        <h2>Start for <span class="accent">free</span>.</h2>
+        <p class="lede">The whole app for your first 20 applications or 60 days, whichever lasts longer. Free AI included. Pro, coming soon: $29 once, no subscription. <a href="/pricing">Pricing</a></p>
       </div>
       <div class="downloads">
         <a class="btn btn-primary" href="/download/mac?from=footer"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M11.2 8.5c0-1.6 1.3-2.4 1.4-2.4-.8-1.1-2-1.3-2.4-1.3-1-.1-2 .6-2.5.6s-1.3-.6-2.2-.6C4.4 4.8 3.3 5.5 2.7 6.6c-1.2 2.1-.3 5.2.9 6.9.6.8 1.2 1.7 2.1 1.7.9 0 1.2-.5 2.2-.5s1.3.5 2.2.5 1.5-.9 2-1.7c.6-.9.9-1.8.9-1.9 0 0-1.8-.7-1.8-2.6zM9.6 3.6c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.8 2.1.8.1 1.6-.4 2.2-1z"/></svg>Download for Mac</a>
@@ -134,7 +171,7 @@
   </section>
 
   <footer class="site-foot">
-    <div><b>✈ Jobadabra</b>A job search for any role, across Europe.</div>
+    <div><b>✈ Jobadabra</b>A job search for any role, across Europe.<small class="abra">Job + abracadabra <span class="spark solid" aria-hidden="true"></span></small></div>
     <div><b>Product</b><a href="/how-it-works">How it works</a><a href="/features">Features</a><a href="/intelligence">AI inside</a><a href="/coverage">Jobs we cover</a><a href="/changelog">What's new</a></div>
     <div><b>Before you start</b><a href="/download">Download</a><a href="/pricing">Pricing</a><a href="/faq">FAQ</a><a href="/compare">Compare</a><a href="/platforms">Platforms</a></div>
     <div><b>Trust</b><a href="/trust">Your data and safety</a><a href="/research">Research</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
@@ -142,6 +179,7 @@
 </div>
 <script src="site.js" defer></script>
 <script type="module" src="hero-carousel.js"></script>
+<script src="journey.js" defer></script>
 <script src="/track.js" defer></script>
 <!-- Cloudflare Web Analytics (cookie-free; the token is public) --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "37313e8b9f4345c3aac34a5121904e8a"}'></script>
 </body>

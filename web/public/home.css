@@ -20,10 +20,16 @@
 .hero-clips.is-moving .slide { will-change: transform, opacity; transition: none; }   /* the script places every slide on the track */
 .hero-clips.is-still { -webkit-mask-image: none; mask-image: none; }
 .hero-clips.is-still .slide:not(:first-of-type) { display: none; }
-.hero-clips .dots { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; justify-content: center; gap: 8px; z-index: 20; }
-.hero-clips .dots button { width: 22px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: rgb(255 255 255 / .35); cursor: pointer; transition: background .2s, width .2s; }
-.hero-clips .dots button[aria-current] { width: 34px; background: var(--amber, #ffb224); }
-.hero-clips .dots button:focus-visible { outline: 2px solid var(--amber, #ffb224); outline-offset: 3px; }
+/* The clip picker: four labelled steps on a dark strip under the centred clip (owner, 21 Oct 2026, from the ChatGPT redesign). */
+.hero-clips .dots { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; z-index: 20; border-radius: 10px;
+  background: rgb(13 19 26 / .82); border: 1px solid var(--line-strong); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.hero-clips .dots button { display: inline-flex; gap: 6px; align-items: baseline; padding: 6px 11px; border: 0; border-radius: 7px; background: transparent; color: var(--muted);
+  font: 500 .74rem var(--sans); cursor: pointer; transition: background .2s, color .2s; white-space: nowrap; }
+.hero-clips .dots button span { font: 500 .66rem var(--mono); opacity: .7; }
+.hero-clips .dots button:hover { color: var(--ink); }
+.hero-clips .dots button[aria-current] { background: var(--signal-soft); color: var(--amber, #ffb224); }
+.hero-clips .dots button:focus-visible { outline: 2px solid var(--amber, #ffb224); outline-offset: 2px; }
+@media (max-width: 420px) { .hero-clips .dots button { padding: 5px 8px; font-size: .7rem; } .hero-clips .dots button span { display: none; } }
 .hero-clips.is-still .dots { display: none; }
 @media (prefers-reduced-motion: reduce) { .hero-clips .slide { transition: none; } }
 @media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 40px 40px; }
@@ -47,22 +53,12 @@
   .numbers li:nth-child(n+3) { border-top: 1px solid var(--line); } }
 section.block.tight { padding-block: 56px; }
 
-/* Three steps, each with its picture and a link to the detail. */
+/* Three cards (owner, 21 Oct 2026: icons only, like the ChatGPT redesign): icon tile, number, kicker, title, words, a footer line with an arrow. */
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.steps li { display: grid; grid-template-rows: auto 1fr; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
-.steps .pic { aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--raised); }
-.steps .pic img, .steps .pic video { width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; }
-.steps .words { display: grid; gap: 8px; align-content: start; padding: 20px 22px 22px; }
-.steps .words p { color: var(--muted); font-size: .95rem; }
-.steps .more { color: var(--signal); font-weight: 600; font-size: .92rem; text-decoration: none; }
-.steps .more:hover { text-decoration: underline; text-underline-offset: 3px; }
+.steps li { display: flex; flex-direction: column; gap: 10px; padding: 26px 26px 22px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--raised), var(--surface) 55%); }
+.steps p { color: var(--muted); font-size: .95rem; }
 @media (max-width: 860px) { .steps { grid-template-columns: minmax(0, 1fr); } }
-
-/* You stay in control: three facts, a teal rule each (teal = what runs on its own stops here). */
-.facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
-.facts li { display: grid; gap: 6px; padding-left: 18px; border-left: 2px solid var(--teal); }
-.facts span { color: var(--muted); font-size: .95rem; }
-@media (max-width: 760px) { .facts { grid-template-columns: minmax(0, 1fr); } }
 
 /* A section's head with its "more" link at the right. */
 .head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
@@ -82,3 +78,87 @@ section.block.tight { padding-block: 56px; }
 .site-foot a { display: block; text-decoration: none; padding-block: 3px; }
 .site-foot a:hover { color: var(--ink); }
 @media (max-width: 760px) { .site-foot { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* The ChatGPT-redesign borrowings (owner, 21 Oct 2026); the effects themselves live in effects.css. */
+.hero.split h1 { position: relative; }
+.hero.split h1 .accent { font-size: 1.12em; line-height: .9; }
+.title-spark { font-size: .42em; margin-left: .08em; vertical-align: .9em; }
+.hero.split .hero-visual { position: relative; }
+.hero.split .hero-visual::before { content: ""; position: absolute; inset: -18% -10% -10% 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 55% 45%, rgb(244 173 38 / .16) 0%, rgb(142 114 50 / .07) 28%, transparent 62%); }
+.hero-spark { position: absolute; z-index: 25; }
+.hero-spark.one { top: 2%; right: 13%; font-size: 26px; }
+.hero-spark.two { bottom: 16%; left: 8%; font-size: 15px; animation-delay: -3s; opacity: .6; }
+@media (max-width: 900px) { .hero-spark.two { display: none; } .hero-spark.one { top: -14px; right: 6px; font-size: 20px; } }
+
+.steps .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
+.steps .card-no { font: 500 .72rem var(--mono); color: var(--muted); }
+.kicker { font: 500 .66rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.steps h3 { font: 600 1.3rem/1.2 var(--display); letter-spacing: -.02em; }
+.steps .card-foot { justify-content: space-between; margin-top: auto; padding-top: 18px; color: var(--ink); font-size: .84rem; text-decoration: none; }
+.steps .card-foot i { color: var(--signal); font-size: 1.05rem; }
+
+/* The two panels: the whole journey and the closing download. */
+.glow-panel { border: 1px solid var(--line); border-radius: 22px; padding: clamp(22px, 4vw, 44px); overflow: hidden;
+  background: linear-gradient(135deg, var(--raised), var(--surface) 55%); }
+.journey .head-row { align-items: flex-end; margin-bottom: 28px; }
+.journey .note { color: var(--muted); font-size: .95rem; text-align: right; }
+.panel-foot, .head-row .arrow-link { color: var(--signal); font-weight: 600; text-decoration: none; }
+
+/* The journey: two rows of steps, a circle each on one line; teal = it runs on its own, amber = yours; the last step loops back. */
+.journey-rows { display: grid; gap: 14px; position: relative; }
+.journey-rows.looped { margin-bottom: 44px; }
+/* The way back to the first step (journey.js draws it from the steps' places): dashed, slowly flowing, with its words at the bottom. */
+.journey-loop { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.journey-loop path { fill: none; stroke: var(--teal); stroke-width: 1.3; stroke-dasharray: 5 6; opacity: .75; animation: loop-flow 1.6s linear infinite; }
+.journey-loop .head { fill: var(--teal); stroke: none; animation: none; opacity: .9; }
+.journey-loop text { fill: var(--teal); font: 500 10.5px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+@keyframes loop-flow { to { stroke-dashoffset: -22; } }
+@media (prefers-reduced-motion: reduce) { .journey-loop path { animation: none; } }
+.row-name { font: 500 .66rem var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.journey-row { --node: 56px; list-style: none; margin: 0 0 10px; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: relative; }
+.journey-row::before { content: ""; position: absolute; top: calc(var(--node) / 2); left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, var(--teal), var(--teal) 55%, var(--signal)); opacity: .5; }
+.journey-row:last-of-type::before { background: linear-gradient(90deg, var(--teal), var(--teal) 70%, var(--signal) 80%, var(--teal)); }
+.journey-row button { position: relative; display: grid; justify-items: center; gap: 6px; width: 100%; padding: 0 4px 6px; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer; text-align: center; }
+.journey-row .node { display: grid; place-items: center; width: var(--node); height: var(--node); border-radius: 50%; margin-bottom: 8px; color: var(--teal);
+  border: 1px solid color-mix(in srgb, var(--teal) 55%, var(--line)); background: color-mix(in srgb, var(--teal) 10%, var(--surface)); box-shadow: 0 0 0 7px var(--surface);
+  transition: transform .25s ease, background .25s ease, box-shadow .25s ease; }
+.journey-row .node svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.journey-row .who { font: 500 .62rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--teal); }
+.journey-row b { font-weight: 500; font-size: .92rem; line-height: 1.3; color: var(--muted); }
+.journey-row .you .node { color: var(--signal); border-color: color-mix(in srgb, var(--signal) 55%, var(--line)); background: color-mix(in srgb, var(--signal) 10%, var(--surface)); }
+.journey-row .you .who { color: var(--signal); }
+.journey-row .both .node { color: var(--signal); border-color: color-mix(in srgb, var(--teal) 55%, var(--line)); }
+.journey-row .both .who { color: var(--signal); }
+.journey-row .again .node { border-style: dashed; }
+.journey-row button:hover .node { transform: scale(1.08); }
+.journey-row button:hover b, .journey-row [aria-selected="true"] b { color: var(--ink); }
+.journey-row [aria-selected="true"] .node { color: #0c2520; background: var(--teal); border-color: var(--teal); box-shadow: 0 0 0 7px var(--surface), 0 0 26px color-mix(in srgb, var(--teal) 45%, transparent); }
+.journey-row .you [aria-selected="true"] .node, .journey-row .both [aria-selected="true"] .node { color: var(--signal-ink); background: var(--signal); border-color: var(--signal);
+  box-shadow: 0 0 0 7px var(--surface), 0 0 26px color-mix(in srgb, var(--signal) 45%, transparent); }
+.journey-row button:focus-visible { outline: none; }
+.journey-row button:focus-visible .node { outline: 2px solid var(--signal); outline-offset: 4px; }
+.journey-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; margin-top: 14px; padding-block: 26px; border-block: 1px solid var(--line); }
+.journey-detail[hidden] { display: none; }
+.journey-detail .tile-icon { transform: none; }
+.journey-detail h3 { font: 600 1.35rem/1.25 var(--display); letter-spacing: -.02em; margin-block: 6px; }
+.journey-detail p { color: var(--muted); max-width: 70ch; }
+.journey-detail .kicker { color: var(--signal); }
+.journey-promises { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 28px; color: var(--muted); font-size: .88rem; }
+.journey-promises li { display: flex; align-items: center; gap: 8px; }
+.journey-promises li::before { content: "✓"; color: var(--teal); font-weight: 700; }
+.panel-foot { margin-top: 18px; }
+@media (max-width: 760px) {
+  .journey .note { text-align: left; }
+  .journey-row { --node: 42px; }
+  .journey-row .node { box-shadow: 0 0 0 4px var(--surface); margin-bottom: 4px; }
+  .journey-row .node svg { width: 18px; height: 18px; }
+  .journey-row .who { font-size: .54rem; letter-spacing: .08em; }
+  .journey-row b { font-size: .74rem; }
+  .journey-detail { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+.closing.glow-panel { position: relative; }
+.big-spark { position: absolute; right: 5%; top: -20px; font-size: 150px; color: rgb(255 178 36 / .16); z-index: -1; }
+@media (max-width: 760px) { .big-spark { right: -10px; top: -14px; font-size: 90px; } }
+.site-foot .abra { display: flex; align-items: center; gap: 6px; margin-top: 10px; font: 400 .74rem var(--mono); }
+.site-foot .abra .spark { animation: none; font-size: 12px; }

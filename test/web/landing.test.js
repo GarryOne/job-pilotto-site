@@ -82,10 +82,10 @@ test('the sitemap lists every public page, and only pages that exist', () => {
   assert.deepEqual([...listed].sort(), pages.filter(page => !UNLISTED.includes(page)).sort());
 });
 
-test('the landing stays short: one hero, the numbers, three steps, control, one closing download', () => {
+test('the landing stays short: one hero, the numbers, three cards, the whole journey, one closing download', () => {
   const html = read('index.html');
-  assert.equal((html.match(/<section\b/g) || []).length, 4, 'sections on the landing');   // numbers, steps, control, start; the hero is a header
-  assert.equal((html.match(/More info →/g) || []).length, 3);
+  assert.equal((html.match(/<section\b/g) || []).length, 4, 'sections on the landing');   // numbers, steps, journey, start; the hero is a header
+  assert.equal((html.match(/class="card-foot arrow-link" href="\/how-it-works#/g) || []).length, 3, 'each card leads to its detail');
   for (const href of html.matchAll(/href="(\/[\w-]*)(?:#[\w-]+)?"/g)) {
     if (/^\/(download|install|api)\b/.test(href[1])) continue;
     assert.ok(existsSync(new URL(pageOf(href[1]), dir)), `link to missing page ${href[1]}`);

@@ -1,0 +1,51 @@
+/* The site's motion layer (owner, 21 Oct 2026: "borrow the nice css effects on cards, the effect that follows the cursor as a magic wand"):
+   the cursor glow on every card, the sparkles, the hero's warm glow and the serif accent word. site.js marks the cards (.glow, its CARDS list)
+   and moves --mx/--my with a mouse or pen. Everything here stops with reduced motion, and the glow never runs on touch.
+   Guarded by test/web/effects.test.js. */
+
+/* The cursor glow: a soft warm light under the pointer, and the card's edge lit where the pointer is near. */
+.glow { position: relative; isolation: isolate; }
+.glow::before, .glow::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s ease; }
+.glow::before { z-index: -1; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--signal) 15%, transparent), transparent 70%); }
+.glow::after { z-index: 2; padding: 1px; background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--signal) 85%, transparent), transparent 75%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+@media (hover: hover) and (pointer: fine) {
+  .glow { transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; }
+  .glow:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgb(0 0 0 / .35); }
+  .glow:hover::before, .glow:hover::after { opacity: 1; }
+  details.glow:hover, .faq .glow:hover { transform: none; }   /* a question that opens stays put under the pointer */
+}
+
+/* A sparkle: a four-pointed star drawn as an outline, in the current colour. */
+.spark { display: inline-block; width: 1em; height: 1em; background: currentColor; pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  color: var(--signal); animation: twinkle 7s ease-in-out infinite; }
+.spark.solid { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6Z'/%3E%3C/svg%3E"); }
+@keyframes twinkle { 0%, 100% { opacity: .45; transform: rotate(0) scale(.9); } 50% { opacity: 1; transform: rotate(25deg) scale(1.05); } }
+
+/* The serif accent: one word of a heading in italic serif ("autopilot", "three", "click"). */
+.accent { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+
+/* A card's icon: a small tilted tile with a sparkle on its corner; it straightens when the card is hovered. */
+.tile-icon { position: relative; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 16px; color: var(--signal);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--signal) 14%, var(--raised)), var(--raised)); border: 1px solid color-mix(in srgb, var(--signal) 22%, var(--line));
+  box-shadow: 0 10px 26px rgb(0 0 0 / .35); transform: rotate(-6deg); transition: transform .4s ease; }
+.tile-icon.teal { color: var(--teal); background: linear-gradient(135deg, color-mix(in srgb, var(--teal) 14%, var(--raised)), var(--raised)); border-color: color-mix(in srgb, var(--teal) 24%, var(--line)); }
+.tile-icon.tilt-right { transform: rotate(5deg); }
+.tile-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.tile-icon .spark { position: absolute; top: -9px; right: -10px; font-size: 16px; color: inherit; }
+.glow:hover .tile-icon { transform: rotate(0) scale(1.05); }
+
+/* Arrow links nudge forward on hover. */
+.arrow-link { display: inline-flex; align-items: center; gap: 8px; }
+.arrow-link i { font-style: normal; transition: transform .2s ease; }
+.arrow-link:hover i, .glow:hover .arrow-link i { transform: translateX(4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .spark { animation: none; }
+  .glow, .glow::before, .glow::after, .tile-icon, .arrow-link i { transition: none; }
+  .glow:hover { transform: none; }
+  .glow:hover .tile-icon { transform: rotate(-6deg); }
+}
