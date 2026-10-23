@@ -71,7 +71,7 @@ jobs:
           app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: GarryOne
-          repositories: job-pilotto-internal
+          repositories: jobadabra-lab
       - name: Which tape no longer covers this build (offline replays, no AI)
         id: choose
         env:
@@ -124,7 +124,7 @@ jobs:
           app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: GarryOne
-          repositories: job-pilotto-internal
+          repositories: jobadabra-lab
       - name: The candidate's CV and its current tape (for the draft only)
         env:
           NET_RECORDS_READ_TOKEN: ${{ steps.records_app.outputs.token || secrets.NET_RECORDS_READ_TOKEN }}
