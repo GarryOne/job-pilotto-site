@@ -2,6 +2,7 @@
 # Redo or improve the landing hero's four clips from a worktree, with its local edits (owner, 24 Oct 2026: "a repeatable way to redo/improve this hero
 # video ... the feedback mechanism permanently available"). Skill: .claude/skills/redo-site-hero-video. Guard: test/web/hero-redo.test.js.
 #   tools/hero.sh [pieces...]          record (default: all four), contact sheets, the in-hero side-by-side (today's live hero | this one), opened
+#   tools/hero.sh --words <set dir> [pieces...]  words only (captions, tags, cards): redraw that set's kept recordings, no new recording
 #   tools/hero.sh --place <set dir>    copy a set's hero files into web/public/media (after the owner's yes), with their sizes
 #   tools/hero.sh --preview [set dir]  only the side-by-side (no set: the files already in web/public/media)
 # Pieces: hero-onboarding (Set up), hero (Find), hero-fill (Apply), hero-track (Track); their steps are media/scenes.mjs. Demo data only, no AI,
@@ -12,6 +13,8 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$here"
 cache="$HOME/.cache/jobadabra-media"; mkdir -p "$cache"
 HERO=(hero-onboarding hero hero-fill hero-track)
+words=()   # --words <set dir>: redraw that set's kept recordings with the scenes' current words (media/words.mjs; owner, 24 Oct 2026: "you should have rerecord just one 1/4 clips")
+if [ "${1:-}" = --words ]; then words=(--words "${2:?--words needs a set dir made by tools/hero.sh (it keeps its recordings)}"); shift 2; fi
 
 if [ "${1:-}" = --place ]; then
   set_dir="${2:?--place needs a set dir}"
@@ -50,9 +53,9 @@ fi
 
 pieces=("$@"); [ ${#pieces[@]} -gt 0 ] || pieces=("${HERO[@]}")
 set_dir="$cache/hero-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$set_dir/sheets"
-echo "hero: recording ${pieces[*]} into $set_dir"
+echo "hero: ${words[1]:+words only from ${words[1]}: }recording ${pieces[*]} into $set_dir"
 lock="${MEDIA_HEAVY_LOCK:-$HOME/job-pilotto/tools/heavy-lock.sh}"
-record=(node ../media/media.mjs "${pieces[@]}" --out "$set_dir" --keep)
+record=(node ../media/media.mjs "${pieces[@]}" --out "$set_dir" --keep ${words[@]+"${words[@]}"})
 if [ -f "$lock" ]; then (cd .overlay/desktop && bash "$lock" product-media "${record[@]}"); else (cd .overlay/desktop && "${record[@]}"); fi
 
 # beat sheets: one frame per beat (the scene's looks, at their hold's end; manifest.json "beats"), desktop and phone, to read before the preview

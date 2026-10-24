@@ -271,6 +271,16 @@ test('each cut is checked against its frames: a page that changes by itself is c
   const late = frameCuts({log: {...acted, frames: framesFrom(2.2)}, thumb});
   assert.ok(late.frames.filter(f => f.t >= 1.95).every(f => f.file === 'new'), 'no old frame after the cut');
   assert.equal(late.frames.at(-1).t, 2.75, 'later frames move up by what was cut');
+  // a quiet page (round 7, Track's Actions on a loaded Mac): no frame of the new page until its hold forces one, 2 s after the cut
+  const quietFrames = [0, 0.5, 1, 1.5, 1.9, 2.0, 2.05].map(t => ({t, file: 'old'})).concat([4.0, 4.5].map(t => ({t, file: 'new'})));
+  const quiet = frameCuts({log: {frames: quietFrames, events: [{type: 'hold', t: 0, s: 1, box: {}}, {type: 'press', t: 1.95}, {type: 'hold', t: 3.99, s: 1, box: {}, cut: true}]}, thumb});
+  assert.ok(quiet.frames.filter(f => f.t >= 1.95).every(f => f.file === 'new'), 'the old page is cut up to the new one\'s first frame, however late');
+  // a half-painted page at the cut (round 7, Track: closer to the new page than the old, still far from it) held 1.1 s by a quiet page: cut out
+  // up to the settled page, by the same measure as the gate (strayFrames, STRAY_MAX)
+  const shade = file => new Uint8Array(THUMB.w * THUMB.h).fill({old: 40, half: 150, new: 200}[file]);
+  const halfFrames = [0, 0.5, 1, 1.5, 1.9].map(t => ({t, file: 'old'})).concat([{t: 1.96, file: 'half'}, {t: 4.0, file: 'new'}, {t: 4.5, file: 'new'}]);
+  const half = frameCuts({log: {frames: halfFrames, events: [{type: 'hold', t: 0, s: 1, box: {}}, {type: 'press', t: 1.95}, {type: 'hold', t: 3.99, s: 1, box: {}, cut: true}]}, thumb: shade});
+  assert.ok(half.frames.filter(f => f.t > 1.95).every(f => f.file === 'new'), `no half-painted frame after the cut: ${half.frames.map(f => `${f.t}:${f.file}`).join(' ')}`);
 });
 
 // Round 4 (owner, 24 Oct 2026: "we cropped too hard, let's leave a bit of space"): every look keeps LOOK_MARGIN on each side inside the view, unless the

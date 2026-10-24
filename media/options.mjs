@@ -9,11 +9,12 @@ import {DEFAULT_PERSONA, VIDEOS} from './scenes.mjs';
 const here = path.dirname(new URL(import.meta.url).pathname);
 
 export function parseArgs(argv) {
-  const options = {pieces: [], out: path.join(os.tmpdir(), 'jobadabra-media'), persona: path.join(here, 'personas', 'nurse-lyon'), keep: false};
+  const options = {pieces: [], out: path.join(os.tmpdir(), 'jobadabra-media'), persona: path.join(here, 'personas', 'nurse-lyon'), keep: false, words: null};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--out') options.out = path.resolve(argv[++i]);
     else if (argv[i] === '--persona') options.persona = path.resolve(argv[++i]);
     else if (argv[i] === '--keep') options.keep = true;
+    else if (argv[i] === '--words') options.words = path.resolve(argv[++i]);   // words only: redraw that set's kept recordings (words.mjs)
     else options.pieces.push(argv[i]);
   }
   const known = [...Object.keys(VIDEOS), 'stills', 'snips'];

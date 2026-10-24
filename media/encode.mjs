@@ -10,9 +10,26 @@ const size = file => fs.statSync(file).size;
 // The first quality (CRF) whose file fits the budget: from sharp to small, two steps at a time. Pure.
 export const crfLadder = (from, to) => Array.from({length: Math.floor((to - from) / 2) + 1}, (_, i) => from + 2 * i);
 
+// The sharpest quality (lowest CRF) whose file fits: a binary search over the ladder (the file shrinks as CRF rises), so about 4 encodes instead of up
+// to 9 (owner, 24 Oct 2026, "why it takes you so much time?": Track's WebM walked 8 slow encodes). fits(crf) encodes at crf and says whether it fits.
+// -> {crf, tries}, or null when even the last fails (its file is the last one tried). Pure.
+export function sharpestFit(ladder, fits) {
+  let lo = 0, hi = ladder.length - 1, best = null;
+  const tries = [];
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    tries.push(ladder[mid]);
+    if (fits(ladder[mid])) { best = mid; hi = mid - 1; } else lo = mid + 1;
+  }
+  return best === null ? null : {crf: ladder[best], tries};
+}
+
 function withinBudget(make, file, budget, ladder) {
-  for (const crf of ladder) { make(crf); if (!budget || size(file) <= budget) return crf; }
-  throw new Error(`media: ${path.basename(file)} is ${(size(file) / 1e6).toFixed(2)} MB at the lowest quality, over its ${(budget / 1e6).toFixed(2)} MB budget (shorten the scene)`);
+  if (!budget) { make(ladder[0]); return ladder[0]; }
+  const found = sharpestFit(ladder, crf => { make(crf); return size(file) <= budget; });
+  if (!found) throw new Error(`media: ${path.basename(file)} is ${(size(file) / 1e6).toFixed(2)} MB at the lowest quality, over its ${(budget / 1e6).toFixed(2)} MB budget (shorten the scene)`);
+  if (found.tries.at(-1) !== found.crf) make(found.crf);   // the file left on disk is the chosen quality's
+  return found.crf;
 }
 
 // The encoders every piece needs; a missing one stops the run before any recording (an ffmpeg built without WebP, run 39451422713).
