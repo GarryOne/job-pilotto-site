@@ -72,3 +72,13 @@ test('a tag stays with the captions after it until another one is named', () => 
   assert.equal(captionAt(list, 1.5).tag, 'Jobs');
   assert.equal(captionAt([{t: 0, say: 'no tag'}], 1).tag, undefined);
 });
+
+// Owner, 24 Oct 2026: "Let's not put 'She' or 'He'. Let it be impersonal" (the Track card said "She opens Jobadabra to check her mail"). Every word a
+// viewer reads (captions, cards, tags, the site's caption and alt) and every beat on the preview names no person: the CV, the job, the form.
+const PERSONAL = /\b(she|he|her|hers|herself|him|his|himself)\b/i;
+test('no hero caption, card, tag, site text or beat says she, he, her or his', () => {
+  for (const [name, piece] of hero) {
+    const words = [piece.caption, piece.alt, piece.shows, piece.card, ...(piece.steps || []).flatMap(step => [step.say, step.card, step.tag, step.beat])];
+    for (const text of words.filter(Boolean)) assert.doesNotMatch(text, PERSONAL, `${name}: "${text}" (impersonal: the CV, the job, the form)`);
+  }
+});

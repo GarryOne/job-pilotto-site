@@ -21,6 +21,7 @@ import {recordAppVideo, shootApp} from './record-app.mjs';
 import {recordExtensionVideo} from './record-extension.mjs';
 import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from './options.mjs';
 import {partsOf, SNIPS, STILLS, VIDEOS} from './scenes.mjs';
+import {rewordLog} from './words.mjs';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const desktop = path.resolve(here, '..', 'desktop');
@@ -31,12 +32,16 @@ function runRender(job, name) {
   const file = path.join(path.dirname(job.out), `${path.basename(job.out, '.mp4')}.json`);
   fs.writeFileSync(file, JSON.stringify(job));
   const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), file], {stdio: 'inherit', timeout: 15 * 60000});
-  if (run.status !== 0) throw new Error(`media: ${name}: the renderer failed (${run.status ?? run.signal})`);
+  // run.error: it never started (24 Oct 2026, a Mac out of memory printed "failed (null)"): name the cause
+  if (run.status !== 0) throw new Error(`media: ${name}: the renderer failed (${run.error ? `could not start: ${run.error.message}` : run.status ?? run.signal})`);
   return job.out;
 }
 
 // One recorded clip (a piece, or a part of one): frames, log, the masters (recorded time; encode.mjs plays them `speed` times faster). Checked here.
 // tune(piece): the steps as this recording needs them (a picture in picture's pace); layer: no masters (pip.mjs draws it inside another picture).
+// Words only (media.mjs --words <set dir>, words.mjs): the set's kept recordings, redrawn with the scenes' current words; null = record.
+let wordsFrom = null;
+
 async function recordClip(name, persona, work, {tune = piece => piece, layer = false} = {}) {
   const piece = tune(openOnCard(withPlan(VIDEOS[name], planOf(name))));   // a part that comes in by a card opens on it (transitions.mjs)
   const stale = leftWords(`${piece.caption || ''} ${piece.shows} ${piece.alt || ''}`, persona.forbid);
@@ -45,7 +50,15 @@ async function recordClip(name, persona, work, {tune = piece => piece, layer = f
   const record = piece.source === 'extension' ? recordExtensionVideo : recordAppVideo;
   // a capture that stalled on a loaded Mac is recorded again (check.mjs captureGaps), at most twice; then pieceProblems fails the piece
   let recorded;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  if (wordsFrom) {
+    const kept = path.join(wordsFrom, name);
+    if (!fs.existsSync(path.join(kept, 'log.json'))) throw new Error(`media: ${name}: no kept recording in ${kept} (tools/hero.sh keeps one per set)`);
+    fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
+    fs.cpSync(path.join(kept, 'frames'), path.join(dir, 'frames'), {recursive: true});
+    recorded = rewordLog(JSON.parse(fs.readFileSync(path.join(kept, 'log.json'), 'utf8')), piece, name);
+    fs.writeFileSync(path.join(dir, 'log.json'), JSON.stringify(recorded, null, 1));
+    console.log(`media: ${name}: words only, redrawn from ${kept}`);
+  } else for (let attempt = 1; attempt <= 3; attempt++) {
     fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
     recorded = await record({persona, piece, dir});
     const gaps = captureGaps(recorded);
@@ -165,6 +178,10 @@ async function main() {
   const missing = missingEncoders();
   if (missing.length) throw new Error(`this ffmpeg lacks ${missing.join(', ')} (brew install ffmpeg)`);
   const work = path.join(options.out, '.work');
+  if (options.words) {
+    if (options.words === options.out) throw new Error('media: --words reads another set: give a new --out');
+    wordsFrom = path.join(options.words, '.work');
+  }
   fs.mkdirSync(work, {recursive: true});
   execFileSync(process.execPath, [path.join(desktop, 'scripts', 'stage.mjs')], {cwd: desktop, stdio: 'ignore'});   // the app imports shared/ (npm start does the same)
   const entries = [];

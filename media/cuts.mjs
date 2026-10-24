@@ -115,8 +115,13 @@ export function frameCuts({log, thumb}) {
     const byAction = out.events.some(event => pageChange(event) && event.t > prev.t && event.t === cut);
     const early = !byAction && out.frames.find(frame => frame.t > seen && frame.t < cut && looksNew(frame));
     if (early) { out = {...out, events: [...out.events, {type: 'ready', t: round(early.t - 0.001)}].sort((x, y) => x.t - y.t)}; continue; }
-    const after = out.frames.slice(frameAt(out.frames, cut)).filter(frame => frame.t <= cut + 1.5), firstNew = after.find(looksNew);
-    if (firstNew && after[0] && !looksNew(after[0])) out = cutOut(out, cut, firstNew.t);
+    // up to the new look's hold at least: a quiet page sends no frame until the hold forces one (round 7: Track's Actions came 2.2 s after its cut)
+    const until = Math.max(cut + 1.5, hold.t + 0.5);
+    // after the cut, the new page as its look shows it, by the gate's own measure (strayFrames): a half-painted page "closer to new" is not it
+    // (round 7: Track's Actions half drawn at the cut, held 1.1 s by a quiet page; looksNew let it through, the gate failed)
+    const settled = frame => meanDiff(thumb(frame.file, box), b) <= STRAY_MAX;
+    const after = out.frames.slice(frameAt(out.frames, cut)).filter(frame => frame.t <= until), firstNew = after.find(settled);
+    if (firstNew && after[0] && !settled(after[0])) out = cutOut(out, cut, firstNew.t);
   }
   return out;
 }

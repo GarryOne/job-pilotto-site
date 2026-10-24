@@ -20,6 +20,12 @@ a tighter 4:3 copy for phones, and a **transition at every screen change** (roun
    (it syncs `media/ web/ tools/` into `.overlay`), writes the set to `~/.cache/jobadabra-media/hero-<time>/`, one contact-sheet frame **per beat**
    (`sheets/<piece>.png`, `sheets/<piece>-720.png`; the log prints `hero: <piece> beat <n> <t> s: <words>`) and `preview.png`, and opens the preview.
    **Never edit `tools/hero.sh` while it runs** (bash reads it as it goes; the tail breaks): make the sheets/preview by hand then.
+   **Record only what changed** (owner, 24 Oct 2026: "you should have rerecord just one 1/4 clips"; a words-only change re-recorded all four,
+   15 min): first list which pieces' steps changed and how. Words only (`say`, `card`, `tag`, `beat`, `caption`, `alt`) need **no new recording**:
+   the words are drawn on the recorded frames, so redraw the last set's recordings (`tools/hero.sh --words <set dir> [pieces]`, ~1/3 of the time).
+   A new look, step, scene or app change re-records only its pieces. Before any run, tell the owner in one line which pieces, why, and how many
+   minutes (he asked "are you done?" twice).
+   Encoding finds each file's quality by a binary search (encode.mjs `sharpestFit`, ~4 encodes, not up to 9): a clip over budget fails fast.
 3. **Read the sheets, then the preview** (checklist below). Fix and re-record only the pieces that are wrong.
 4. **Owner's yes on VIDEO** (owner, 24 Oct 2026: "the before/after should be on video clips, not screenshots ... the before we can take from the
    website/master branch"): `node media/compare.mjs <set dir> <scratch>/compare` makes, per clip, `<piece>-compare.mp4` (left: main's published clip,
@@ -64,7 +70,7 @@ Pick per moment, by what the viewer must understand; never one method everywhere
 | Side by side (split) | two places change at once and matter equally | (sketched, not used yet) |
 | Slide | moving from one screen to another | a page, Jobadabra ↔ Chrome, the next clip |
 | Tiles | time passed in reality | the search ran, "2 weeks later" |
-| Title card | the flow is not obvious: say how she got there | "She opens Jobadabra to check her mail" |
+| Title card | the flow is not obvious: say how we got there | "Jobadabra checks the mail" |
 | Fade | the same screen changing | the AI's proposal replacing "reading your CV" |
 | Something drawn in the page | it happens outside the app | the Gmail notification |
 | Caption + tag chip | always: what happens and where | every step |
@@ -169,6 +175,11 @@ Pick per moment, by what the viewer must understand; never one method everywhere
   main at "Ready to submit", Chrome in the inset.
 - "The skill should possess all of these possibilities ... and we should use whenever it's the right time for that method": the toolbox below.
 
+
+**Round 7: impersonal words**
+- **No "she", "he", "her" or "his"** in anything a viewer reads (owner, 24 Oct 2026: "Let's not put 'She' or 'He'. Let it be impersonal", on the card
+  "She opens Jobadabra to check her mail"): captions, cards, tags, the site caption and alt, and the beats on the preview name the thing (the CV,
+  the job, the form, the calendar) or the action ("Strategy confirmed", "Find jobs: the search starts"). Test: media-captions.test.js.
 ## When something is wrong: fix the mechanism, then the scene (owner, 24 Oct 2026: "did you fix the root causes permanently?")
 A bad crop, a missing step or a wrong frame is first a question about the tool: which camera/recorder/tool rule let it through? Fix that rule, add a test
 that loops over every hero look or scene (it fails on the old code), add a trap line below; only then tune the scene's numbers. A scene-only tweak
@@ -263,6 +274,10 @@ comes back at the next redo.
   (its `sync` to its next mark), so the card ticks while the fields fill; both meet at their `sync` steps. A step marked `lead` makes its
   recording the main picture; the caption is always the main picture's (so write each recording's says for the stage it leads). The inset sits
   top right (34% wide, 46% on phones): keep the main look's words out of that corner. Tests: `desktop/test/media-pip.test.js`.
+- **After a cut, wait for the settled page, by the gate's measure** (round 7, Track's Actions on a loaded Mac): the frame at the cut was the page half
+  drawn ("closer to new" than old, so frameCuts kept it), and the quiet page sent nothing else for 1.1 s; the gate (≤ STRAY_MAX from the look's
+  beat frame) failed it twice. frameCuts now cuts to the first frame the gate would pass, searching up to the new look's hold. A stray that repeats
+  on a new recording is the tool's timing: replay the cut on the kept recording (frames + log.json) before recording a third time.
 - **A join never shows the same place on both sides** (round 6, take 4): the app part ended on the Applying card and the picture in picture opened on
   the same card a few pixels apart; the fade doubled every line (a ghost). End the part on its press instead (`{tap, end: true}`: camera.mjs
   `untilEnd` drops what follows) and join by a slide. Test: media-pip.test.js loops over every join by the looks' `tag`.
