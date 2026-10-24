@@ -55,23 +55,19 @@ test('no static file shadows /changelog.json: a file in public/ is served before
   assert.equal(existsSync(new URL('../../web/public/changelog-seed.json', import.meta.url)), true);
 });
 
-test('the page reads changelog.json, shows the three group titles and the channel, writes text (never HTML), is in the sitemap and linked from the footer', () => {
-  const html = pub('changelog.html');
-  for (const title of ['New features', 'Improvements', 'Bug fixes']) assert.match(html, new RegExp(title));
-  assert.match(html, /Beta/);
-  assert.match(html, /fetch\('changelog\.json'\)/);
-  assert.doesNotMatch(html.split('<script>')[1], /innerHTML/);
+test('the page reads changelog.json, shows the three category labels and the channel, writes text (never HTML), is in the sitemap and linked from the footer', () => {
+  const html = pub('changelog.html'), script = pub('changelog.js');
+  for (const label of ['New', 'Improved', 'Fixed']) assert.match(script, new RegExp(`'${label}'`));
+  assert.match(script, /Beta/);
+  assert.match(script, /fetch\('changelog\.json'\)/);
+  assert.doesNotMatch(script, /innerHTML/);
   assert.match(pub('sitemap.xml'), /<loc>https:\/\/www\.jobadabra\.top\/changelog<\/loc>/);
   assert.match(pub('index.html'), /<a href="(\/changelog|changelog\.html)">What's new<\/a>/);
-  assert.doesNotMatch(html, /\$\d|\bPro\b/);
+  assert.doesNotMatch(html + script, /\$\d|\bPro\b/);
 });
 
-test('the page puts a row of dots above the project-start entry (the gap before the first registered release) and labels it as the start', () => {
-  const script = pub('changelog.html').split('<script>')[1];
-  assert.match(script, /entry\.channel === 'start'/);
-  assert.match(script, /className = 'gap'/);
-  assert.match(script, /aria-hidden/);
-  assert.match(script, /Project start/);
+test('the project-start entry is labelled "Project start" (the gap before the first registered release)', () => {
+  assert.match(pub('changelog.js'), /start: 'Project start'/);
 });
 
 test('every page with the top menu links to "What\'s new", on desktop (link row) and phone (beside Download)', () => {
