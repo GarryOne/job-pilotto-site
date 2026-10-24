@@ -4,6 +4,8 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import {test} from 'node:test';
 
+// CI runs this inside the joined tree (public files laid under this repo's): only this repo's own folders are scanned, the public repo has its own guard.
+const OWN = /^(web|admin|api|shared|workers|jobs|media|preview|test|db)\//;
 const NOT_SCANNED = /(^|\/)(node_modules|dist)\/|^AGENTS\.md$|^CLAUDE\.md$|^db\/migrations\/|^test\/fixtures\/|^test\/brand-wording\.test\.js$|\.(png|jpg|jpeg|gif|ico|svg|webp|mp4|woff2?|lock)$|package-lock/;
 // Kept names, each with its reason: a line is allowed when one matches.
 const KEPT = [
@@ -14,7 +16,7 @@ const KEPT = [
 ];
 
 test('the site repo says Jobadabra, except the kept names', () => {
-  const files = execFileSync('git', ['ls-files'], {encoding: 'utf8', maxBuffer: 1 << 26}).split('\n').filter(f => f && !NOT_SCANNED.test(f));
+  const files = execFileSync('git', ['ls-files'], {encoding: 'utf8', maxBuffer: 1 << 26}).split('\n').filter(f => f && OWN.test(f) && !NOT_SCANNED.test(f));
   const bad = [];
   for (const file of files) {
     let text;
