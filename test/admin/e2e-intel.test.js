@@ -44,6 +44,14 @@ test('GET lists the settled runs and the pending ones (a red still open or unkno
   assert.deepEqual(body.pending, [2]);
 });
 
+test('a cancelled run is stored and counted as a cancelled try, not as a finished run', async () => {
+  const e = env();
+  await put(e, {rules: 1, runs: [run(1), run(2, 'success'), run(3, 'cancelled')], fails: []});
+  const snapshot = await buildSnapshot(e.STATS, now);
+  assert.deepEqual(snapshot.days.map(d => [d.runs, d.cancelled, d.reds, d.greens]), [[2, 1, 1, 1]]);
+  assert.equal(snapshot.latest.filter(r => r.conclusion === 'cancelled').length, 1);
+});
+
 test('bad rows are dropped: an unknown cause, a run without a number, too many rows', async () => {
   const e = env();
   const response = await put(e, {rules: 1, runs: [run(1), {...run(2), runId: 'x'}], fails: [fail(1, 'apply', 'mac', 'because'), fail(1, 'apply', 'mac', 'flake')]});

@@ -7,7 +7,7 @@ import {bars, page, rangeOf, suiteRows, windowOf} from '../../admin/e2e-page.js'
 
 const now = new Date('2026-10-18T12:00:00Z');
 const snapshot = {schema: 1, at: '2026-10-18T11:41:00Z',
-  days: [{day: '2026-10-17', runs: 4, reds: 3, greens: 1, redMin: 80}, {day: '2026-10-12', runs: 2, reds: 1, greens: 1, redMin: 30}, {day: '2026-09-30', runs: 1, reds: 1, greens: 0, redMin: 20}],
+  days: [{day: '2026-10-17', runs: 4, cancelled: 3, reds: 3, greens: 1, redMin: 80}, {day: '2026-10-12', runs: 2, reds: 1, greens: 1, redMin: 30}, {day: '2026-09-30', runs: 1, reds: 1, greens: 0, redMin: 20}],
   fails: [{day: '2026-10-17', suite: 'apply', platform: 'mac', cause: 'test', n: 2, min: 24}, {day: '2026-10-17', suite: 'apply', platform: 'windows', cause: 'test', n: 2, min: 28}, {day: '2026-10-17', suite: 'strategy', platform: 'mac', cause: 'credit', n: 1, min: 6},
     {day: '2026-10-12', suite: 'quality', platform: 'mac', cause: 'flake', n: 1, min: 9}, {day: '2026-09-30', suite: 'old', platform: 'mac', cause: 'product', n: 1, min: 5}],
   latest: [{runId: 39074977525, day: '2026-10-17', kind: 'beta', conclusion: 'failure', minutes: 26}, {runId: 39072072784, day: '2026-10-17', kind: 'beta', conclusion: 'success', minutes: 16}]};
@@ -33,6 +33,7 @@ test('the page: numbers, suites with chips, a bar per day, the run list; "no dat
   assert.match(html, /67%/, 'red runs: 4 of 6');
   assert.match(html, /1\.8 h/, '110 minutes of red runs');
   assert.match(html, /17%/, 'flakes: 1 of 6 red suites');
+  assert.match(html, /Tries per green<\/span><b>4\.5<\/b>[^]*?9 betas started \(3 cancelled\) for 2 green/, 'cancelled betas count as tries: (6 finished + 3 cancelled) / 2 green');
   assert.match(html, /Top cause<\/span><b>Test bug/);
   assert.match(html, /<code>apply<\/code><\/td><td>Windows<\/td>/);
   assert.match(html, /actions\/runs\/39074977525/);

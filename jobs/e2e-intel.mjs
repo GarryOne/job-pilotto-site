@@ -40,7 +40,7 @@ export function rowsOf(runs, {logOf = () => '', filesBetween = () => null} = {})
   const out = {runs: [], fails: []};
   runs.forEach((run, index) => {
     out.runs.push({runId: run.databaseId, createdAt: run.createdAt, kind: /Nightly/.test(run.displayTitle) ? 'nightly' : 'beta', conclusion: run.conclusion, minutes: minutesOf(run.createdAt, run.updatedAt)});
-    for (const red of redJobs(run.jobs)) {
+    for (const red of run.conclusion === 'cancelled' ? [] : redJobs(run.jobs)) {   // a cancelled run is a try that showed nothing: its jobs are not reds
       const fixed = runs.slice(index + 1).find(later => passedFirst(later.jobs, red.suite, red.platform));
       const fixFiles = red.rerun === 'success' ? null : fixed ? filesBetween(run.headSha, fixed.headSha) : [];
       const cause = causeOf({...red, log: red.rerun === 'success' ? '' : logOf(red.jobId), fixFiles});
@@ -73,7 +73,7 @@ async function main() {
   if (!key && !dry) { console.log('::warning::SELFHEAL_PUBLISH_KEY is not set: nothing published.'); return; }
   const since = new Date(Date.now() - 30 * 86400000).toISOString();
   const listed = gh('run', 'list', '--repo', repo, '--workflow', 'desktop.yml', '--limit', '200', '--json', 'databaseId,conclusion,createdAt,updatedAt,displayTitle,headSha')
-    .filter(run => RUN_TITLE.test(run.displayTitle) && ['success', 'failure'].includes(run.conclusion) && run.createdAt >= since).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    .filter(run => RUN_TITLE.test(run.displayTitle) && ['success', 'failure', 'cancelled'].includes(run.conclusion) && run.createdAt >= since).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   let have = [], pending = [];
   if (key) ({have, pending} = await (await fetch(`${base}?v=${RULES_VERSION}`, {headers: {Authorization: `Bearer ${key}`}})).json());
   const settled = new Set(have), waiting = new Set(pending);
