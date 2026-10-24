@@ -8,7 +8,7 @@ section.block.first { padding-top: 40px; }
 .page-jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .page-jump a { padding: 7px 14px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: .88rem; text-decoration: none; color: var(--muted); }
 .page-jump a:hover { color: var(--ink); border-color: var(--ink); }
-.next-page { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 24px 28px; margin-block: 8px 72px;
+.next-page { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 24px 28px; margin-block: 56px 72px;
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .next-page a { color: var(--signal); font-weight: 600; text-decoration: none; }
 
