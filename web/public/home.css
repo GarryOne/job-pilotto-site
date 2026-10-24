@@ -13,16 +13,18 @@
 /* The hero's stage (owner, 24 Oct 2026): one clip at a time in an app-like frame with a restrained amber glow; the caption above it, the four steps below
    with a thin line that fills as the clip plays, a small pause button. hero-stage.js plays them; phones show the 4:3 copies (tighter crops). */
 .hero-stage { position: relative; display: grid; gap: 14px; }
-.stage-cap { margin: 0; display: grid; gap: 2px; min-height: 3.2em; }
+.stage-cap { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: baseline; min-height: 3.2em; }
 .stage-cap b { font: 600 clamp(1.1rem, 1.55vw, 1.35rem)/1.25 var(--display); color: var(--ink); letter-spacing: -.01em; }
-.stage-cap span { font-size: .92rem; color: var(--muted); }
+.stage-cap .stage-sub { font-size: .92rem; color: var(--muted); }
 .stage-screen { position: relative; aspect-ratio: 1600 / 1000; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); background: var(--surface);
   box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 178 36 / .05), 0 24px 90px -28px rgb(255 178 36 / .28); }
 .stage-screen .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }   /* a cut, never a crossfade: two screens never overlap (owner, 24 Oct 2026) */
 .stage-screen .slide.is-on { opacity: 1; }
-.stage-later { position: absolute; left: 12px; top: 12px; z-index: 2; padding: 4px 10px; border-radius: 999px; font: 500 .72rem/1 var(--mono); letter-spacing: .04em;
-  color: var(--signal-ink); background: var(--signal); box-shadow: 0 4px 16px rgb(0 0 0 / .35); opacity: 0; animation: stage-later 2.2s ease forwards; }
-@keyframes stage-later { 0%, 100% { opacity: 0; } 12%, 70% { opacity: 1; } }
+.stage-cap .stage-title, .stage-cap .stage-sub { grid-column: 1 / -1; }
+.stage-cap .stage-later:not([hidden]) + .stage-title { grid-column: 2; }
+.stage-later { justify-self: start; padding: 3px 9px; border-radius: 999px; font: 600 .72rem/1.2 var(--mono); letter-spacing: .04em; white-space: nowrap;
+  color: var(--signal-ink); background: var(--signal); animation: stage-later .4s ease both; }   /* round 2 (owner, 24 Oct 2026: "label not on the text"): in the caption line, never over the video */
+@keyframes stage-later { from { opacity: 0; } to { opacity: 1; } }
 .stage-steps { display: flex; gap: 6px; align-items: stretch; }
 .stage-steps button { position: relative; flex: 1 1 0; min-width: 0; display: inline-flex; gap: 6px; align-items: baseline; padding: 8px 10px 11px; border: 1px solid var(--line);
   border-radius: 9px; background: transparent; color: var(--muted); font: 500 .8rem var(--sans); cursor: pointer; overflow: hidden; white-space: nowrap; transition: color .2s, border-color .2s; }

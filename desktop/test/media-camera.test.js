@@ -2,7 +2,7 @@
 // the view never leaves the page, every output frame maps to a recorded frame.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, PHONE_GAIN, PHONE_MAX, posterTime, renderPlan} from '../../media/camera.mjs';
+import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, PHONE_GAIN, PHONE_MAX, posterTime, renderPlan, beatTimes, FIT_MARGIN, FIT_WARN, FIRST_LAG, fromFirstLook} from '../../media/camera.mjs';
 
 const viewport = {w: 1800, h: 1125};
 const box = {x: 250, y: 500, width: 1200, height: 540};
@@ -115,4 +115,69 @@ test('the phone copy: its own aspect, a tighter zoom (gain or its own), capped, 
   }
   const whole = cameraKeys({viewport, events: [{t: 0, type: 'hold', box, zoom: 1}], phone});
   assert.ok(cameraAt(whole, 1, viewport, 1, phone).h <= viewport.h + 1e-9, 'even "the whole screen" fits the page height at 4:3');
+});
+
+// Round 2 (owner, 24 Oct 2026: the steps were missing and nobody saw it before shipping): every look's beat gets a moment in the played clip, so the
+// side-by-side and the beats sheet show each step, not only the result.
+test('each look with a beat gets its moment in the played clip: near its hold\'s end, divided by the speed', () => {
+  const steps = [{go: 'jobs'}, {hold: 2, look: '#a', beat: 'First'}, {click: '#x'}, {hold: 1}, {hold: 3, look: '#b', beat: 'Second'}];
+  const events = [{t: 0.5, type: 'mark'}, {t: 1, type: 'hold', look: '#a', s: 2}, {t: 3.2, type: 'click'}, {t: 3.9, type: 'press'}, {t: 4, type: 'hold', s: 1}, {t: 5, type: 'hold', look: '#b', s: 3}];
+  assert.deepEqual(beatTimes(events, steps, 2), [{t: 1.4, beat: 'First'}, {t: 3.85, beat: 'Second'}]);
+  assert.deepEqual(beatTimes(events, [{hold: 2, look: '#a'}], 1), [], 'no beat, no moment');
+});
+
+// Round 2 (owner, 24 Oct 2026: "wrong cropping"): in the hero (steady) every look is shown WHOLE across: a card wider than its zoomed view used to lose
+// its right side (Set up's note card lost its Build button). Loops over widths, so no zoom/width pair cuts a look.
+test('a hero look is never cut left or right: its zoom is lowered to fit the box, and a much lower zoom is reported', () => {
+  for (const width of [300, 700, 900, 1200, 1500, 1750]) {
+    for (const zoom of [1.5, 2, 2.4]) {
+      const look = {x: 1800 - width - 20 > 0 ? 20 : 0, y: 300, width, height: 120};
+      const heard = [];
+      const keys = cameraKeys({viewport, events: [{t: 0, type: 'hold', look: 'x', box: look, zoom}], steady: true, onFit: (event, asked, used) => heard.push(used / asked)});
+      const view = cameraAt(keys, 1, viewport);
+      assert.ok(view.x <= look.x + 0.5 && view.x + view.w >= look.x + look.width - 0.5, `width ${width} at zoom ${zoom}: the view ${view.x.toFixed(0)}+${view.w.toFixed(0)} holds the box`);
+      if (look.width + 2 * FIT_MARGIN > viewport.w / zoom) assert.equal(heard.length, 1, `width ${width} at zoom ${zoom}: the lowered zoom is reported`);
+      else assert.deepEqual(heard, [], 'a box that fits keeps its zoom');
+    }
+  }
+  assert.ok(FIT_WARN < 1);
+});
+
+test('the phone copy keeps its tighter crop unless it names its own look; outside the hero a wide box still reads from its left edge', () => {
+  const wide = {x: 200, y: 600, width: 900, height: 60};
+  const phone = {aspect: 4 / 3};
+  const tight = cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', box: wide, zoom: 2}], steady: true, phone}), 1, viewport, 1, phone);
+  assert.ok(tight.w < wide.width, 'the phone copy still zooms past the box (its point is a tighter crop)');
+  const own = cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', box: wide, phoneBox: wide, zoom: 2}], steady: true, phone}), 1, viewport, 1, phone);
+  assert.ok(own.w >= wide.width, 'a phoneLook is shown whole');
+});
+
+// Round 2 (owner: Find "starts on the list already full"): the hero's clip begins at its first look, not at the app's launch.
+test('a hero clip starts at its first look: earlier frames and events go, times move so the look starts at 0', () => {
+  const raw = {viewport, frames: [0, 0.5, 1, 1.5, 2, 3].map((t, i) => ({t, file: `f${i}.jpg`})),
+    events: [{t: 0.4, type: 'mark'}, {t: 1.2, type: 'hold', box, s: 2}, {t: 3.2, type: 'click', box}]};
+  const log = fromFirstLook(raw);
+  assert.deepEqual(log.frames.map(frame => frame.file), ['f3.jpg', 'f4.jpg', 'f5.jpg'], 'the frame on screen at the look (+ the repaint lag) is the first');
+  assert.equal(log.frames[0].t, 0);
+  assert.deepEqual(log.events.map(event => event.type), ['hold', 'click'], 'what happened before the look is gone');
+  assert.equal(log.events[0].t, 0);
+  assert.ok(Math.abs(log.events[1].t - (3.2 - 1.2 - FIRST_LAG)) < 1e-9);
+  const none = {...raw, events: []};
+  assert.equal(fromFirstLook(none), none, 'no look: unchanged');
+});
+
+test('a look may keep its left part on purpose (lookWidth), never wider than the box itself', async () => {
+  const {holdEvent} = await import('../../media/record-app.mjs');
+  const wide = {x: 256, y: 100, width: 1512, height: 180};
+  assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 760}, wide).box.width, 760);
+  assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 2000}, wide).box.width, 1512);
+  assert.deepEqual(holdEvent({hold: 1, look: 'x'}, wide).box, wide);
+});
+
+// Round 2: a hold's entry is stamped after its boxes are measured; its `s` is the time left on screen, so beat frames and posters fall inside the look.
+test('a hold logs the seconds it has left after measuring, and the recorder waits exactly that', async () => {
+  const {holdEvent, holdLeft} = await import('../../media/record-app.mjs');
+  assert.ok(Math.abs(holdLeft(2.2, 1000, 1700) - 1.5) < 1e-9);
+  assert.equal(holdLeft(1, 1000, 3000), 0.3, 'a slow measure still leaves a moment on screen');
+  assert.equal(holdEvent({hold: 2.2, look: 'x'}, {x: 0, y: 0, width: 10, height: 10}, null, 1.5).s, 1.5);
 });

@@ -1,5 +1,7 @@
 // The hero's side-by-side review image (owner, 24 Oct 2026: "judge readability inside the hero, not fullscreen"): today's live hero | this tree's hero,
-// at a desktop and a phone width, one frame per phase at the clip's result moment, labelled, same scale. Demo media only; a fresh browser profile (no cookies).
+// at a desktop and a phone width, inside the real page, same scale. Round 2 (owner, 24 Oct 2026: steps missing, wrong crops, nobody saw it before
+// shipping): every phase shows EVERY beat of the new clip (its manifest's beats, captioned with what the viewer should read) under three moments of
+// today's clip, not only the result. Demo media only; a fresh browser profile (no cookies).
 //   node tools/hero-preview.mjs --out <png> [--media <media set dir>] [--before <url>] [--web web/public] [--tree .overlay]
 //   --media   a set from media/media.mjs (its files win over web/public/media), to review clips before placing them
 //   --before  the page to compare against (default https://www.jobadabra.top; "none" leaves the left column out)
@@ -47,27 +49,40 @@ function serve() {
   return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
 
-// This tree's stage: each step clicked, paused, sought to just before the clip's end (its result), the stage shot with its caption.
-async function shootStage(page, url) {
+const PIECES = ['hero-onboarding', 'hero', 'hero-fill', 'hero-track'];
+// The moments to show per phase: the set's beats (media.mjs writes them into its manifest.json), else the clip's last moment; today's clips: three moments.
+const setBeats = (() => {
+  try { return Object.fromEntries(JSON.parse(fs.readFileSync(path.join(media, 'manifest.json'), 'utf8')).items.filter(entry => entry.beats).map(entry => [entry.name, entry.beats])); } catch { return {}; }
+})();
+const momentsOf = (k, live) => live ? [{at: 0.12}, {at: 0.5}, {at: 0.96}] : (setBeats[PIECES[k]] || [{at: 0.96, beat: 'result'}]).map(beat => (beat.t != null ? {t: beat.t, beat: beat.beat} : beat));
+
+// A stage (this tree's, or today's live one): each step clicked, paused, sought to each moment, the stage shot with its caption.
+async function shootStage(page, url, live = false) {
   await page.goto(url, {waitUntil: 'networkidle'});
   await page.locator('#hero-stage').scrollIntoViewIfNeeded();
-  const shots = [];
+  const phases = [];
   for (let k = 0; k < PHASES.length; k++) {
-    const caption = await page.evaluate(async k => {
-      const root = document.getElementById('hero-stage');
-      root.querySelectorAll('.stage-steps button:not(.stage-pause)')[k].click();
-      if (root.querySelector('.stage-pause').getAttribute('aria-label') === 'Pause') root.querySelector('.stage-pause').click();
-      const clip = root.querySelectorAll('video.slide')[k];
-      clip.preload = 'auto';
-      if (clip.readyState < 1) { clip.load(); await new Promise(done => { clip.addEventListener('loadedmetadata', done, {once: true}); setTimeout(done, 8000); }); }
-      clip.currentTime = Math.max(0, (clip.duration || 1) - 0.35);
-      await new Promise(done => { clip.addEventListener('seeked', done, {once: true}); setTimeout(done, 4000); });
-      return `${root.querySelector('.stage-cap b').textContent} | ${root.querySelector('.stage-cap span').textContent} | ${clip.currentSrc.split('/').pop()} ${clip.videoWidth}x${clip.videoHeight}`;
-    }, k);
-    await page.waitForTimeout(700);   // the crossfade
-    shots.push({png: await page.locator('#hero-stage').screenshot(), caption});
+    const shots = [];
+    for (const moment of momentsOf(k, live)) {
+      const caption = await page.evaluate(async ({k, moment}) => {
+        const root = document.getElementById('hero-stage');
+        root.querySelectorAll('.stage-steps button:not(.stage-pause)')[k].click();
+        if (root.querySelector('.stage-pause').getAttribute('aria-label') === 'Pause') root.querySelector('.stage-pause').click();
+        const clip = root.querySelectorAll('video.slide')[k];
+        clip.preload = 'auto';
+        if (clip.readyState < 1) { clip.load(); await new Promise(done => { clip.addEventListener('loadedmetadata', done, {once: true}); setTimeout(done, 8000); }); }
+        const end = Math.max(0, (clip.duration || 1) - 0.1);
+        clip.currentTime = Math.min(end, moment.t ?? (clip.duration || 1) * moment.at);
+        await new Promise(done => { clip.addEventListener('seeked', done, {once: true}); setTimeout(done, 4000); });
+        const words = sel => root.querySelector(sel)?.textContent || '';
+        return `${moment.beat || `${clip.currentTime.toFixed(1)} s`} · ${words('.stage-later')} ${words('.stage-cap b')} · ${clip.currentSrc.split('/').pop()} ${clip.videoWidth}x${clip.videoHeight}`;
+      }, {k, moment});
+      await page.waitForTimeout(500);
+      shots.push({png: await page.locator('#hero-stage').screenshot(), caption});
+    }
+    phases.push(shots);
   }
-  return shots;
+  return phases;
 }
 
 // The page to compare against: whatever its hero is, the region around its first video, at four moments of its loop.
@@ -91,18 +106,20 @@ try {
   for (const size of SIZES.filter(one => !only || one.name.toLowerCase().startsWith(only))) {
     const open = async () => (await browser.newContext({viewport: {width: size.width, height: size.height}, deviceScaleFactor: size.scale, isMobile: Boolean(size.mobile), hasTouch: Boolean(size.mobile)})).newPage();
     const now = await shootStage(await open(), local);
-    const then = before ? await shootBefore(await open(), before) : [];
-    PHASES.forEach((phase, k) => rows.push({size: size.name, phase, now: now[k], then: then[k]}));
+    let then = [];
+    if (before) { const page = await open(); await page.goto(before, {waitUntil: 'networkidle'}); then = await page.locator('#hero-stage').count() ? await shootStage(page, before, true) : (await shootBefore(page, before)).map(shot => [shot]); }
+    PHASES.forEach((phase, k) => rows.push({size: size.name, phase, now: now[k], then: then[k] || []}));
   }
-  const img = shot => shot ? `<figure><img src="data:image/png;base64,${shot.png.toString('base64')}"><figcaption>${shot.caption.replace(/</g, '&lt;')}</figcaption></figure>` : '<figure></figure>';
-  const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:24px;background:#111;color:#eee;font:14px system-ui}h2{font-size:15px;margin:28px 0 8px}
-    .row{display:grid;grid-template-columns:${before ? '1fr 1fr' : '1fr'};gap:20px;align-items:start}img{max-width:100%;border:1px solid #333}figure{margin:0}figcaption{color:#aaa;font-size:12px;margin-top:4px}
-    .head{display:grid;grid-template-columns:${before ? '1fr 1fr' : '1fr'};gap:20px;font-weight:600;color:#ffb224}</style>
-    <div class="head">${before ? `<div>Today (${before})</div>` : ''}<div>New (this tree${media ? ', ' + path.basename(media) : ''})</div></div>
-    ${rows.map(row => `<h2>${row.size} · ${row.phase}</h2><div class="row">${before ? img(row.then) : ''}${img(row.now)}</div>`).join('')}`;
-  const sheet = await (await browser.newContext({viewport: {width: before ? 1800 : 1000, height: 900}})).newPage();
+  const img = shot => `<figure><img src="data:image/png;base64,${shot.png.toString('base64')}"><figcaption>${shot.caption.replace(/</g, '&lt;')}</figcaption></figure>`;
+  const strip = (label, shots, phone) => `<div class="strip ${phone ? 'phone' : ''}"><b>${label}</b><div class="frames">${shots.map(img).join('')}</div></div>`;
+  const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:24px;background:#111;color:#eee;font:14px system-ui}h2{font-size:16px;margin:30px 0 8px;color:#ffb224}
+    .strip{margin:6px 0 14px}.strip>b{display:block;color:#aaa;font-size:12px;margin-bottom:4px}.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;align-items:start}
+    .phone .frames{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}img{max-width:100%;border:1px solid #333}figure{margin:0}figcaption{color:#ccc;font-size:12px;margin-top:4px}</style>
+    <div style="color:#ffb224;font-weight:600">Hero side-by-side: per phase, today's clip (3 moments) over the new clip (every beat). New: this tree${media ? ', ' + path.basename(media) : ''}</div>
+    ${rows.map(row => `<h2>${row.size} · ${row.phase}</h2>${before ? strip(`Today (${before})`, row.then, row.size.startsWith('Phone')) : ''}${strip('New', row.now, row.size.startsWith('Phone'))}`).join('')}`;
+  const sheet = await (await browser.newContext({viewport: {width: 1800, height: 900}})).newPage();
   await sheet.setContent(html, {waitUntil: 'load'});
   fs.writeFileSync(out, await sheet.screenshot({fullPage: true}));
-  rows.forEach(row => console.log(`hero-preview: ${row.size} · ${row.phase}: ${row.now.caption}`));
+  rows.forEach(row => row.now.forEach(shot => console.log(`hero-preview: ${row.size} · ${row.phase}: ${shot.caption}`)));
   console.log(`hero-preview: ${out}`);
 } finally { await browser.close(); server.close(); }

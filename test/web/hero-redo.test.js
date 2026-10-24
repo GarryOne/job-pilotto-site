@@ -39,3 +39,20 @@ test('the skill names every slide scene and every file it points to exists', () 
     assert.ok(existsSync(new URL(rel, root)), `${rel} exists`);
   }
 });
+
+// Round 2 (owner, 24 Oct 2026: phases "not showing all the steps", "wrong cropping"): the owner's side-by-side and the contact sheets show EVERY beat
+// of each clip (manifest `beats`), never one result frame per phase, and the skill says so.
+test('the side-by-side and the contact sheets are built from each clip\'s beats', () => {
+  assert.match(read('tools/hero-preview.mjs'), /\.beats\b/, 'hero-preview reads the manifest beats');
+  assert.match(read('tools/hero.sh'), /beats/, 'hero.sh takes one sheet frame per beat');
+  assert.match(read('media/manifest.mjs'), /beats/, 'the manifest carries the beat times');
+  assert.match(readFileSync(skill, 'utf8'), /every beat/i, 'the skill asks for every beat');
+});
+
+// Round 2: the overlay was built once and never refreshed, so the app it recorded lagged public main (the redesigned setup step would have been missed).
+test('tools/hero.sh records the current public app: it rebuilds the overlay when public main (or HERO_PUBLIC_REF) moved', () => {
+  const text = read('tools/hero.sh');
+  assert.match(text, /git ls-remote/, 'it asks GitHub for the public commit');
+  assert.match(text, /HERO_PUBLIC_REF/, 'a public PR branch can be recorded');
+  assert.doesNotMatch(text, /\[ -d \.overlay\/\.git \] \|\| tools\/overlay\.sh/, 'never "build once, keep forever"');
+});

@@ -34,8 +34,8 @@ test('the demo folder is a persona; a folder with a real key or no profile is re
 
 test('the director\'s plan sets a zoom per look and the manifest\'s words; no plan keeps the scene', () => {
   assert.equal(withPlan(VIDEOS['hero-track'], null), VIDEOS['hero-track']);
-  const planned = withPlan(VIDEOS['hero-track'], {zooms: {'section.card.is-lit': 1.3}, caption: 'Jobs that fit you'});
-  assert.equal(planned.steps.find(step => step.look === 'section.card.is-lit').zoom, 1.3);
+  const planned = withPlan(VIDEOS['hero-track'], {zooms: {'#activity-card .mail-email': 1.3}, caption: 'Jobs that fit you'});
+  assert.equal(planned.steps.find(step => step.look === '#activity-card .mail-email').zoom, 1.3);
   assert.equal(planned.caption, 'Jobs that fit you');
   assert.equal(planOf('no-such-piece', os.tmpdir()), null);
 });
@@ -79,5 +79,28 @@ test('every hero clip is steady, makes at most one deliberate move, holds a zoom
     assert.ok(result.hold / piece.speed >= 2, `${name}: the result is on screen ${(result.hold / piece.speed).toFixed(1)} s`);
     assert.equal(piece.phone.width / piece.phone.height, 4 / 3, `${name}: phone copy 4:3`);
     assert.ok(piece.steps.filter(step => step.look).every(step => (step.phoneZoom || 0) > (step.zoom || 1)), `${name}: the phone crops tighter`);
+  }
+});
+
+// Round 2 (owner, 24 Oct 2026: Set up "not showing all the steps", Find "show we got to that list", Track "doesn't continue the journey"): a phase is the
+// user's real sequence, one look per step, each look naming what the viewer reads (its beat: the storyboard's caption, tools/hero.sh --storyboard).
+test('every hero look names its beat; a phase shows three steps or more, except Apply (one fill)', () => {
+  for (const [name, piece] of Object.entries(VIDEOS).filter(([, p]) => p.slide)) {
+    const looks = piece.steps.filter(step => step.look);
+    for (const look of looks) assert.ok(typeof look.beat === 'string' && look.beat.length >= 12, `${name}: ${look.look} has no beat`);
+    if (piece.source === 'app') assert.ok(looks.length >= 3, `${name}: ${looks.length} steps shown`);
+    assert.equal(new Set(looks.map(look => look.beat)).size, looks.length, `${name}: two looks with the same beat`);
+  }
+});
+
+// Round 2: Recent activity (opened for Track's Gmail beat) stays open on the next page and covered the Interviews table (a click timed out).
+test('a scene that opens the Recent activity panel closes it before it goes to another page', () => {
+  const TOGGLE = "getElementById('activity-toggle')";
+  for (const [name, piece] of Object.entries(VIDEOS)) {
+    let open = false;
+    for (const step of piece.steps) {
+      if (step.js?.includes(TOGGLE)) open = !open;
+      else if (step.go) assert.ok(!open, `${name}: close Recent activity before {go: '${step.go}'}`);
+    }
   }
 });

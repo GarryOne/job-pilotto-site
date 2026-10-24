@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {startRealExtension} from '../desktop/e2e/lib/real-extension.mjs';
-import {holdEvent, unionBox} from './record-app.mjs';
+import {holdEvent, holdLeft, unionBox} from './record-app.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {answerReply, formHost, formHtml} from './stand-in.mjs';
 
@@ -56,12 +56,14 @@ export async function recordExtensionVideo({persona, piece, dir}) {
         continue;
       }
       if (item.hold) {
+        const started = Date.now();
         await page.waitForTimeout(250);
         const boxOf = async look => (look ? unionBox(await Promise.all([look].flat().map(one => (one === 'panel' ? panelBox(page) : page.locator(one).first().boundingBox())))) : null);
         const box = await boxOf(item.look);
         if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
-        log.add(holdEvent(item, box, await boxOf(item.phoneLook)));
-        await page.waitForTimeout(item.hold * 1000 - 250);
+        const phoneBox = await boxOf(item.phoneLook), left = holdLeft(item.hold, started, Date.now());
+        log.add(holdEvent(item, box, phoneBox, left));
+        await page.waitForTimeout(left * 1000);
       }
     }
     const frames = await cast.stop();
