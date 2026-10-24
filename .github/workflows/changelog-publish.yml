@@ -2,11 +2,10 @@ name: CI · Changelog publish
 # The What's new page publishes itself (owner, 18 Oct 2026): every stable release and every build the beta gate approved gets an entry, drafted by Haiku in plain words (new features / improvements / bug fixes),
 # checked by admin/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. When the AI cannot draft (limit, bad key, outage) the version goes out as a PLAIN entry built without it, the run is red with the refusal named + a Telegram message, and the next run that can reach the AI writes it again (admin/changelog-plain.js).
 # This run drafts only versions NEWER than the newest on the page; the one-time backfill of older versions (+ the 0.0.1 start entry) was run once from the owner's Mac, `node jobs/changelog-publish.mjs --plan|--backfill`, never from here.
-# Runs at :23 and :53 every hour (the public repo cannot start a workflow here), or by hand: `gh workflow run changelog-publish.yml`.
+# Runs hourly at :23 (the fallback; the release workflow starts it on each release), or by hand: `gh workflow run changelog-publish.yml`.
 on:
   schedule:
     - cron: '23 * * * *'
-    - cron: '53 * * * *'   # GitHub dropped most of the hourly runs (24 Oct 2026: 3 runs in 11 hours); a second slot, a run is a minute
   workflow_dispatch:
 
 permissions:
