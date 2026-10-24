@@ -5,8 +5,12 @@
 set -euo pipefail
 tree="${1:-.}"; priv="${2:-$tree}"
 priv="$(cd "$priv" && pwd)"
+export SITE_REPO_DIR="$priv"   # tests that must read only this repo's own files (tests/test_site_workflow_pipefail.py)
 cd "$tree"
 status=0
+# A test of this repo at the path of a public test REPLACES it in the joined tree and then runs against both repos' files (24 Oct 2026: tests/test_workflow_pipefail.py hid the public one and failed on its workflows). Same path = fail.
+shadowed="$(cd "$priv" && git ls-files tests desktop/test desktop/e2e/test test 2>/dev/null | while read -r file; do git -C "$OLDPWD" cat-file -e "HEAD:$file" 2>/dev/null && echo "$file"; done)"
+if [ -n "$shadowed" ]; then echo "::error::these tests of this repo have the path of a public test and would replace it (rename them site_*): $shadowed"; status=1; fi
 python_files="$( { grep -l "needs_site" tests/*.py | grep -v site_private.py; (cd "$priv" && ls tests/test_*.py 2>/dev/null); } | sort -u)"
 for file in $python_files; do
   python3 -m unittest discover -s tests -p "$(basename "$file")" || status=1

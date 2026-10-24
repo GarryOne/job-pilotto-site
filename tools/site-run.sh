@@ -8,4 +8,5 @@ if [ ! -d "$tree" ] || [ -n "${SITE_OVERLAY_FRESH:-}" ] || [ -n "$(find "$tree" 
   "$here/tools/overlay.sh" "$tree" >&2
 fi
 cd "$tree"
+export SITE_REPO_DIR="$here"
 exec "$@"
