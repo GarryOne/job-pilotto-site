@@ -127,9 +127,6 @@ body { counter-reset: gate; }
 .hero .cta-note a { color: inherit; text-underline-offset: 3px; }
 .hero .hero-note { font-size: .9rem; color: #8a97a6; max-width: 56ch; }
 .hero .hero-note a { color: var(--hall-ink); font-weight: 600; text-underline-offset: 3px; }
-.maker { display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px; border: 1px solid #243040; border-radius: 14px; max-width: 480px;
-  background: #141c25; font-size: .88rem; color: var(--hall-muted); text-align: left; }
-.maker img { width: 28px; height: 28px; border-radius: 50%; }
 @media (max-width: 700px) { .hero { gap: 40px; padding-block: 52px 48px; } .hero .eyebrow { justify-content: center; } .hero .eyebrow::before { display: none; } }
 
 /* The board, big: the hall's screen */
