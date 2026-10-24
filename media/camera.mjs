@@ -23,13 +23,21 @@ const frame = (box, z, viewport, aspect) => {
   return {cx: box.width > w ? box.x + w / 2 : box.x + box.width / 2, cy: box.y + Math.min(box.height, h) / 2, z};
 };
 
+// The hero shows a look's WHOLE width (round 2, owner 24 Oct 2026: "wrong cropping": a card wider than its zoomed view lost its right side, its button
+// with it): the zoom asked for is lowered until the box fits with a small margin, never below the whole page. -> the zoom used. Pure.
+export const FIT_MARGIN = 12;   // CSS px kept on each side of a look
+export const fitWidth = (box, z, viewport) => Math.min(z, Math.max(1, viewport.w / (box.width + 2 * FIT_MARGIN)));
+// A hero look whose zoom fitWidth had to lower by more than this share reads small: the recording names it (`onFit`) so a narrower look is picked.
+export const FIT_WARN = 0.85;
+
 // log: {viewport: {w, h}, events: [{t, type: 'click'|'press'|'hold'|'mark', box?, zoom?, cut?, phoneZoom?, phoneBox?}]} -> [{t, cx, cy, z}], time-ordered; a key is where
 // the camera has ARRIVED at t. Default: the whole screen shows only at the start (context); a click zooms onto its target while the cursor glides there; a hold
 // with a box zooms onto that box (its own zoom, else the box fitted). `steady` (the hero, owner 24 Oct 2026: "zoom toward the result, then hold"): the piece opens
 // already framed on its first look, a click moves nothing unless it carries a zoom, and a look marked `cut` switches at the page change (the last mark or
 // press since the previous look) instead of gliding. `phone` ({aspect}): the phone copy's camera, each zoom PHONE_GAIN closer (or the step's phoneZoom),
 // up to PHONE_MAX and never so wide that the view leaves the page. `speed`: the clip is played faster, so moves are stretched in recorded time.
-export function cameraKeys({viewport, events, speed = 1, steady = false, phone = null}) {
+// `steady` looks fit their box's width (fitWidth; the phone copy only for its own phoneLook, a tighter crop is its point); onFit(event, asked, used) hears each lowered zoom.
+export function cameraKeys({viewport, events, speed = 1, steady = false, phone = null, onFit = null}) {
   const aspect = phone ? phone.aspect : viewport.w / viewport.h;
   const least = Math.max(1, viewport.w / aspect / viewport.h);   // the widest view that still fits the page's height
   const zoomed = (event, z) => Math.max(least, phone ? Math.min(PHONE_MAX, event.phoneZoom ?? z * PHONE_GAIN) : Math.min(MAX_ZOOM, z));
@@ -50,7 +58,10 @@ export function cameraKeys({viewport, events, speed = 1, steady = false, phone =
     if (!look || event.zoom === 1) { if (first || event.zoom === 1) move(event.t + (first ? CONTEXT * speed : dur), full); return; }
     const box = {...look, height: Math.min(look.height, viewport.h * LOOK_HEIGHT)};
     const fit = FILL * Math.min(viewport.w / box.width, viewport.h / box.height);
-    const target = frame(box, zoomed(event, Math.max(1, event.zoom ?? fit)), viewport, aspect);
+    const asked = zoomed(event, Math.max(1, event.zoom ?? fit));
+    const used = steady && (!phone || event.phoneBox) ? Math.max(least, fitWidth(box, asked, viewport)) : asked;
+    if (used < asked) onFit?.(event, asked, used);
+    const target = frame(box, used, viewport, aspect);
     if (steady && first) { keys[0] = {t: 0, ...target}; return; }
     const lastLook = earlier.filter(prev => prev.type === 'hold').at(-1);
     if (event.cut) {
@@ -97,16 +108,36 @@ export function cursorAt(events, t, viewport) {
   return {x, y, press};
 }
 
+// A hero clip starts at its first look (round 2, owner 24 Oct 2026: Find "starts on the list already full": the frames before the first look showed the
+// page before its scene set it up). -> the log with every time moved so the first look's hold starts at 0 (plus FIRST_LAG for the screen to repaint);
+// the frame shown then becomes frame 0, earlier frames and events are dropped. No look: the log unchanged. Pure.
+export const FIRST_LAG = 0.3;
+export function fromFirstLook(log) {
+  const hold = log.events.find(event => event.type === 'hold' && event.box);
+  if (!hold) return log;
+  const t0 = hold.t + FIRST_LAG, at = frameAt(log.frames, t0);
+  const frames = log.frames.slice(at).map((frame, i) => ({...frame, t: i ? Number((frame.t - t0).toFixed(3)) : 0}));
+  const events = log.events.filter(event => event === hold || event.t >= t0).map(event => ({...event, t: Math.max(0, Number((event.t - t0).toFixed(3))), ...(event === hold ? {s: Math.max(0.1, event.s - FIRST_LAG)} : {})}));
+  return {...log, frames, events};
+}
+
 // The poster's moment: the end of the hold marked poster (the filled form, ready to submit), else the first frame. Pure.
 export function posterTime(events = []) {
   const hold = events.find(event => event.type === 'hold' && event.poster);
   return hold ? Number((hold.t + hold.s * 0.9).toFixed(2)) : 0;
 }
 
+// Each beat's moment in the played clip (round 2, owner 24 Oct 2026): the looks' holds in order, matched to the scene's looks that name a beat, at 90% of
+// the hold, in output seconds (the clip plays `speed` times faster). What the side-by-side and the beats sheet show, one frame per step. Pure.
+export function beatTimes(events = [], steps = [], speed = 1) {
+  const looks = steps.filter(step => step.hold && step.look), holds = events.filter(event => event.type === 'hold' && event.look);
+  return looks.map((step, i) => (step.beat && holds[i] ? {t: Number(((holds[i].t + holds[i].s * 0.9) / speed).toFixed(2)), beat: step.beat} : null)).filter(Boolean);
+}
+
 // Every output frame of a video at `fps`: which recorded frame, the page area shown, the cursor. What render.cjs draws. Pure.
 // log: {viewport, frames: [{t, file}], events}. cursor: false hides it (a piece with no clicks). steady/phone: as cameraKeys.
-export function renderPlan(log, fps = 30, speed = 1, {steady = false, phone = null} = {}) {
-  const keys = cameraKeys({...log, speed, steady, phone}), end = log.frames.at(-1).t, cursor = log.events.some(event => event.type === 'click');
+export function renderPlan(log, fps = 30, speed = 1, {steady = false, phone = null, onFit = null} = {}) {
+  const keys = cameraKeys({...log, speed, steady, phone, onFit}), end = log.frames.at(-1).t, cursor = log.events.some(event => event.type === 'click');
   const out = [];
   for (let i = 0; i <= Math.floor(end * fps); i++) {
     const t = i / fps, view = cameraAt(keys, t, log.viewport, speed, phone), at = cursorAt(log.events, t, log.viewport);

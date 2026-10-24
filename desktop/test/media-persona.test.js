@@ -82,6 +82,20 @@ test('a moment edits records by id: fields set, null removes one, _first moves i
   assert.throws(() => applyEdits(data, {jobs: {9: {stage: 'x'}}}), /no record 9/);
 });
 
+// Round 2 (owner, 24 Oct 2026: Track starts on "a gmail check that shows an interview scheduled mail received", then that job's interview): a moment
+// adds a record (the e-mail check run), edits a bare-list file (runs.json, key "."), a map of records by id (interviews.json records) and one record (draft).
+test('a moment adds a record with _add, edits a bare list under ".", a map by id and a single record by its id', () => {
+  const runs = [{id: 1, kind: 'search'}];
+  assert.deepEqual(applyEdits(runs, {'.': {9: {_add: true, _first: true, kind: 'mail'}}}), [{id: 9, kind: 'mail'}, {id: 1, kind: 'search'}]);
+  assert.deepEqual(applyEdits({items: []}, {items: {n: {_add: true, page_id: 'n'}}}).items, [{page_id: 'n'}], 'an _add keeps the id field it names');
+  const iv = {records: {'iv-3': {id: 'iv-3', title: 'Clinique · Phone screen'}}, draft: {id: 'd', title: 'Clinique, phone screen', file: 'a.webm'}};
+  const out = applyEdits(iv, {records: {'iv-3': {title: 'Institut · Phone screen'}}, draft: {d: {title: 'Institut, phone screen'}}});
+  assert.equal(out.records['iv-3'].title, 'Institut · Phone screen');
+  assert.deepEqual(out.draft, {id: 'd', title: 'Institut, phone screen', file: 'a.webm'});
+  assert.throws(() => applyEdits(iv, {draft: {other: {title: 'x'}}}), /no record other/);
+  assert.throws(() => applyEdits(runs, {runs: {1: {kind: 'x'}}}), /runs is not a list/);
+});
+
 test('a recording with a moment gets the moment\'s edits, dates shifted like the rest; the moments folder itself is not copied', () => {
   const folder = path.join(media, 'personas', 'nurse-lyon');
   const persona = loadPersona(folder);

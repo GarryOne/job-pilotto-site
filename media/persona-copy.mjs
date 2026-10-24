@@ -27,22 +27,39 @@ export function shiftDates(text, days, year) {
     });
 }
 
-// A moment's record edits over one file's JSON (owner, 24 Oct 2026: the same person "2 weeks later" for the Track clip). edits: {<list key>: {<id>: fields}}:
-// a record is found by its id, page_id or code; a field set to null is removed; _first moves the record to the front, _drop removes it. Pure.
+// A moment's record edits over one file's JSON (owner, 24 Oct 2026: the same person "2 weeks later" for the Track clip). edits: {<key>: {<id>: fields}}, where
+// <key> names a list ("." = the file itself is the list, e.g. runs.json), a map of records by id, or one record (found by its own id). A list record is found
+// by its id, page_id or code; a field set to null is removed; _first moves it to the front, _drop removes it, _add creates it (round 2: the e-mail check
+// run Track opens on). Pure.
+const idOf = id => (/^\d+$/.test(id) ? Number(id) : id);
+const merged = (old, set) => { const record = {...old, ...set}; for (const [field, value] of Object.entries(set)) if (value === null) delete record[field]; return record; };
 export function applyEdits(json, edits) {
   const out = structuredClone(json);
   for (const [key, byId] of Object.entries(edits)) {
-    let list = out[key];
-    if (!Array.isArray(list)) throw new Error(`media: moment: ${key} is not a list`);
+    const target = key === '.' ? out : out[key];
+    if (target && !Array.isArray(target) && typeof target === 'object') {   // a map of records by id, or a single record
+      for (const [id, fields] of Object.entries(byId)) {
+        const {_add, ...set} = fields;
+        if (target.id != null && String(target.id) === id) {
+          Object.assign(target, set);
+          for (const [field, value] of Object.entries(set)) if (value === null) delete target[field];
+        } else if (target[id] || _add) target[id] = merged(target[id] || {}, set);
+        else throw new Error(`media: moment: no record ${id} in ${key}`);
+      }
+      continue;
+    }
+    if (!Array.isArray(target)) throw new Error(`media: moment: ${key} is not a list`);
+    let list = target;
     for (const [id, fields] of Object.entries(byId)) {
-      const at = list.findIndex(record => [record.id, record.page_id, record.code].some(value => value != null && String(value) === id));
+      const {_first, _drop, _add, ...set} = fields;
+      let at = list.findIndex(record => [record.id, record.page_id, record.code].some(value => value != null && String(value) === id));
+      if (at < 0 && _add) { list = [...list, ['id', 'page_id', 'code'].some(field => field in set) ? {} : {id: idOf(id)}]; at = list.length - 1; }
       if (at < 0) throw new Error(`media: moment: no record ${id} in ${key}`);
-      const {_first, _drop, ...set} = fields;
       if (_drop) { list = list.filter((_, i) => i !== at); continue; }
-      const record = {...list[at], ...set};
-      for (const [field, value] of Object.entries(set)) if (value === null) delete record[field];
+      const record = merged(list[at], set);
       list = _first ? [record, ...list.filter((_, i) => i !== at)] : list.map((old, i) => (i === at ? record : old));
     }
+    if (key === '.') return list;
     out[key] = list;
   }
   return out;

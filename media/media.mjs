@@ -9,8 +9,8 @@
 import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import {posterTime, renderPlan, RING} from './camera.mjs';
-import {leftWords, pieceProblems, realEmails} from './check.mjs';
+import {beatTimes, FIT_WARN, fromFirstLook, posterTime, renderPlan, RING} from './camera.mjs';
+import {captureGaps, leftWords, pieceProblems, realEmails} from './check.mjs';
 import {brightness, duration, encodeStill, encodeVideo, missingEncoders} from './encode.mjs';
 import {manifest, stillEntry, videoEntry} from './manifest.mjs';
 import {recordAppVideo, shootApp} from './record-app.mjs';
@@ -29,13 +29,24 @@ async function makeVideo(name, persona, work, out) {
   const dir = path.join(work, name);
   fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
   const record = piece.source === 'extension' ? recordExtensionVideo : recordAppVideo;
-  const log = await record({persona, piece, dir});
+  // a capture that stalled on a loaded Mac is recorded again (check.mjs captureGaps), at most twice; then pieceProblems fails the piece
+  let recorded;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
+    recorded = await record({persona, piece, dir});
+    const gaps = captureGaps(recorded);
+    if (!gaps.length || attempt === 3) break;
+    console.log(`media: ${name}: the capture stalled (no frame at ${gaps.map(gap => `${gap.t.toFixed(1)} s`).join(', ')}): recording again (${attempt + 1} of 3)`);
+  }
+  const log = piece.camera === 'steady' ? fromFirstLook(recorded) : recorded;   // the hero starts at its first look (camera.mjs)
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));
   const scale = jpegWidth(first) / log.viewport.w, steady = piece.camera === 'steady';
+  // a hero look too wide for its zoom is shown whole at a lower zoom (camera.mjs fitWidth); much lower reads small, so the log names it (round 2)
+  const onFit = (event, asked, used) => console.log(`media: ${name}: look ${JSON.stringify(event.look)} shown whole at zoom ${used.toFixed(2)} (asked ${asked.toFixed(2)})${used < asked * FIT_WARN ? ': SMALL TEXT, pick a narrower look' : ''}`);
   // The site's copy, and for a piece with a phone shape ({width, height}: the hero) a second master with its own tighter camera (camera.mjs PHONE_*).
   const render = (out, width, height, phone = null) => {
-    const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS, piece.speed || 1, {steady, phone}), scale, width, height, fps: FPS, ring: RING, out, ffmpeg: 'ffmpeg'};
+    const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS, piece.speed || 1, {steady, phone, onFit}), scale, width, height, fps: FPS, ring: RING, out, ffmpeg: 'ffmpeg'};
     const file = path.join(dir, `${path.basename(out, '.mp4')}.json`);
     fs.writeFileSync(file, JSON.stringify(job));
     const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), file], {stdio: 'inherit', timeout: 15 * 60000});
@@ -49,7 +60,7 @@ async function makeVideo(name, persona, work, out) {
   if (problems.length) throw new Error(problems.join('\n'));
   const {files, bytes} = encodeVideo({master, phoneMaster, name, piece, outDir: out, posterAt: posterTime(log.events)});
   console.log(`media: ${name}: ${Object.entries(bytes).map(([kind, n]) => `${kind} ${(n / 1e6).toFixed(2)} MB`).join(', ')}`);
-  return videoEntry({name, piece, files, bytes, seconds: duration(path.join(out, files.mp4))});
+  return videoEntry({name, piece, files, bytes, seconds: duration(path.join(out, files.mp4)), beats: beatTimes(log.events, piece.steps, piece.speed || 1)});
 }
 
 async function makeStills(kinds, persona, work, out) {

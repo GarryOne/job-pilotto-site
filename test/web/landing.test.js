@@ -110,9 +110,13 @@ test('the hero is one stage of four clips: the first loads, the rest wait; each 
     assert.match(clip, /\(made-up example\)"/, `clip ${i + 1} says it is an example`);
     assert.doesNotMatch(clip, /autoplay|loop/, `clip ${i + 1}: the script plays and advances it`);
   });
-  assert.ok(stage.includes(`<b>${CAPTIONS[0]}</b>`), 'the first caption is there without the script');
+  assert.ok(stage.includes(`<b class="stage-title">${CAPTIONS[0]}</b>`), 'the first caption is there without the script');
   assert.match(clips[2], /data-sub="Review your answers, then submit\."/, 'Apply hands over to the person');
   assert.match(clips[3], /data-later="2 weeks later"/, 'Track is later in the same example');
+  // Round 2 (owner, 24 Oct 2026: "label not on the text"): the "later" words are a tag in the caption line above the stage, never drawn over the video.
+  assert.match(stage, /<p class="stage-cap"><span class="stage-later" hidden><\/span><b class="stage-title">/, 'the later tag leads the caption');
+  assert.doesNotMatch(stage.match(/<div class="stage-screen">[\s\S]*?<video/)[0], /stage-later/, 'nothing sits on top of the video');
+  assert.doesNotMatch(read('home.css').match(/\.stage-later \{[^}]*\}/)[0], /position: absolute/, 'the tag flows in the caption line');
   assert.equal((stage.match(/<button type="button" aria-label="(Set up|Find|Apply|Track)"/g) || []).length, 4, 'one step per clip');
   assert.match(stage, /class="stage-pause" aria-label="Pause"/);
   assert.match(html, /<script type="module" src="hero-stage\.js">/);

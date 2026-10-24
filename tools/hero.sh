@@ -25,8 +25,15 @@ if [ "${1:-}" = --place ]; then
   exit 0
 fi
 
-# the joined tree with this worktree's edits (built once, then only the folders the hero touches are synced)
-[ -d .overlay/.git ] || tools/overlay.sh .overlay >&2
+# the joined tree with this worktree's edits. The app recorded is public main (or HERO_PUBLIC_REF, e.g. a public PR branch that redesigns a screen the
+# hero shows): rebuilt when that commit moved (round 2: a stale overlay would have recorded the old setup step), then the hero's folders are synced.
+ref="${HERO_PUBLIC_REF:-main}"
+want="$(git ls-remote "${PUBLIC_REPO_URL:-https://github.com/GarryOne/job-pilotto.git}" "refs/heads/$ref" 2>/dev/null | cut -c1-40 || true)"
+have="$(git -C .overlay rev-parse HEAD 2>/dev/null || true)"
+if [ -z "$have" ] || { [ -n "$want" ] && [ "$want" != "$have" ]; }; then
+  echo "hero: recording the app at job-pilotto/$ref ${want:0:7} (the overlay had ${have:-none}): rebuilding .overlay" >&2
+  tools/overlay.sh .overlay "$ref" >&2
+fi
 rsync -a media/ .overlay/media/ && rsync -a web/ .overlay/web/ && rsync -a tools/ .overlay/tools/
 for dir in desktop desktop/e2e; do   # packages, cached by lock file as tools/media.sh does
   [ -d ".overlay/$dir/node_modules" ] && continue
@@ -48,13 +55,21 @@ lock="${MEDIA_HEAVY_LOCK:-$HOME/job-pilotto/tools/heavy-lock.sh}"
 record=(node ../media/media.mjs "${pieces[@]}" --out "$set_dir" --keep)
 if [ -f "$lock" ]; then (cd .overlay/desktop && bash "$lock" product-media "${record[@]}"); else (cd .overlay/desktop && "${record[@]}"); fi
 
-# contact sheets: 8 frames per clip, desktop and phone, to read before the preview
+# beat sheets: one frame per beat (the scene's looks, at their hold's end; manifest.json "beats"), desktop and phone, to read before the preview
+# (round 2, owner 24 Oct 2026: evenly spaced frames hid a missing step and a bad crop). The beats and their words: `hero: <piece> beat <n> <t> s: <words>`.
 for piece in "${pieces[@]}"; do
+  beats="$(node -e 'const m = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")); const e = m.items.find(i => i.name === process.argv[2]); for (const b of e?.beats || []) console.log(`${b.t}\t${b.beat}`)' "$set_dir/manifest.json" "$piece")"
   for clip in "$piece" "$piece-720"; do
     [ -f "$set_dir/$clip.mp4" ] || continue
     length="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$set_dir/$clip.mp4")"
-    ffmpeg -v error -y -i "$set_dir/$clip.mp4" -vf "fps=8/$length,scale=600:-1,tile=4x2" -frames:v 1 "$set_dir/sheets/$clip.png"
-    printf "hero: %s %.1f s, sheet %s\n" "$clip" "$length" "$set_dir/sheets/$clip.png"
+    inputs=(); n=0
+    while IFS=$'\t' read -r at words; do
+      [ -n "$at" ] || continue
+      n=$((n + 1)); ffmpeg -v error -y -ss "$at" -i "$set_dir/$clip.mp4" -frames:v 1 -vf scale=600:-1 "$set_dir/sheets/$clip-beat$n.png"; inputs+=(-i "$set_dir/sheets/$clip-beat$n.png")
+      [ "$clip" = "$piece" ] && printf "hero: %s beat %d %s s: %s\n" "$piece" "$n" "$at" "$words"
+    done <<< "$beats"
+    if [ "$n" -gt 1 ]; then ffmpeg -v error -y "${inputs[@]}" -filter_complex "hstack=inputs=$n" "$set_dir/sheets/$clip.png"; else cp "$set_dir/sheets/$clip-beat1.png" "$set_dir/sheets/$clip.png" 2>/dev/null || true; fi
+    printf "hero: %s %.1f s, %d beats, sheet %s\n" "$clip" "$length" "$n" "$set_dir/sheets/$clip.png"
   done
 done
 

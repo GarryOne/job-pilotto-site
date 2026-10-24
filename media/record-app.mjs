@@ -9,13 +9,14 @@ import {clipTo} from './camera.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
+import {holdEvent, holdLeft} from './hold.mjs';
 
 const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
 const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.json'))('playwright-core');
 export const WINDOW = {width: 1440, height: 900};   // 16:10, the site's hero shape; the app's own zoom lays it out wider, Retina capture is 2x
 
 // The app on a temp copy of the persona (persona-copy.mjs); demo mode reads its data from there too (JOB_PILOTTO_DEMO_DIR, lib/demo.js).
-export async function launchApp({persona = {folder: path.join(desktop, 'demo')}, settings = null, moment = null} = {}) {
+export async function launchApp({persona = {folder: path.join(desktop, 'demo')}, settings = null, moment = null, env = {}} = {}) {
   const data = personaCopy(persona, {demo: path.join(desktop, 'demo'), moment});
   if (settings) {   // a piece may start the app in another state (the first-run wizard: setupDone false), on the temp copy only
     const file = path.join(data, 'settings.json');
@@ -24,7 +25,7 @@ export async function launchApp({persona = {folder: path.join(desktop, 'demo')},
   const app = await electron.launch({
     executablePath: path.join(desktop, 'node_modules', '.bin', 'electron'),   // a Mac (here or the CI runner): the site shows the Mac app
     args: [desktop],
-    env: {...process.env, JOB_PILOTTO_DEMO: '1', JOB_PILOTTO_USER_DATA: data, JOB_PILOTTO_CONFIG_DIR: data, JOB_PILOTTO_DATA_DIR: data, JOB_PILOTTO_DEMO_DIR: data,
+    env: {...process.env, ...env, JOB_PILOTTO_DEMO: '1', JOB_PILOTTO_USER_DATA: data, JOB_PILOTTO_CONFIG_DIR: data, JOB_PILOTTO_DATA_DIR: data, JOB_PILOTTO_DEMO_DIR: data,
       JOB_PILOTTO_THEME: 'dark', JOB_PILOTTO_E2E: '1', JOB_PILOTTO_E2E_HIDDEN: '1', JOB_PILOTTO_NO_DOTENV: '1', TZ: persona.tz || 'Europe/Zurich'},
     timeout: 240000,   // a busy Mac (load 60+, 21 Oct 2026) took over 90 s to start the window
   });
@@ -49,9 +50,7 @@ export function unionBox(boxes) {
 }
 const lookBox = async (page, look) => unionBox(await Promise.all([look].flat().map(selector => page.locator(selector).first().boundingBox())));
 
-// A hold's log entry: what the camera needs (cameraKeys): its box, zoom, a cut at the page change, the phone copy's own zoom or box.
-export const holdEvent = (item, box, phoneBox = null) => ({type: 'hold', look: item.look || null, box, s: item.hold, ...(item.zoom ? {zoom: item.zoom} : {}),
-  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox} : {}), ...(item.poster ? {poster: true} : {})});
+export {holdEvent, holdLeft};   // pure, in hold.mjs (tests import them without Playwright)
 
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {
@@ -78,21 +77,24 @@ async function step(page, item, log) {
     return;
   }
   if (item.hold) {
+    const started = Date.now();
     await page.waitForTimeout(250);
     const box = item.look ? await lookBox(page, item.look) : null;
     if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
     const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
-    log.add(holdEvent(item, box, phoneBox));
-    await page.waitForTimeout(item.hold * 1000 - 250);
+    const left = holdLeft(item.hold, started, Date.now());
+    log.add(holdEvent(item, box, phoneBox, left));
+    await log.paint();   // a frame now, still page or not (check.mjs captureGaps)
+    await page.waitForTimeout(Math.max(0, left * 1000 - 180));
   }
 }
 
 // A video piece: frames + log.json in `dir`. -> the log.
 export async function recordAppVideo({persona, piece, dir}) {
-  const {page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment});
+  const {page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment, env: piece.env});
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
-    const log = stepLog(cast.clock);
+    const log = stepLog(cast.clock, cast.paint);
     for (const item of piece.steps) await step(page, item, log);
     await page.waitForTimeout(200);
     const frames = await cast.stop();

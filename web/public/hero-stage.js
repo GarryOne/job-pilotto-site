@@ -1,6 +1,6 @@
 // The landing hero's stage (index.html #hero-stage; owner, 24 Oct 2026): four short clips of one made-up person and one job, played in turn on one stage.
 // A clip ends, the next cuts in once its first frame is decoded (owner, 24 Oct 2026: "smooth transitions without blank frames or overlapping screens":
-// the old clip stays on screen until then, never its end-frame poster, never two screens at once); its caption goes above the stage and its step's line fills as it plays. The steps jump to a clip, the pause button
+// the old clip stays on screen until then, never its end-frame poster, never two screens at once); its caption goes above the stage (a "later" clip leads it with a tag, never over the video) and its step's line fills as it plays. The steps jump to a clip, the pause button
 // holds it (as do a hidden tab and a stage scrolled out of view); the next clip is fetched while the current one plays. Phones (the 720 copies, 4:3) get
 // their own posters. With reduced motion nothing plays by itself: the posters show, a step switches them, play starts a clip. Guarded by test/web/landing.test.js.
 const root = document.getElementById('hero-stage');
@@ -47,8 +47,8 @@ if (root && clips.length) {
       step.style.setProperty('--played', '0');
     });
     const clip = clips[on];
-    cap.querySelector('b').textContent = clip.dataset.cap || '';
-    cap.querySelector('span').textContent = clip.dataset.sub || '';
+    cap.querySelector('.stage-title').textContent = clip.dataset.cap || '';
+    cap.querySelector('.stage-sub').textContent = clip.dataset.sub || '';
     if (later) { later.textContent = clip.dataset.later || ''; later.hidden = !clip.dataset.later; }
     if (playing()) clip.play().catch(() => {});
   }

@@ -23,6 +23,7 @@ export async function startScreencast(page, dir, {quality = 92, maxWidth = 3600,
   await nudge();
   return {
     clock: () => Date.now() / 1000 - t0,
+    paint: nudge,   // one forced frame: each hold calls it, so a hold with no frame after it is a stalled capture (check.mjs captureGaps)
     stop: async () => {
       await nudge();   // a last frame, so a still ending is as long as it was held
       await cdp.send('Page.stopScreencast').catch(() => {});
@@ -34,7 +35,7 @@ export async function startScreencast(page, dir, {quality = 92, maxWidth = 3600,
 }
 
 // The click log: each event stamped with the screencast's clock.
-export function stepLog(clock) {
+export function stepLog(clock, paint = async () => {}) {
   const events = [];
-  return {events, add: event => events.push({t: Number(clock().toFixed(3)), ...event})};
+  return {events, paint, add: event => events.push({t: Number(clock().toFixed(3)), ...event})};
 }

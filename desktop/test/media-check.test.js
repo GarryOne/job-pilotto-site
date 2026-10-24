@@ -2,7 +2,7 @@
 // form the extension did not fill each stop the run.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {missingFills, pieceProblems, realEmails, realSecrets} from '../../media/check.mjs';
+import {captureGaps, missingFills, pieceProblems, realEmails, realSecrets} from '../../media/check.mjs';
 import {missingEncoders} from '../../media/encode.mjs';
 
 test('only e-mail addresses on reserved test domains pass', () => {
@@ -49,4 +49,14 @@ test('the fictional form and its recorder are dark', async () => {
   const read = file => fs.readFileSync(new URL(`../../media/${file}`, import.meta.url), 'utf8');
   assert.match(read('form.html'), /prefers-color-scheme: dark/);
   assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'/);
+});
+
+// Round 2: a still page sends no frames (a gap-after-a-click check failed a good Set up); each look forces a repaint, so a look with no frame after it is a stall.
+test('a look with no frame right after its forced repaint is a stall; a still page between looks is not', () => {
+  const frames = [0, 0.5, 1, 6, 6.5].map(t => ({t}));
+  assert.deepEqual(captureGaps({frames, events: [{t: 0.45, type: 'hold', look: 'a'}, {t: 3, type: 'click'}, {t: 5.9, type: 'hold', look: 'b'}]}), [], 'frames at each look; the still page between is fine');
+  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'hold', look: 'b'}]}), [{look: 'b', t: 3}]);
+  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'hold'}]}), [], 'a hold with no look shows nothing new');
+  const problems = pieceProblems({name: 'hero', source: 'app', log: {frames, events: [{t: 3, type: 'hold', look: 'b'}], text: ''}, posterBrightness: 0.1, quiet: true});
+  assert.ok(problems.some(line => /capture stalled/.test(line)), problems.join(' / '));
 });
