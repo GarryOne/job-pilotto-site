@@ -70,7 +70,10 @@ if (root && clips.length) {
       step.style.setProperty('--played', '0');
     });
     const clip = clips[on];
-    cap.querySelector('.stage-title').textContent = clip.dataset.cap || '';
+    const title = cap.querySelector('.stage-title');
+    title.querySelector('.m-hide').textContent = clip.dataset.cap || '';
+    title.querySelector('.m-only').textContent = clip.dataset.short || clip.dataset.cap || '';
+    cap.querySelector('.stage-step').textContent = `0${on + 1} / ${steps[on].getAttribute('aria-label')}`;   // the phone's one short label above the title
     cap.querySelector('.stage-sub').textContent = clip.dataset.sub || '';
     if (later) { later.textContent = clip.dataset.later || ''; later.hidden = !clip.dataset.later; }
     if (playing()) clip.play().catch(() => {});

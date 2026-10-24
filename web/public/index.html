@@ -54,42 +54,43 @@
 
   <header class="hero split" id="top">
     <div class="hero-copy">
-      <span class="eyebrow">Any role · across Europe</span>
-      <h1>Your job search on <span class="flightpath accent">autopilot</span>.<span class="spark title-spark" aria-hidden="true"></span> Powered by AI.</h1>
-      <p class="lede">Jobadabra finds the jobs that fit you, fills in the application forms and keeps track of every reply. You check each one and press Submit.</p>
-      <div class="downloads">
+      <span class="eyebrow m-hide">Any role · across Europe</span>
+      <h1>Your job search on <span class="flightpath accent">autopilot</span>.<span class="spark title-spark" aria-hidden="true"></span> <span class="h1-sub">Powered by AI.</span></h1>
+      <p class="lede"><span class="m-hide">Jobadabra finds the jobs that fit you, fills in the application forms and keeps track of every reply. You check each one and press Submit.</span><span class="m-only">Find matching jobs, fill forms, and track every reply.</span></p>
+      <div class="downloads m-hide">
         <a class="btn btn-primary" href="/download/mac?from=hero"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M11.2 8.5c0-1.6 1.3-2.4 1.4-2.4-.8-1.1-2-1.3-2.4-1.3-1-.1-2 .6-2.5.6s-1.3-.6-2.2-.6C4.4 4.8 3.3 5.5 2.7 6.6c-1.2 2.1-.3 5.2.9 6.9.6.8 1.2 1.7 2.1 1.7.9 0 1.2-.5 2.2-.5s1.3.5 2.2.5 1.5-.9 2-1.7c.6-.9.9-1.8.9-1.9 0 0-1.8-.7-1.8-2.6zM9.6 3.6c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.8 2.1.8.1 1.6-.4 2.2-1z"/></svg>Download for Mac</a>
         <a class="btn btn-primary" href="/download/windows?from=hero"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M0 2.2 6.5 1.3v6.2H0zm7.3-1 8.7-1.2v7.5H7.3zM0 8.3h6.5v6.3L0 13.7zm7.3 0H16V16l-8.7-1.2z"/></svg>Download for Windows</a>
       </div>
-      <span class="downloads-note">Free to start · Free AI included · Mac with Apple silicon, Windows 10 or 11</span>
+      <a class="btn btn-primary hero-get m-only" href="/download?from=hero">Get the desktop app</a>
+      <span class="downloads-note"><span class="m-hide">Free to start · Free AI included · Mac with Apple silicon, Windows 10 or 11</span><span class="m-only">Mac &amp; Windows · Free to start</span></span>
     </div>
     <div class="hero-visual">
         <span class="spark hero-spark one" aria-hidden="true"></span><span class="spark hero-spark two" aria-hidden="true"></span>
         <!-- media: four short clips on one stage (media/manifest.json; owner, 24 Oct 2026): one person and one job from setup to interview. hero-stage.js plays them in turn,
              crossfades, writes each clip's caption above it and fills its step's line; without it, or with reduced motion, the first clip's poster and no autoplay. -->
         <div class="hero-stage" id="hero-stage" role="group" aria-roledescription="carousel" aria-label="Jobadabra in four steps, a made-up example">
-          <p class="stage-cap"><span class="stage-later" hidden></span><b class="stage-title">Add your CV. Shape your search.</b><span class="stage-sub">It proposes roles, places and pay from your CV. You confirm them.</span></p>
+          <p class="stage-cap"><span class="stage-later" hidden></span><b class="stage-title"><span class="m-hide">Add your CV. Shape your search.</span><span class="m-only">Your CV. Your search.</span></b><span class="stage-step" aria-hidden="true">01 / Set up</span><span class="stage-sub">It proposes roles, places and pay from your CV. You confirm them.</span></p>
           <div class="stage-screen">
             <video class="slide is-on" muted playsinline preload="auto" data-into="fade" poster="/media/hero-onboarding-poster.jpg" data-phone-poster="/media/hero-onboarding-720-poster.jpg" width="1600" height="1000"
-              data-cap="Add your CV. Shape your search." data-sub="It proposes roles, places and pay from your CV. You confirm them." aria-label="The Jobadabra setup: a CV added, then the proposed search strategy, confirmed (made-up example)">
+              data-cap="Add your CV. Shape your search." data-short="Your CV. Your search." data-sub="It proposes roles, places and pay from your CV. You confirm them." aria-label="The Jobadabra setup: a CV added, then the proposed search strategy, confirmed (made-up example)">
               <source src="/media/hero-onboarding-720.mp4" type="video/mp4" media="(max-width: 720px)">
               <source src="/media/hero-onboarding.webm" type="video/webm">
               <source src="/media/hero-onboarding.mp4" type="video/mp4">
             </video>
             <video class="slide" muted playsinline preload="none" data-into="slide" poster="/media/hero-poster.jpg" data-phone-poster="/media/hero-720-poster.jpg" width="1600" height="1000"
-              data-cap="Find matching jobs. See why they fit." data-sub="It searches the job sites, then scores every job out of 100 against your CV, with the reasons." aria-label="Nurse jobs in Lyon ranked by fit, one opened on why it fits (made-up example)">
+              data-cap="Find matching jobs. See why they fit." data-short="Jobs that fit, with reasons." data-sub="It searches the job sites, then scores every job out of 100 against your CV, with the reasons." aria-label="Nurse jobs in Lyon ranked by fit, one opened on why it fits (made-up example)">
               <source src="/media/hero-720.mp4" type="video/mp4" media="(max-width: 720px)">
               <source src="/media/hero.webm" type="video/webm">
               <source src="/media/hero.mp4" type="video/mp4">
             </video>
             <video class="slide" muted playsinline preload="none" data-into="slide" poster="/media/hero-fill-poster.jpg" data-phone-poster="/media/hero-fill-720-poster.jpg" width="1600" height="1000"
-              data-cap="Fill applications with your details." data-sub="Review your answers, then submit." aria-label="The browser extension filling that job's application form, then Ready to submit (made-up example)">
+              data-cap="Fill applications with your details." data-short="Applications, filled in." data-sub="Review your answers, then submit." aria-label="The browser extension filling that job's application form, then Ready to submit (made-up example)">
               <source src="/media/hero-fill-720.mp4" type="video/mp4" media="(max-width: 720px)">
               <source src="/media/hero-fill.webm" type="video/webm">
               <source src="/media/hero-fill.mp4" type="video/mp4">
             </video>
             <video class="slide" muted playsinline preload="none" data-into="tiles" poster="/media/hero-track-poster.jpg" data-phone-poster="/media/hero-track-720-poster.jpg" width="1600" height="1000"
-              data-cap="Your interviews and next steps, together." data-sub="The invitation spotted in your inbox, the call reviewed, what to practise, the date on your calendar." data-later="2 weeks later" aria-label="Two weeks later: the interview invitation for that job found in the inbox, the phone screen reviewed with what to practise, and the interview on the calendar (made-up example)">
+              data-cap="Your interviews and next steps, together." data-short="Your interviews. Your next steps." data-sub="The invitation spotted in your inbox, the call reviewed, what to practise, the date on your calendar." data-later="2 weeks later" aria-label="Two weeks later: the interview invitation for that job found in the inbox, the phone screen reviewed with what to practise, and the interview on the calendar (made-up example)">
               <source src="/media/hero-track-720.mp4" type="video/mp4" media="(max-width: 720px)">
               <source src="/media/hero-track.webm" type="video/webm">
               <source src="/media/hero-track.mp4" type="video/mp4">

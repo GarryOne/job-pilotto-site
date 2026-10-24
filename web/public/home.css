@@ -199,3 +199,21 @@ section.block.tight { padding-block: 56px; }
 @media (max-width: 760px) { .big-spark { right: -10px; top: -14px; font-size: 90px; } }
 .site-foot .abra { display: flex; align-items: center; gap: 6px; margin-top: 10px; font: 400 .74rem var(--mono); }
 .site-foot .abra .spark { animation: none; font-size: 12px; }
+
+/* Phones (owner, 24 Oct 2026, mockup + table): a shorter, centred hero with one button; the phone words sit in .m-only, the desktop's in .m-hide. */
+.m-only, .stage-cap .stage-step { display: none; }
+@media (max-width: 720px) {
+  .m-only { display: inline; }
+  .hero.split .hero-get.m-only { display: inline-flex; }
+  .m-hide { display: none !important; }
+  .hero.split .hero-copy { justify-items: center; text-align: center; }
+  .hero.split h1 .h1-sub { display: block; margin-top: 6px; font-size: .62em; font-weight: 500; color: var(--muted); }
+  .hero.split .lede { font-size: 1.05rem; }
+  .hero.split .hero-get { white-space: nowrap; padding-inline: 28px; }
+  .hero .downloads-note { font-size: .8rem; color: var(--muted); }
+  .stage-cap { justify-items: center; text-align: center; min-height: 3.6em; align-content: start; }
+  .stage-cap .stage-step.stage-step { display: block; grid-column: 1 / -1; order: -1; font: 500 .8rem var(--mono); letter-spacing: .04em; color: var(--muted); }
+  .stage-later { display: none; }
+  .stage-cap .stage-sub { display: none; }
+  .stage-cap .stage-title { grid-column: 1 / -1; }
+}
