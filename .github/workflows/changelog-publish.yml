@@ -39,6 +39,7 @@ jobs:
         with:
           node-version: '22'
       - name: Draft and publish the new versions
+        shell: bash   # -eo pipefail: a failing job behind `| tee` fails the step (default bash -e returns tee's status)
         run: node jobs/changelog-publish.mjs --cost "$RUNNER_TEMP/cost.json" 2>&1 | tee "$RUNNER_TEMP/changelog.log"
       - name: Report the AI cost
         if: always()

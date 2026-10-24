@@ -57,6 +57,7 @@ jobs:
         id: draw
         env:
           SEED_INPUT: ${{ inputs.seed }}
+        shell: bash   # -eo pipefail: a failing job behind `| tee` fails the step (default bash -e returns tee's status)
         run: |
           seed="${SEED_INPUT:-$(date -u +%F)}"
           echo "seed=$seed" >> "$GITHUB_OUTPUT"
