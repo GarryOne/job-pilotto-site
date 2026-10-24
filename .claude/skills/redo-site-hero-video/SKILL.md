@@ -128,6 +128,14 @@ Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web
 **Round 6: transitions and the side by side**
 - A transition at every screen change: a cut look inside a clip, a join between parts (app ↔ Chrome), the switch between clips on the site
   and the loop back to Set up. "Fading/moving or even some tiles/text", never an instant replacement.
+- **The transition is chosen for what the change means** (owner: "use most of them: fade, slide, tiles, title card... whenever it fits better";
+  samples https://claude.ai/artifact/MfH6fvdPHAV3tTf4Kw9dYf):
+  - **Slide**: "when we just move from one screen to another" (another page, Jobadabra ↔ Chrome, the next clip).
+  - **Tiles**: "when in reality more/long time passed" (the search running, "2 weeks later").
+  - **Title card**: "when we need to explain how we got there, when the flow is not obvious enough": a short card (place tag + a few words)
+    between the two screens; it adds its time to the clip.
+  - **Fade**: the same screen changing (a result appearing, the AI's proposal replacing "reading your CV"), the softest.
+  - Every cut look, part join and clip switch names its transition; pick by the meaning above, never one style everywhere.
 - Apply side by side (sketch https://claude.ai/artifact/GdQuKaFdKnQp3du6QDsuJX): split screen, Chrome | her card; the side that changes grows to
   60% and zooms in (Chrome while fields fill, then the card's count), both zoom out at "Ready to submit". It replaces round 5's one after
   another; on phones the two stack (Chrome on top, the card below).
