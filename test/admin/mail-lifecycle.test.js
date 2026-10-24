@@ -83,12 +83,12 @@ test('the Pro-launch mail: off without its flag; counts without send=1; goes onl
   e.STATS.db.prepare('UPDATE pro_accounts SET marketing_opt_in = 1 WHERE id = ?').run(a);
   assert.deepEqual(await launch(e), {off: true});
   assert.deepEqual(await launch({...e, MAIL_LAUNCH: 'on'}), {off: true}, 'the marketing flag is the owner\'s second key');
-  const on = {...e, MAIL_LAUNCH: 'on', MARKETING_MAIL: 'on', PRO_PRICE_USD: '29', PRO_LAUNCH_USD: '19'};
+  const on = {...e, MAIL_LAUNCH: 'on', MARKETING_MAIL: 'on'};
   assert.deepEqual(await launch(on, {now}), {would: 1});
   assert.equal(sent.length, 0);
   assert.deepEqual(await launch(on, {send: true, now}), {sent: 1, skipped: 0});
   assert.equal(sent[0].to, 'yes@example.com');
-  assert.match(sent[0].text, /\$19 at launch \(then \$29\), VAT included/);
+  assert.match(sent[0].text, /Pro €9, or Pro \+ AI €19 with AI credit included\. VAT included/);
   assert.match(sent[0].from, /news@jobadabra\.top/);
   assert.deepEqual(await launch(on, {send: true, now}), {sent: 0, skipped: 0}, 'once only');
 });

@@ -84,12 +84,14 @@ test('the status the app reads: free, then pro with a percent and a warning, nev
   assert.equal((await ask2('JPF1.install-x-01.deadbeef')).status, 401);
   const none = await (await ask2(await keyOf('install-none-1'))).json();
   assert.deepEqual([none.ok, none.plan], [true, 'free']);
-  assert.deepEqual(none.offer, {price: '29', launch: '19'}, 'the app shows the price the site says');
-  assert.deepEqual((await (await ask2(await keyOf('install-none-1'), {...e, PRO_LAUNCH_USD: ''})).json()).offer, {price: '29', launch: ''}, 'an empty launch price ends it');
+  assert.deepEqual(none.offers.slice(0, 2).map(o => [o.id, o.price, o.list, o.currency, o.credit]), [['pro', '9', null, 'EUR', false], ['pro-ai', '19', '29', 'EUR', true]], 'the app shows the euro prices the site says');
   const pro = await proInstall(e, 'install-pro-05', 5_000_000);
   e.STATS.db.prepare('UPDATE pro_accounts SET credit_micro = ?').run(1_400_000);   // 28%: rounds down to 25, the 30% warning
   const body = await (await ask2(pro.key)).json();
-  assert.deepEqual([body.plan, body.creditPercent, body.warn], ['pro', 25, 30]);
+  assert.deepEqual([body.plan, body.package, body.creditPercent, body.warn], ['pro', 'pro', 25, 30]);
+  e.STATS.db.prepare('UPDATE pro_accounts SET credit_micro = 0, credit_added_micro = 0').run();   // Pro without AI: never had credit
+  const bare = await (await ask2(pro.key)).json();
+  assert.deepEqual([bare.hasCredit, bare.warn], [false, null], 'no "used up" warning for a Pro that never had credit');
   assert.doesNotMatch(JSON.stringify(body), /micro|usd|\$|cents/i, 'a percent and a step, never money');
   assert.equal((await ask2(pro.key, {...e, PRO_PLAN: 'off'})).status, 404);
   e.STATS.db.prepare("UPDATE pro_accounts SET status = 'refunded'").run();

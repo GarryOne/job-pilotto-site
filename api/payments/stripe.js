@@ -5,7 +5,7 @@ import {equal} from '../../shared/guard.js';
 
 const API = 'https://api.stripe.com/v1';
 export const TOLERANCE_SECONDS = 300;
-const PRICE_VAR = {pro: 'STRIPE_PRICE_PRO', topup5: 'STRIPE_PRICE_TOPUP5', topup10: 'STRIPE_PRICE_TOPUP10', topup20: 'STRIPE_PRICE_TOPUP20'};
+const PRICE_VAR = {pro: 'STRIPE_PRICE_PRO', 'pro-ai': 'STRIPE_PRICE_PRO_AI', upgrade: 'STRIPE_PRICE_UPGRADE', topup5: 'STRIPE_PRICE_TOPUP5', topup10: 'STRIPE_PRICE_TOPUP10', topup20: 'STRIPE_PRICE_TOPUP20'};
 const form = fields => new URLSearchParams(Object.entries(fields).filter(([, value]) => value !== undefined && value !== '')).toString();
 const hex = bytes => [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, '0')).join('');
 
