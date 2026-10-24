@@ -12,8 +12,9 @@ export const CAUSES = [
   {id: 'unknown', label: 'Unknown', color: '#5b6b7a', hint: 'the fix could not be read from GitHub'},
 ];
 export const CAUSE_IDS = CAUSES.map(cause => cause.id);
-export const RULES_VERSION = 1;
-const MAX_FIX_FILES = 30;
+export const RULES_VERSION = 2;   // 2: a wider range still names the fix (measured 24 Oct 2026: 44 of 58 unknown reds had no log read, 14 had 100+ files)
+const MAX_FIX_FILES = 150;
+const COMPARE_CAP = 300;   // GitHub's compare lists at most 300 files: a range that long is cut off, so its files say nothing
 
 const CREDIT = /insufficient_quota|credit balance is too low|exceeded your current quota|billing_hard_limit/i;
 const INFRA = /runner has received a shutdown signal|lost communication with the server|The operation was canceled|No space left on device/i;
@@ -34,7 +35,7 @@ export function causeOf({jobConclusion, failedStep = '', log = '', rerun, fixFil
   if (rerun === 'success') return 'flake';
   if (fixFiles === null || log === null) return 'unknown';   // log === null: the log was not read, so an empty credit cannot be ruled out
   if (!fixFiles.length) return 'open';
-  if (fixFiles.length > MAX_FIX_FILES) return 'unknown';   // many unrelated commits landed before the suite passed again: the files say nothing about the fix
+  if (fixFiles.length > MAX_FIX_FILES || fixFiles.length >= COMPARE_CAP) return 'unknown';   // many unrelated commits landed before the suite passed again: the files say nothing about the fix
   if (fixFiles.every(isHarness)) return 'test';   // a mix of tests and tooling below counts as infra
   return fixFiles.every(path => isHarness(path) || isTooling(path)) ? 'infra' : 'product';
 }

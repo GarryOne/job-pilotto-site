@@ -11,7 +11,7 @@ import {CAUSES, RULES_VERSION, causeOf, suiteOfJob} from '../admin/e2e-causes.js
 const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/job-pilotto';
 const base = process.env.E2E_INTEL_URL || 'https://www.jobpilotto.top/e2e/data';
 const execAsync = promisify(execFile);
-const MAX_LOGS = 24;   // a log is megabytes and a call takes seconds: only the newest reds of one collector run are read; an older red with no log read is "unknown", never a guess
+const MAX_LOGS = 80;   // a log is megabytes and a call takes seconds (eight at a time): the newest reds of one collector run are read; an older red with no log read is "unknown", never a guess. 24 left 44 of 58 reds unread (24 Oct 2026)
 const gh = (...args) => JSON.parse(execFileSync('gh', args, {encoding: 'utf8', maxBuffer: 1 << 28}) || 'null');
 const RUN_TITLE = /Beta|Nightly|E2E check/;
 const minutesOf = (from, to) => Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 6000) / 10) || 0;

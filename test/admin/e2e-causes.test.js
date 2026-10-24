@@ -33,9 +33,11 @@ test('the second try green is a "flake"; red twice goes by the files of the fix'
   assert.equal(causeOf(red({fixFiles: ['tools/ship.sh']})), 'infra');
 });
 
-test('a range of more than 30 files cannot name the fix: "unknown"', () => {
-  assert.equal(causeOf(red({fixFiles: Array.from({length: 31}, (_, i) => `site/src/f${i}.js`)})), 'unknown');
-  assert.equal(causeOf(red({fixFiles: Array.from({length: 31}, (_, i) => `desktop/e2e/f${i}.mjs`)})), 'unknown');
+test('a range of more than 150 files, or one cut off at GitHub\'s 300, cannot name the fix: "unknown"; a wide range under that still can', () => {
+  assert.equal(causeOf(red({fixFiles: Array.from({length: 151}, (_, i) => `site/src/f${i}.js`)})), 'unknown');
+  assert.equal(causeOf(red({fixFiles: Array.from({length: 300}, (_, i) => `desktop/e2e/f${i}.mjs`)})), 'unknown');
+  assert.equal(causeOf(red({fixFiles: Array.from({length: 116}, (_, i) => `desktop/e2e/f${i}.mjs`)})), 'test');
+  assert.equal(causeOf(red({fixFiles: [...Array.from({length: 109}, (_, i) => `desktop/e2e/f${i}.mjs`), 'extension/content.js']})), 'product');
 });
 
 test('a log that was not read (null) is never guessed: "unknown"; a flake and a cancelled job still are what they are', () => {
