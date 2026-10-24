@@ -9,7 +9,7 @@ import {MODEL, countOf, daysToRun, makeDigest, plan, zurichDay, zurichHour} from
 import {post} from '../admin/build-digest-telegram.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
-const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';
+const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/job-pilotto';
 const base = process.env.DIGEST_URL || 'https://www.jobpilotto.top/digest/data';
 const gh = (...args) => JSON.parse(execFileSync('gh', args, {encoding: 'utf8', maxBuffer: 1 << 28}) || 'null');
 const arg = name => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : ''; };
