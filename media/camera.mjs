@@ -135,8 +135,9 @@ export function posterTime(events = []) {
 // Each beat's moment in the played clip (round 2, owner 24 Oct 2026): the looks' holds in order, matched to the scene's looks that name a beat, at 90% of
 // the hold, in output seconds (the clip plays `speed` times faster). What the side-by-side and the beats sheet show, one frame per step. Pure.
 export function beatTimes(events = [], steps = [], speed = 1) {
-  const looks = steps.filter(step => step.hold && step.look), holds = events.filter(event => event.type === 'hold' && event.look);
-  return looks.map((step, i) => (step.beat && holds[i] ? {t: Number(((holds[i].t + holds[i].s * 0.9) / speed).toFixed(2)), beat: step.beat} : null)).filter(Boolean);
+  // every hold, with a look or not: the recorders log each one (round 5: "Ready to submit" was a hold on the same framing, no look, and had no beat)
+  const stills = steps.filter(step => step.hold), holds = events.filter(event => event.type === 'hold');
+  return stills.map((step, i) => (step.beat && holds[i] ? {t: Number(((holds[i].t + holds[i].s * 0.9) / speed).toFixed(2)), beat: step.beat} : null)).filter(Boolean);
 }
 
 // Every output frame of a video at `fps`: which recorded frame, the page area shown, the cursor. What render.cjs draws. Pure.

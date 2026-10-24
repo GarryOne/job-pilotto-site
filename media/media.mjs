@@ -18,7 +18,7 @@ import {manifest, stillEntry, videoEntry} from './manifest.mjs';
 import {recordAppVideo, shootApp} from './record-app.mjs';
 import {recordExtensionVideo} from './record-extension.mjs';
 import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from './options.mjs';
-import {SNIPS, STILLS, VIDEOS} from './scenes.mjs';
+import {partsOf, SNIPS, STILLS, VIDEOS} from './scenes.mjs';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 const desktop = path.resolve(here, '..', 'desktop');
@@ -81,11 +81,11 @@ function joined(files, out) {
   return out;
 }
 
-// A video piece; `before: <part>` records that part first (its own app state, moment and steps) and plays it ahead of this one.
+// A video piece with its parts (scenes.mjs partsOf): each recorded on its own app state, moment and steps, played in order.
 async function makeVideo(name, persona, work, out) {
   const clips = [];
-  for (const part of [VIDEOS[name].before, name].filter(Boolean)) clips.push(await recordClip(part, persona, work));
-  const {piece} = clips.at(-1), speed = piece.speed || 1, dir = path.join(work, name);
+  for (const part of partsOf(name)) clips.push(await recordClip(part, persona, work));
+  const {piece} = clips.find(clip => clip.name === name), speed = piece.speed || 1, dir = path.join(work, name);
   const starts = clips.map((_, i) => clips.slice(0, i).reduce((sum, clip) => sum + clip.seconds, 0));   // recorded seconds where each part starts
   const master = joined(clips.map(clip => clip.master), path.join(dir, 'master-joined.mp4'));
   const phoneMaster = clips[0].phoneMaster ? joined(clips.map(clip => clip.phoneMaster), path.join(dir, 'master-phone-joined.mp4')) : null;

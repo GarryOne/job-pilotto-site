@@ -124,6 +124,8 @@ test('each look with a beat gets its moment in the played clip: near its hold\'s
   const events = [{t: 0.5, type: 'mark'}, {t: 1, type: 'hold', look: '#a', s: 2}, {t: 3.2, type: 'click'}, {t: 3.9, type: 'press'}, {t: 4, type: 'hold', s: 1}, {t: 5, type: 'hold', look: '#b', s: 3}];
   assert.deepEqual(beatTimes(events, steps, 2), [{t: 1.4, beat: 'First'}, {t: 3.85, beat: 'Second'}]);
   assert.deepEqual(beatTimes(events, [{hold: 2, look: '#a'}], 1), [], 'no beat, no moment');
+  assert.deepEqual(beatTimes([{type: 'hold', t: 1, s: 2, look: '#a'}, {type: 'hold', t: 4, s: 2, look: null}], [{hold: 2, look: '#a'}, {review: {}}, {hold: 2, beat: 'Ready'}], 1),
+    [{t: 5.8, beat: 'Ready'}], 'a hold without a look keeps its beat, paired in order');
 });
 
 // Round 2 (owner, 24 Oct 2026: "wrong cropping"): in the hero (steady) every look is shown WHOLE across: a card wider than its zoomed view used to lose
@@ -313,4 +315,22 @@ test('lookWidth never cuts through a line of words (hold.mjs wordsCut), and the 
   const {VIDEOS: pieces} = await import('../../media/scenes.mjs');
   const first = pieces.hero.steps.find(step => step.hold && step.look);
   assert.ok(!first.lookWidth, 'the empty card is full width with its words centred: no left part');
+});
+
+test('a look mostly off screen stops the recording; a few px of padding past the edge does not', async () => {
+  const {offScreen, OFF_MAX} = await import('../../media/hold.mjs');
+  const view = {w: 1800, h: 1125};
+  assert.equal(offScreen({x: 552, y: -308, width: 760, height: 190}, view), 1, 'round 5: her job header wholly above the window');
+  assert.ok(offScreen({x: 1700, y: 10, width: 200, height: 20}, view) > OFF_MAX, 'half past the right edge');
+  assert.ok(offScreen({x: 400, y: 30, width: 900, height: 1112}, view) < OFF_MAX, 'the Chrome form: 17 px of bottom padding below the window');
+  assert.equal(offScreen({x: 565, y: 359, width: 760, height: 78}, view), 0);
+  assert.equal(offScreen(null, view), 0, 'no look, nothing to check');
+});
+
+test('both recorders check every look is on screen before framing it', async () => {
+  const fs = await import('node:fs');
+  for (const file of ['record-app.mjs', 'record-extension.mjs']) {
+    const source = fs.readFileSync(new URL(`../../media/${file}`, import.meta.url), 'utf8');
+    assert.match(source, /offScreen\(box, view\)/, `${file}: measures looks without the off-screen check`);
+  }
 });

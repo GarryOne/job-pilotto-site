@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
 import {jpegWidth, loadPersona, parseArgs, planOf, withPlan} from '../../media/options.mjs';
-import {VIDEOS} from '../../media/scenes.mjs';
+import {partsOf, VIDEOS} from '../../media/scenes.mjs';
 import {answerReply, formHtml} from '../../media/stand-in.mjs';
 
 const demo = path.join(import.meta.dirname, '..', 'demo');
@@ -71,10 +71,13 @@ test('every hero clip is steady, makes at most one deliberate move, holds a zoom
   assert.deepEqual(slides.map(([, piece]) => piece.slide).sort(), [1, 2, 3, 4]);
   for (const [name, piece] of slides) {
     assert.equal(piece.camera, 'steady', `${name}: no zoom on every click`);
-    // Apply plays its app part first (round 3): one clip, one budget of moves; each part opens on its own first look (the join is a cut)
-    const parts = [VIDEOS[piece.before], piece].filter(Boolean).map(part => part.steps);
-    const moves = parts.reduce((sum, steps) => sum + steps.filter(step => step.look).slice(1).filter(step => !step.cut).length + steps.filter(step => (step.click || step.tap) && step.zoom).length, 0);
-    assert.ok(moves <= 1, `${name}: ${moves} camera moves`);
+    // Apply plays its app parts around the fill (round 3: before; round 5: after): one clip, one budget of moves; each part opens on its own first look (the join is a cut)
+    // one deliberate camera move per part: a part is a phase of its own (round 5, owner: the live card "B, then pan to the pill")
+    for (const part of partsOf(name)) {
+      const steps = VIDEOS[part].steps;
+      const moves = steps.filter(step => step.look).slice(1).filter(step => !step.cut).length + steps.filter(step => (step.click || step.tap) && step.zoom).length;
+      assert.ok(moves <= 1, `${part}: ${moves} camera moves`);
+    }
     const result = piece.steps.find(step => step.poster);
     assert.ok(result && result.look && result.zoom >= 1.6, `${name}: a zoomed result marked poster`);
     assert.ok(result.hold / piece.speed >= 2, `${name}: the result is on screen ${(result.hold / piece.speed).toFixed(1)} s`);
@@ -100,7 +103,7 @@ test('a scene that opens the Recent activity panel closes it before it goes to a
   for (const [name, piece] of Object.entries(VIDEOS)) {
     let open = false;
     for (const step of piece.steps) {
-      if (step.js?.includes(TOGGLE)) open = !open;
+      if ([step.js, step.then].some(code => code?.includes(TOGGLE))) open = !open;   // a press's `then` opens it too (round 5: Run on the Actions card)
       else if (step.go) assert.ok(!open, `${name}: close Recent activity before {go: '${step.go}'}`);
     }
   }

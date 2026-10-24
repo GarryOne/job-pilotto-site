@@ -62,9 +62,14 @@ const MAIL_IN = `(() => { const back = document.createElement('div'); back.id = 
     '<div style="font-weight:700;font-size:19px;margin-top:3px">Institut Cardio Rhône</div><div style="font-weight:600">Interview invitation: Registered Nurse, Cardiac Care Unit</div>' +
     '<div style="color:#4a4f59;margin-top:4px">We would like to meet you on Wed 28 Oct at 10:00 for an interview…</div></div>';
   document.body.append(back, n); requestAnimationFrame(() => requestAnimationFrame(() => { back.style.opacity = '1'; n.style.transform = 'none'; n.style.opacity = '1'; })); })()`;
-const MAIL_WAIT = "(() => { document.getElementById('hero-mail')?.remove(); document.getElementById('hero-mail-back')?.remove(); const s = document.createElement('style'); s.id = 'hero-wait'; s.textContent = '#activity-card, #activity-log, #activity-status, #activity-sub { visibility: hidden }'; document.head.append(s); document.getElementById('activity-toggle')?.click(); })()";
+const MAIL_WAIT = "(() => { document.getElementById('hero-mail')?.remove(); document.getElementById('hero-mail-back')?.remove(); const s = document.createElement('style'); s.id = 'hero-wait'; s.textContent = '#activity-card, #activity-log, #activity-status, #activity-sub { visibility: hidden }'; document.head.append(s); })()";
+// Round 5 (owner, 24 Oct 2026: "show the Action screen where we click on 'check gmail' card"): she runs the check from Actions, then its result opens.
+const GMAIL_TASK = '.task-card:has([data-command=mail])';
+const MAIL_OPEN = "(() => { document.getElementById('activity-toggle')?.click(); const s = document.getElementById('hero-wait'); if (s) s.textContent = '#activity-log { display: none }'; })()";
 // No fade: the cut is the change (a fade read as another page to the stray-frame gate). The demo run has no log: its "No log available" row stays hidden.
 const MAIL_SHOW = "(() => { const s = document.getElementById('hero-wait'); if (s) s.textContent = '#activity-log { display: none }'; })()";
+// The stand-in form's fields (media/form.html), in the order the extension fills them: the live card (hero-fill-done) ticks them off.
+const HER_FORM = ['First name', 'Last name', 'Email', 'Phone', 'Location (city)', 'LinkedIn profile', 'Resume/CV', 'Are you legally authorised to work in this country?', 'What is your notice period?', 'Why do you want to work at Institut Cardio Rhône?'];
 export const VIDEOS = {
   'hero-onboarding': {kind: 'video', source: 'app', slide: 1, speed: 1.5, camera: 'steady', width: 1600, height: 1000, budget: 6e5, phone: PHONE,
     settings: {setupDone: false, wizardStep: 'ai'}, quiet: true,   // the first-run wizard from its first step (round 3, owner: "starts from step 3/5"); a still page: frames only when it changes
@@ -96,13 +101,24 @@ export const VIDEOS = {
       {click: '#job-panel .jd-tabs button:has-text("Match")'},
       {hold: 3, look: ['#job-panel h2', '#job-panel .fit-detail'], zoom: 2.2, phoneLook: '#job-panel .fit-card.tone-good', phoneZoom: 3.8, cut: true, poster: true, say: 'Match: why this job fits her', beat: 'Her job opened on Match: why it fits'},
     ]},
-  'hero-fill-app': {kind: 'video', source: 'app', part: true, speed: 1.5, camera: 'steady', moment: 'applying', width: 1600, height: 1000, phone: PHONE,
+  'hero-fill-app': {kind: 'video', source: 'app', part: true, speed: 1.5, camera: 'steady', moment: 'applying', quiet: true, width: 1600, height: 1000, phone: PHONE,
     shows: 'Her job on Jobs, Apply pressed, the Applying page opening it in Chrome',
     steps: [{go: 'jobs'}, {js: scrollTo('Cardiac Care Unit')},
       {hold: 1.8, look: [`${ROW} .company`, `${ROW} button.row-main`], zoom: 2.2, phoneZoom: 3, tag: 'Jobs', say: 'Institut Cardio Rhône: she presses Apply', beat: 'Her job on Jobs: Apply'},
-      {tap: `${ROW} button.row-main`, then: OPEN_HERS},   // the look holds the button: the press is seen without a camera move
+      {tap: `${ROW} button.row-main`, then: `${OPEN_HERS}; setTimeout(() => document.getElementById('ss-job')?.scrollIntoView({block: 'start'}), 120)`},   // the Applying page keeps the Jobs page's scroll (round 5)   // the look holds the button: the press is seen without a camera move
       {hold: 2.0, look: ['#ss-job', '#ss-decision'], lookWidth: 760, zoom: 2.2, phoneZoom: 3, cut: true, tag: 'Applying', say: 'Applying: it opens the job in Chrome', beat: 'Applying: the job opens in Chrome'}]},
-  'hero-fill': {kind: 'video', source: 'extension', slide: 3, before: 'hero-fill-app', speed: 1.5, camera: 'steady', motion: 'reduce', width: 1600, height: 1000, budget: 5e5, phone: {...PHONE, budget: 2.3e5},
+  // Both app parts are quiet (round 5): with the form open in Chrome the Applying card no longer spins "Checking Chrome…", so the page sends a frame only
+  // when it changes; each hold's forced frame still catches a real stall (check.mjs captureGaps).
+  // Round 5 (owner, 24 Oct 2026: "show ... how the session card in the desktop app gets updated live, at the time the [extension] is filling it. Try first one
+  // after another"): back in the app, the Applying page's form card ticks off each field as the extension reports it (a `review` step), then Ready to submit.
+  'hero-fill-done': {kind: 'video', source: 'app', part: true, speed: 1.5, camera: 'steady', moment: 'applying', quiet: true, width: 1600, height: 1000, phone: PHONE,
+    shows: 'Back in the app: the Applying card ticking off each field the extension fills, then Ready to submit',
+    steps: [{go: 'sessions'}, {js: OPEN_HERS},   // the card's count, bar and pill change; its folded list of fields would shrink it to small text
+      {hold: 1.8, look: ['#ss-form-card .ss-form-head', '#ss-form-card .ss-form-progress'], lookWidth: 760, zoom: 2.0, phoneZoom: 2.8, cut: true, tag: 'Jobadabra', say: 'Meanwhile in Jobadabra: the card follows', beat: 'The Applying card: 0 of 10 fields'},
+      {review: {id: 'd1', url: 'https://jobs.example/institut-cardio-rhone/cardiac-care', fields: HER_FORM, every: 300}},
+      // then one move right to the pill (owner, 24 Oct 2026: "B, then pan to the pill"): close on the count while it ticks, the pill when it is ready
+      {hold: 2.6, look: '#ss-form-pill', zoom: 2.0, phoneZoom: 2.8, say: 'Every field ticked: Ready to submit', beat: 'The card: 10 of 10, Ready to submit'}]},
+  'hero-fill': {kind: 'video', source: 'extension', slide: 3, before: 'hero-fill-app', after: 'hero-fill-done', speed: 1.5, camera: 'steady', motion: 'reduce', width: 1600, height: 1000, budget: 5e5, phone: {...PHONE, budget: 2.3e5},
     shows: 'Apply pressed on her job, then the Jobadabra extension filling its application form; you review, then submit',
     caption: 'Fill applications with your details.', alt: 'An application form filled by the Jobadabra extension, its panel saying Ready to submit: review, then submit',
     steps: [{hold: 1.7, look: '#application', zoom: 1.3, phoneZoom: 2.2, tag: 'Chrome', say: 'In Chrome: the form, still empty', beat: "That job's application form, still empty"}, {fill: true}, {hold: 0.8},
@@ -112,9 +128,9 @@ export const VIDEOS = {
     caption: 'Your interviews and next steps, together.', alt: 'Jobadabra two weeks later: the Institut Cardio Rhône interview e-mail, the phone screen reviewed, interview patterns and practice, then the interview in the calendar',
     steps: [{go: 'focus'}, {js: MAIL_IN},
       {hold: 3.6, look: '#hero-mail', zoom: 2.2, phoneZoom: 2.6, tag: 'Gmail', say: 'Two weeks later, an e-mail lands', beat: 'Two weeks later: a new e-mail from Institut Cardio Rhône'},
-      {js: MAIL_WAIT},
-      {hold: 1.8, look: ['#activity-selected', '#check-mail'], zoom: 2.2, phoneLook: '#check-mail', phoneZoom: 3.2, cut: true, tag: 'Jobadabra', say: 'In Jobadabra, she checks Gmail', beat: 'In Jobadabra: Check Gmail now'},
-      {tap: '#check-mail', then: MAIL_SHOW},
+      {js: MAIL_WAIT}, {go: 'actions'},
+      {hold: 1.8, look: GMAIL_TASK, zoom: 2.2, phoneZoom: 3.2, cut: true, tag: 'Actions', say: "In Jobadabra's Actions, she checks Gmail", beat: 'Actions: the Check Gmail & Calendar card'},
+      {tap: `${GMAIL_TASK} [data-command=mail]`, then: MAIL_OPEN},
       {hold: 2.6, look: '#activity-card .mail-email', zoom: 1.9, phoneZoom: 3.4, cut: true, say: 'It reads it: interview scheduled', beat: 'The check reads it: the job moves to Interview scheduled'},
       {js: "document.getElementById('activity-toggle')?.click()"},   // the panel stays open across pages and covers the next one
       {go: 'interviews'}, {hold: 1.7, look: '#iv-drafts .iv-draft', lookWidth: 800, zoom: 2.2, phoneZoom: 3.4, cut: true, tag: 'Interviews', say: 'The phone screen, recorded on her Mac', beat: 'The phone screen with them, recorded on the Mac'},
@@ -129,6 +145,8 @@ export const VIDEOS = {
     caption: 'The extension fills the form', alt: 'An application form being filled by the Jobadabra extension, with its panel on the right',
     steps: [{hold: 1}, {fill: true}, {hold: 3.4, look: '#application', zoom: 1.7, poster: true}, {hold: 2.2, look: '#why', zoom: 2.2}, {hold: 2.4, look: 'panel', zoom: 2.2}]},
 };
+// A video piece and its parts, in play order: `before`, the piece, `after` (each recorded on its own app state). Pure.
+export const partsOf = name => [VIDEOS[name].before, name, VIDEOS[name].after].filter(Boolean);
 
 // Stills: one window each, after the steps. bd crops them 16:10 from the top-left, so each page keeps its action there.
 export const STILLS = {

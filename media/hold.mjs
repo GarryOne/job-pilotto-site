@@ -8,6 +8,15 @@ export const holdLeft = (hold, startedMs, nowMs) => Math.max(0.3, hold - (nowMs 
 export const leftPart = (box, width) => (box && width ? {...box, width: Math.min(box.width, width)} : box);
 export const holdEvent = (item, box, phoneBox = null, s = item.hold) => ({type: 'hold', look: item.look || null, box: leftPart(box, item.lookWidth), s, ...(item.zoom ? {zoom: item.zoom} : {}),
   ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox: leftPart(phoneBox, item.phoneLookWidth)} : {}), ...(item.poster ? {poster: true} : {}), ...(item.say ? {say: item.say} : {}), ...(item.tag ? {tag: item.tag} : {})});
+// How much of a look's box is outside the window. A look measured off screen is framed on whatever sits at the window's
+// edge (round 5: the Applying page kept the Jobs page's scroll, her job's header was at y -308 and the camera showed the needs list): the recorders stop. Pure.
+// The share of a look's box outside the window, 0..1: a form a few px taller than the window (its bottom padding) is fine, a header above it is not.
+export const offScreen = (box, view) => {
+  if (!box || !view || !box.width || !box.height) return 0;
+  const w = Math.max(0, Math.min(box.x + box.width, view.w) - Math.max(box.x, 0)), h = Math.max(0, Math.min(box.y + box.height, view.h) - Math.max(box.y, 0));
+  return Number((1 - (w * h) / (box.width * box.height)).toFixed(3));
+};
+export const OFF_MAX = 0.1;   // more than this hidden stops the recording
 // An event where the page changed: a mark (an action's moment), or a press that acts at once. A press `held` on screen first (PRESS_SHOW) changes
 // nothing; the mark logged when its action runs does. Read by camera.mjs and cuts.mjs. Pure.
 export const pageChange = event => event.type === 'mark' || (event.type === 'press' && !event.held);

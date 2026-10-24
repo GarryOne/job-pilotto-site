@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {captionAt, captionSize, captionTimes, SAY_MAX, TAG_MAX} from '../../media/captions.mjs';
-import {VIDEOS} from '../../media/scenes.mjs';
+import {partsOf, VIDEOS} from '../../media/scenes.mjs';
 
 const hero = Object.entries(VIDEOS).filter(([, piece]) => piece.slide || piece.part);
 
@@ -17,13 +17,16 @@ test('every hero look that names a beat says a line short enough to read at once
   }
 });
 
-test('a part played before a piece exists and is not a piece of its own', () => {
-  for (const [name, piece] of Object.entries(VIDEOS).filter(([, each]) => each.before)) {
-    const part = VIDEOS[piece.before];
-    assert.ok(part?.part, `${name}: before "${piece.before}" must be a VIDEOS entry with part: true`);
-    assert.equal(part.speed, piece.speed, `${name}: its part plays at the same speed`);
-    assert.equal(part.camera, piece.camera);
+test('a part played before or after a piece exists and is not a piece of its own', () => {
+  for (const [name, piece] of Object.entries(VIDEOS)) {
+    for (const which of ['before', 'after'].filter(key => piece[key])) {
+      const part = VIDEOS[piece[which]];
+      assert.ok(part?.part, `${name}: ${which} "${piece[which]}" must be a VIDEOS entry with part: true`);
+      assert.equal(part.speed, piece.speed, `${name}: its part plays at the same speed`);
+      assert.equal(part.camera, piece.camera);
+    }
   }
+  assert.deepEqual(partsOf('hero-fill')[1], 'hero-fill', 'the piece plays between its parts');
 });
 
 test('a cut look\'s caption starts at its cut, an action\'s at its moment, and stays until the next', () => {
