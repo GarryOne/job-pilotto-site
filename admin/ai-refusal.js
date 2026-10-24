@@ -1,0 +1,53 @@
+// What a job does when the AI refuses (owner, 24 Oct 2026: the Anthropic workspace hit its monthly limit; the changelog job stayed green and "retried at the next run" for a day, the daily digest failed 7 of 8 runs unseen).
+// One place for every job that calls the Anthropic API from here: name the refusal (limit / auth / rate / overloaded), tell the owner on Telegram (once per outage, not every hour), never print the key.
+// Guard: test/admin/ai-refusal.test.js. The Telegram bot is the CI alerts one when this repo has it, else the Build Log bot (the secrets this repo holds).
+export class AiRefused extends Error {
+  constructor(status, reason) { super(`model answered ${status}: ${reason}`); this.name = 'AiRefused'; this.status = status; this.reason = reason; this.kind = kindOf(status, reason); }
+}
+
+// 400 with "usage limits" is the workspace's own spend cap (it answers 400, not 429); 429 is a rate limit; 529 and 5xx are the API's trouble.
+export function kindOf(status, reason = '') {
+  if (status === 401 || status === 403) return 'auth';
+  if (status === 429) return 'rate';
+  if (status === 529 || status >= 500) return 'overloaded';
+  if (/usage limit|spend(ing)? limit|credit balance|billing|quota/i.test(reason)) return 'limit';
+  return 'other';
+}
+const WORDS = {limit: "the Anthropic workspace's spend limit is reached", auth: 'the Anthropic key was refused (wrong, revoked or no access)', rate: 'Anthropic is rate-limiting this key', overloaded: 'Anthropic is overloaded or down', other: 'Anthropic refused the request'};
+
+export const isRefusal = error => error instanceof AiRefused;
+// "AI refused (limit): <the API's own words>": for the log line, the red run and the Telegram message.
+export const describe = error => `AI refused (${error.kind}): ${WORDS[error.kind]}. ${error.reason}`;
+// A limit or a bad key will not clear within the run: the job stops asking and uses its fallback for everything left.
+export const staysDown = error => isRefusal(error) && ['limit', 'auth', 'rate', 'overloaded'].includes(error.kind);
+
+// Tell the owner once per outage: when the run before this one was not red (the outage just began) or once a day at 08:xx Zurich as a reminder. `previous` = that run's conclusion, null when unknown (then tell).
+export const shouldTell = ({previous = null, zurichHour = -1}) => previous !== 'failure' || zurichHour === 8;
+
+// The latest finished run of this workflow before the current one: 'success' | 'failure' | … | null.
+export function previousConclusion(workflow, {env = process.env, run}) {
+  try {
+    const list = JSON.parse(run('gh', 'run', 'list', '-R', env.GITHUB_REPOSITORY, '-w', workflow, '-L', '6', '--json', 'databaseId,conclusion,status'));
+    return list.find(item => String(item.databaseId) !== String(env.GITHUB_RUN_ID) && item.status === 'completed')?.conclusion ?? null;
+  } catch { return null; }
+}
+
+// Never throws: a Telegram failure must not hide the real one. -> {sent} | {skipped: why}
+export async function tellOwner(text, {env = process.env, fetch: doFetch = fetch} = {}) {
+  const token = env.CI_ALERTS_TELEGRAM_BOT_TOKEN || env.BUILDLOG_TELEGRAM_TOKEN, chat = env.CI_ALERTS_TELEGRAM_CHAT_ID || env.BUILDLOG_TELEGRAM_CHAT;
+  if (!token || !chat) return {skipped: 'no Telegram bot token / chat in this run'};
+  try {
+    const response = await doFetch(`https://api.telegram.org/bot${token}/sendMessage`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({chat_id: chat, text, disable_web_page_preview: true})});
+    return response.ok ? {sent: true} : {skipped: `Telegram answered ${response.status}`};
+  } catch (error) { return {skipped: `Telegram unreachable (${error.name})`}; }
+}
+
+// The whole reaction of a job to a refusal: a named ::error:: line, and (once per outage) the Telegram message. `job` names it ("Changelog publish"); `effect` says what the owner will see ("a plain entry was published").
+export async function reportRefusal(error, {job, effect, workflow, zurichHour, env = process.env, fetch: doFetch, run}) {
+  console.log(`::error::${job}: ${describe(error)}${effect ? ` ${effect}` : ''}`);
+  const previous = workflow && run ? previousConclusion(workflow, {env, run}) : null;
+  if (!shouldTell({previous, zurichHour})) return {skipped: 'already told in the run before'};
+  const result = await tellOwner(`⚠️ ${job}: ${describe(error)}${effect ? `\n${effect}` : ''}`, {env, fetch: doFetch});
+  console.log(`Telegram: ${JSON.stringify(result)}`);
+  return result;
+}

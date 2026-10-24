@@ -122,3 +122,40 @@ test('an automatic run drafts only versions newer than the newest stored one; ol
   assert.deepEqual(newerThanStored(list, {'0.7.18': 'beta'}), []);
   assert.equal(newerThanStored(list, {}).length, 4);
 });
+
+// The AI refuses (owner, 24 Oct 2026): the version still goes out, as a plain entry; a 429 and the 400 limit both stop further calls; an ok answer stays the AI's.
+const refusing = (status, error) => { const calls = []; return {calls, fetch: async () => { calls.push(1); return new Response(JSON.stringify({type: 'error', error}), {status}); }}; };
+const LIMIT = {type: 'invalid_request_error', message: 'You have reached your specified workspace API usage limits. You will regain access on 2026-11-01'};
+const subjects = ['Fix required dropdowns that stayed empty', 'Add a Compare view for two jobs'];
+
+test('a limit (400) publishes a plain entry marked plain, names the refusal, and the next version makes no call', async () => {
+  const {draftOrPlain} = await import('../../jobs/changelog-publish.mjs');
+  const ai = {down: null}, fake = refusing(400, LIMIT);
+  const first = await draftOrPlain(work, {subjects, ai, key: 'k', fetch: fake.fetch});
+  assert.equal(first.plain, true);
+  assert.equal(first.entry.plain, true);
+  assert.deepEqual(problems(first.entry), []);
+  assert.match(first.error.message, /usage limits/);
+  assert.equal(first.error.kind, 'limit');
+  const second = await draftOrPlain({...work, version: '0.7.21'}, {subjects, ai, key: 'k', fetch: fake.fetch});
+  assert.equal(second.plain, true);
+  assert.equal(fake.calls.length, 1, 'no call once the AI is down');
+});
+
+test('a 429 is also plain and red; an ok answer is the AI entry with no error', async () => {
+  const {draftOrPlain} = await import('../../jobs/changelog-publish.mjs');
+  const limited = await draftOrPlain(work, {subjects, ai: {down: null}, key: 'k', fetch: refusing(429, {type: 'rate_limit_error', message: 'slow down'}).fetch});
+  assert.equal(limited.plain, true);
+  assert.equal(limited.error.kind, 'rate');
+  const fine = await draftOrPlain(work, {subjects, ai: {down: null}, key: 'k', ...model(JSON.stringify({groups: [{kind: 'fixes', items: [{emoji: '🐛', lead: 'Dropdowns fixed', text: 'Required dropdowns fill again.'}]}]}))});
+  assert.equal(fine.plain, undefined);
+  assert.equal(fine.error, undefined);
+  assert.equal(fine.entry.plain, undefined);
+});
+
+test('when nothing fit to show can be built without the AI, the refusal is still an error and nothing is hidden', async () => {
+  const {draftOrPlain} = await import('../../jobs/changelog-publish.mjs');
+  const done = await draftOrPlain(work, {subjects: ['wip'], ai: {down: null}, key: 'k', fetch: refusing(400, LIMIT).fetch});
+  assert.ok(done.error);
+  assert.equal(done.entry, undefined);
+});

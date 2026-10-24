@@ -9,12 +9,13 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
 
 // PUT {entries: [{version, date, channel, groups}], hidden: [{version, date, channel}], channels: {version: channel}}
 //   entries: a drafted version (checked, stored once: a stored body is never replaced); hidden: a version with nothing to say; channels: a stored version became stable (beta -> stable only).
-// GET: {have: {version: channel}} for every stored version, hidden ones too.
+//   plain: true on an entry = written without the AI (it could not draft, 24 Oct 2026); redraft: [entry] replaces the body of a stored PLAIN version with the AI's, once (plain -> 0); a body that is not plain is never replaced.
+// GET: {have: {version: channel}} for every stored version, hidden ones too; plain: [versions] still waiting for the AI's words.
 export async function ingest(request, env) {
   if (!authorized(request, env)) return new Response('Not found', {status: 404});
   if (request.method === 'GET') {
-    const {results = []} = await env.STATS.prepare('SELECT version, channel FROM changelog_entries').all();
-    return json({have: Object.fromEntries(results.map(row => [row.version, row.channel]))});
+    const {results = []} = await env.STATS.prepare('SELECT version, channel, plain FROM changelog_entries').all();
+    return json({have: Object.fromEntries(results.map(row => [row.version, row.channel])), plain: results.filter(row => row.plain).map(row => row.version)});
   }
   if (request.method !== 'PUT') return new Response('Not found', {status: 404});
   const text = await request.text();
@@ -23,14 +24,18 @@ export async function ingest(request, env) {
   try { data = JSON.parse(text); } catch { return new Response('Not JSON', {status: 400}); }
   const entries = Array.isArray(data?.entries) ? data.entries : [], hidden = Array.isArray(data?.hidden) ? data.hidden : [];
   if (entries.length > 50 || hidden.length > 50) return new Response('Unexpected shape', {status: 400});
-  const bad = entries.map(entry => ({version: entry?.version, problems: problems(entry)})).filter(item => item.problems.length);
+  const redraft = Array.isArray(data?.redraft) ? data.redraft : [];
+  if (redraft.length > 50) return new Response('Unexpected shape', {status: 400});
+  const bad = [...entries, ...redraft].map(entry => ({version: entry?.version, problems: problems(entry)})).filter(item => item.problems.length);
   if (bad.length) return json({ok: false, rejected: bad}, 422);
   const at = new Date().toISOString();
-  const write = env.STATS.prepare('INSERT INTO changelog_entries (version, date, channel, hidden, body, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(version) DO NOTHING');
+  const write = env.STATS.prepare('INSERT INTO changelog_entries (version, date, channel, hidden, body, at, plain) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(version) DO NOTHING');
   const promote = env.STATS.prepare(`UPDATE changelog_entries SET channel = 'stable' WHERE version = ? AND channel = 'beta'`);
   const note = item => /^\d+\.\d+\.\d+$/.test(item?.version || '') && /^\d{4}-\d{2}-\d{2}$/.test(item?.date || '') && CHANNELS.includes(item?.channel);
-  await env.STATS.batch([...entries.map(entry => write.bind(entry.version, entry.date, entry.channel, 0, JSON.stringify(entry.groups), at)),
-    ...hidden.filter(note).map(item => write.bind(item.version, item.date, item.channel, 1, '[]', at)),
+  const rewrite = env.STATS.prepare('UPDATE changelog_entries SET body = ?, plain = 0, at = ? WHERE version = ? AND plain = 1 AND hidden = 0');
+  await env.STATS.batch([...entries.map(entry => write.bind(entry.version, entry.date, entry.channel, 0, JSON.stringify(entry.groups), at, entry.plain ? 1 : 0)),
+    ...redraft.map(entry => rewrite.bind(JSON.stringify(entry.groups), at, entry.version)),
+    ...hidden.filter(note).map(item => write.bind(item.version, item.date, item.channel, 1, '[]', at, 0)),
     ...Object.entries(data?.channels || {}).filter(([version, channel]) => /^\d+\.\d+\.\d+$/.test(version) && channel === 'stable').map(([version]) => promote.bind(version))]);
   return json({ok: true, stored: entries.length, hidden: hidden.length});
 }
