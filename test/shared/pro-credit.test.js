@@ -62,6 +62,13 @@ test('with the flag off the Pro account is ignored: Free caps apply and nothing 
   assert.equal(row(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 5_000_000);
 });
 
+test('Pro without AI (never had credit): our AI answers the same "add credit or own key", with no overdraft', async () => {
+  const e = env(), bare = await proInstall(e, 'install-pro-bare', 0);
+  const out = await ask(e, bare.key);
+  assert.equal(out.status, 402); assert.equal((await out.json()).error.message, CREDIT_OUT);
+  assert.equal(row(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 0, 'nothing was taken');
+});
+
 test('credit used up: no free fallback; the overdraft lets the application in progress finish, then top-up or own key', async () => {
   const e = env(), pro = await proInstall(e, 'install-pro-04', 1);   // one micro-dollar left: the next call goes below zero
   assert.equal((await ask(e, pro.key)).status, 200, 'a call that starts with credit finishes');

@@ -22,3 +22,8 @@ test('every offer: a credit rule, a Stripe price var in the Worker config, euros
 
 // The STRIPE_PRICE_* names declared in the Worker config.
 const varsOf = async text => Object.fromEntries([...text.matchAll(/^(STRIPE_PRICE_[A-Z0-9_]+)\s*=/gm)].map(m => [m[1], 1]));
+
+test('api/pro-pay.js still names the top-up credits the older app test greps for, and they are the real ones', () => {
+  const text = readFileSync(new URL('../../api/pro-pay.js', import.meta.url), 'utf8');
+  for (const kind of ['topup5', 'topup10', 'topup20']) assert.ok(text.includes(`${kind}: ${String(CREDIT[kind]).replace(/\B(?=(\d{3})+$)/g, '_')}`), kind);
+});
