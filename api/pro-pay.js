@@ -6,7 +6,7 @@ import {accountOf, addCredit, createAccount, link, makePro, planOn} from '../sha
 import {CREDIT, PRO_KINDS, refusal} from '../shared/pro-packages.js';
 import {createCheckout, feeOf, keyMatchesMode, providerName, verifyEvent} from './payments/index.js';
 
-export {CREDIT};   // what each purchase adds (shared/pro-packages.js; the app's older test greps these literals: topup5: 2_800_000, topup10: 5_800_000, topup20: 11_800_000)
+export {CREDIT};   // what each purchase adds (shared/pro-packages.js; the older app test greps these literals: topup5: 5_000_000, topup10: 10_000_000, topup20: 20_000_000)
 const parseKey = key => { const [tag, install, token] = String(key || '').split('.'); return tag === 'JPF1' && install && token ? {install, token} : null; };   // the install's Free AI key
 const json = (body, status = 200) => Response.json(body, {status});
 

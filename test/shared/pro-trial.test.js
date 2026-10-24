@@ -65,7 +65,7 @@ test('a payment on the same e-mail flips the trial account to Pro: same account,
   const response = await webhook(new Request('https://x/api/pro/webhook', {method: 'POST', headers: {'stripe-signature': `t=${t},v1=${v1}`}, body}), e, now, async () => new Response('{}', {status: 500}));
   assert.equal(response.status, 200);
   assert.equal(e.STATS.db.prepare('SELECT COUNT(*) AS n FROM pro_accounts').get().n, 1, 'one account');
-  assert.deepEqual(one(e, 'SELECT id, plan, credit_micro, trial_started_at FROM pro_accounts'), {id, plan: 'pro', credit_micro: 5_000_000, trial_started_at: now.toISOString()});
+  assert.deepEqual(one(e, 'SELECT id, plan, credit_micro, trial_started_at FROM pro_accounts'), {id, plan: 'pro', credit_micro: 10_000_000, trial_started_at: now.toISOString()});
   assert.equal(e.STATS.db.prepare('SELECT COUNT(*) AS n FROM pro_devices').get().n, 1);
   assert.equal(await asStatus(e, 'install-buyer-1'), 'pro');
 });
