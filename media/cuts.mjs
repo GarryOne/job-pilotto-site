@@ -2,6 +2,7 @@
 // new page (owner, 24 Oct 2026: "a small glitch in the first clip, showing something about Sonnet") or the new framing over a page still changing.
 // Pure; run by media.mjs after fromFirstLook. Guard: desktop/test/media-camera.test.js ("a cut look starts when its content is on screen").
 import {FIRST_LAG, frameAt} from './camera.mjs';
+import {pageChange} from './hold.mjs';
 
 const round = t => Number(t.toFixed(3));
 
@@ -23,7 +24,7 @@ export function changeSpans(log) {
     if (event.type !== 'hold' || !event.cut || !event.box) return;
     const earlier = log.events.slice(0, i), prev = earlier.filter(e => e.type === 'hold').at(-1);
     if (!prev) return;
-    const change = earlier.find(e => (e.type === 'mark' || e.type === 'press') && e.t > prev.t);
+    const change = earlier.find(e => pageChange(e) && e.t > prev.t);
     if (!change) return;
     const ready = earlier.find(e => e.type === 'ready' && e.t >= change.t);
     const to = Math.min(ready ? ready.t : event.t + FIRST_LAG, event.t + Math.max(0, event.s - 0.5));
@@ -67,7 +68,7 @@ export function cutTime(log, i) {
   const hold = log.events[i], prev = log.events.slice(0, i).filter(e => e.type === 'hold' && e.box).at(-1);
   if (!prev) return hold.t;
   const after = event => event.t > prev.t && event.t <= hold.t + FIRST_LAG;
-  return (log.events.find(e => (e.type === 'mark' || e.type === 'press') && after(e)) ?? log.events.find(e => e.type === 'ready' && after(e)) ?? hold).t;
+  return (log.events.find(e => pageChange(e) && after(e)) ?? log.events.find(e => e.type === 'ready' && after(e)) ?? hold).t;
 }
 const meanDiff = (a, b) => { let sum = 0; for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]); return sum / a.length; };
 export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRAY_MAX}) {
@@ -108,7 +109,7 @@ export function frameCuts({log, thumb}) {
     const box = hold.box, a = thumb(old.file, box), b = thumb(fresh.file, box);
     if (meanDiff(a, b) <= STRAY_MAX) continue;   // nothing to tell apart
     const looksNew = frame => 2 * meanDiff(thumb(frame.file, box), b) < meanDiff(thumb(frame.file, box), a);   // mostly there: a fade's first third stays out
-    const byAction = out.events.some(event => (event.type === 'mark' || event.type === 'press') && event.t > prev.t && event.t === cut);
+    const byAction = out.events.some(event => pageChange(event) && event.t > prev.t && event.t === cut);
     const early = !byAction && out.frames.find(frame => frame.t > seen && frame.t < cut && looksNew(frame));
     if (early) { out = {...out, events: [...out.events, {type: 'ready', t: round(early.t - 0.001)}].sort((x, y) => x.t - y.t)}; continue; }
     const after = out.frames.slice(frameAt(out.frames, cut)).filter(frame => frame.t <= cut + 1.5), firstNew = after.find(looksNew);

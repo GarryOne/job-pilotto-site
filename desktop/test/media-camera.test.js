@@ -2,7 +2,7 @@
 // the view never leaves the page, every output frame maps to a recorded frame.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, PHONE_GAIN, PHONE_MAX, posterTime, renderPlan, beatTimes, FIT_MARGIN, FIT_WARN, FIRST_LAG, fromFirstLook} from '../../media/camera.mjs';
+import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, PHONE_GAIN, PHONE_MAX, posterTime, renderPlan, beatTimes, LOOK_MARGIN, FIT_WARN, FIRST_LAG, fromFirstLook} from '../../media/camera.mjs';
 
 const viewport = {w: 1800, h: 1125};
 const box = {x: 250, y: 500, width: 1200, height: 540};
@@ -31,10 +31,10 @@ test('a click in a corner puts the camera in that corner; a later hold glides to
   assert.ok(cameraAt(keys, 1.8, viewport).x >= viewport.w / 2, 'still on the click just after the press');
 });
 
-test('a box wider than the zoomed view is framed from its left edge', () => {
+test('a box wider than the zoomed view is framed from its left edge, with the margin', () => {
   const wide = {x: 200, y: 600, width: 1500, height: 60};
   const view = cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', box: wide, zoom: 1.5}]}), 3, viewport);
-  assert.ok(Math.abs(view.x - wide.x) < 1, `the view starts at the box's left edge (${view.x})`);
+  assert.ok(Math.abs(view.x - (wide.x - LOOK_MARGIN)) < 1, `the view starts a margin left of the box's left edge (${view.x})`);
 });
 
 test('a sped-up clip stretches camera moves in recorded time, so on screen they last as long', () => {
@@ -136,7 +136,7 @@ test('a hero look is never cut left or right: its zoom is lowered to fit the box
       const keys = cameraKeys({viewport, events: [{t: 0, type: 'hold', look: 'x', box: look, zoom}], steady: true, onFit: (event, asked, used) => heard.push(used / asked)});
       const view = cameraAt(keys, 1, viewport);
       assert.ok(view.x <= look.x + 0.5 && view.x + view.w >= look.x + look.width - 0.5, `width ${width} at zoom ${zoom}: the view ${view.x.toFixed(0)}+${view.w.toFixed(0)} holds the box`);
-      if (look.width + 2 * FIT_MARGIN > viewport.w / zoom) assert.equal(heard.length, 1, `width ${width} at zoom ${zoom}: the lowered zoom is reported`);
+      if (look.width + 2 * LOOK_MARGIN > viewport.w / zoom) assert.equal(heard.length, 1, `width ${width} at zoom ${zoom}: the lowered zoom is reported`);
       else assert.deepEqual(heard, [], 'a box that fits keeps its zoom');
     }
   }
@@ -269,4 +269,48 @@ test('each cut is checked against its frames: a page that changes by itself is c
   const late = frameCuts({log: {...acted, frames: framesFrom(2.2)}, thumb});
   assert.ok(late.frames.filter(f => f.t >= 1.95).every(f => f.file === 'new'), 'no old frame after the cut');
   assert.equal(late.frames.at(-1).t, 2.75, 'later frames move up by what was cut');
+});
+
+// Round 4 (owner, 24 Oct 2026: "we cropped too hard, let's leave a bit of space"): every look keeps LOOK_MARGIN on each side inside the view, unless the
+// page itself ends there; the top of a tall look too.
+test('a look keeps a margin on every side, the top of a tall look too', () => {
+  assert.ok(LOOK_MARGIN >= 32, 'a margin that reads as space, not a crop');
+  const looks = [{x: 600, y: 300, width: 400, height: 120}, {x: 200, y: 200, width: 1200, height: 160}, {x: 500, y: 150, width: 500, height: 900}];
+  for (const box of looks) for (const zoom of [1.5, 2, 2.4]) {
+    const view = cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', look: 'x', box, zoom}], steady: true}), 1, viewport);
+    assert.ok(box.x - view.x >= LOOK_MARGIN - 0.5 && view.x + view.w - (box.x + box.width) >= LOOK_MARGIN - 0.5, `${JSON.stringify(box)} at ${zoom}: room left and right`);
+    assert.ok(box.y - view.y >= LOOK_MARGIN - 0.5, `${JSON.stringify(box)} at ${zoom}: room above (${(box.y - view.y).toFixed(0)} px)`);
+  }
+});
+
+// Round 4 (owner: "when clicking Apply, the screen changes too fast, let's wait half a second"): a press shown first changes nothing; the mark logged
+// when its action runs is the page change the cut uses. Every press in a video waits (record-app.mjs pressShow).
+test('a held press is not a page change: a cut look switches at the mark after it, PRESS_SHOW later', async () => {
+  const {pageChange, PRESS_SHOW} = await import('../../media/hold.mjs');
+  assert.equal(PRESS_SHOW, 0.5);
+  assert.equal(pageChange({type: 'press', held: true}), false);
+  assert.equal(pageChange({type: 'press'}), true);
+  assert.equal(pageChange({type: 'mark'}), true);
+  const events = [{t: 0, type: 'hold', look: 'a', box: {x: 100, y: 100, width: 300, height: 100}, zoom: 2},
+    {t: 2, type: 'click', box: {x: 200, y: 150, width: 80, height: 30}}, {t: 2.7, type: 'press', held: true, box: {x: 200, y: 150, width: 80, height: 30}},
+    {t: 3.45, type: 'mark'}, {t: 3.8, type: 'hold', look: 'b', box: {x: 900, y: 500, width: 300, height: 100}, zoom: 2, cut: true}];
+  const keys = cameraKeys({viewport, events, steady: true, speed: 1.5});
+  const before = cameraAt(keys, 3.4, viewport), after = cameraAt(keys, 3.46, viewport);
+  assert.ok(before.x < 500, 'still on the first look while the press shows');
+  assert.ok(after.x > 500, 'cut to the second look at the mark');
+  const src = (await import('node:fs')).readFileSync(new URL('../../media/record-app.mjs', import.meta.url), 'utf8');
+  for (const kind of ['item.tap', 'item.click']) assert.match(src, new RegExp(`selector: ${kind.replace('.', '\\.')}, box, \\.\\.\\.\\(`), `${kind}: its press is marked held when it waits`);
+});
+
+// Round 4: lookWidth keeps a look's left part, ending in a gap between columns; an edge that cuts through a line of words stops the recording.
+test('lookWidth never cuts through a line of words (hold.mjs wordsCut), and the empty Find jobs card is framed on its centred words', async () => {
+  const {wordsCut} = await import('../../media/hold.mjs');
+  const card = {x: 100, y: 100, width: 1500, height: 400};   // kept part ends at 1140
+  assert.equal(wordsCut(card, 1040, [{x: 120, y: 120, width: 900, height: 20}, {x: 1200, y: 120, width: 80, height: 20}]), 0, 'a column right of the gap: left out on purpose');
+  assert.equal(wordsCut(card, 1040, [{x: 715, y: 200, width: 470, height: 20}]), 45, 'a centred line crossing the edge is cut');
+  assert.equal(wordsCut(card, 1040, [{x: 700, y: 200, width: 440, height: 20}]), 0, 'a line ending at the edge');
+  assert.equal(wordsCut(card, null, [{x: 715, y: 200, width: 470, height: 20}]), 0, 'no lookWidth: nothing to check');
+  const {VIDEOS: pieces} = await import('../../media/scenes.mjs');
+  const first = pieces.hero.steps.find(step => step.hold && step.look);
+  assert.ok(!first.lookWidth, 'the empty card is full width with its words centred: no left part');
 });
