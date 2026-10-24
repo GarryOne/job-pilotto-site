@@ -7,6 +7,7 @@ import {DAY_MESSAGE, freeAi} from '../../shared/free-ai.js';
 import {digestOf, tokenFor} from '../../shared/guard.js';
 import {OVERDRAFT_MICRO, addCredit, aiCallsKey, createAccount, link, percentOf, status, warnOf} from '../../shared/pro.js';
 import {CREDIT_OUT, PRO_PER_MINUTE} from '../../shared/pro-ai.js';
+import {CREDIT_PER_COST} from '../../shared/pro-packages.js';
 
 function d1() {
   const db = new DatabaseSync(':memory:');
@@ -41,8 +42,8 @@ test('the Pro lane: no install day cap, no global stop; only the minute limit, a
   assert.equal(response.status, 200);
   const calls = row(e, 'SELECT SUM(micro_usd) AS micro FROM ai_calls').micro, left = row(e, 'SELECT credit_micro FROM pro_accounts WHERE id = ?', pro.account).credit_micro;
   assert.ok(calls > 0);
-  assert.equal(5_000_000 - left, calls, 'the credit pays exactly what ai_calls records');
-  assert.deepEqual({...row(e, 'SELECT delta_micro, reason, ref FROM pro_credit WHERE reason = ?', 'ai_call')}, {delta_micro: -calls, reason: 'ai_call', ref: 'score'});
+  assert.equal(5_000_000 - left, calls * CREDIT_PER_COST, 'the credit pays what ai_calls records at our price list (raw × CREDIT_PER_COST)');
+  assert.deepEqual({...row(e, 'SELECT delta_micro, reason, ref FROM pro_credit WHERE reason = ?', 'ai_call')}, {delta_micro: -calls * CREDIT_PER_COST, reason: 'ai_call', ref: 'score'});
   e.WAITLIST.m.set(`freeai:min:${pro.who}:2026-10-16T10:00`, String(PRO_PER_MINUTE));
   assert.equal((await ask(e, pro.key)).status, 429, 'the 50-a-minute limit still applies');
 });

@@ -47,7 +47,7 @@ test('a webhook that is not genuinely signed is a 400 and writes nothing: no hea
 });
 
 test('every handled event, in one loop: a Pro payment and each top-up add exactly their credit, the account and the device, with country, VAT and fee kept', async () => {
-  assert.deepEqual(CREDIT, {pro: 0, 'pro-ai': 5_000_000, upgrade: 5_000_000, topup5: 2_800_000, topup10: 5_800_000, topup20: 11_800_000}, 'the owner\'s numbers: Pro no credit, Pro + AI and the upgrade $5, top-ups $2.80 / $5.80 / $11.80');
+  assert.deepEqual(CREDIT, {pro: 0, 'pro-ai': 10_000_000, upgrade: 10_000_000, topup5: 5_000_000, topup10: 10_000_000, topup20: 20_000_000}, 'the owner\'s numbers: Pro no credit, Pro + AI and the upgrade $5, top-ups $2.80 / $5.80 / $11.80');
   for (const kind of Object.keys(CREDIT)) {
     const e = env(), response = await post(e, sessionEvent(`evt_${kind}`, kind));
     assert.equal(response.status, 200, kind);
@@ -89,13 +89,13 @@ test('a refunded Pro takes its credit back and stops being Pro; a refunded top-u
   const e = env(), pro = async () => (await (await status(new Request('https://x/api/pro/status', {headers: {'x-api-key': await keyOf('install-buyer-1')}}), e)).json()).plan;
   await post(e, sessionEvent('evt_p', 'pro')); await post(e, sessionEvent('evt_t', 'topup10', {payment_intent: 'pi_top', amount_total: 1000}));
   assert.equal(await pro(), 'pro');
-  e.STATS.db.prepare('UPDATE pro_accounts SET credit_micro = ?').run(3_000_000);   // part of it spent
-  await post(e, refundEvent('evt_r0', 'pi_top', 500, 1000));   // half of the top-up refunded: half of its credit (2.90)
+  e.STATS.db.prepare('UPDATE pro_accounts SET credit_micro = ?').run(8_000_000);   // part of it spent
+  await post(e, refundEvent('evt_r0', 'pi_top', 500, 1000));   // half of the top-up refunded: half of its credit (5.00)
   assert.equal(one(e, 'SELECT status FROM pro_purchases WHERE provider_ref = ?', 'pi_top').status, 'paid', 'a partial refund keeps the purchase');
-  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 3_000_000 - 2_900_000);
+  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 8_000_000 - 5_000_000);
   await post(e, refundEvent('evt_r1', 'pi_top', 1000, 1000));   // now the whole refund (cumulative): the other half
   assert.equal(one(e, 'SELECT status FROM pro_purchases WHERE provider_ref = ?', 'pi_top').status, 'refunded');
-  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 0, '0.10 - 2.90 floors at 0');
+  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, 0, '3.00 - 5.00 floors at 0');
   assert.equal(await pro(), 'pro', 'a top-up refund keeps Pro');
   await post(e, refundEvent('evt_r2', 'pi_evt_p', 1900, 1900));
   assert.deepEqual([one(e, 'SELECT status FROM pro_accounts').status, await pro()], ['refunded', 'free']);
@@ -145,7 +145,7 @@ test('checkout: a one-time payment for the install, with the terms consent and b
   assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, CREDIT.upgrade);
 });
 
-test('a refunded upgrade takes back its $5 and the account is Pro without AI again; a refunded Pro + AI removes Pro and its credit', async () => {
+test('a refunded upgrade takes back its €10 and the account is Pro without AI again; a refunded Pro + AI removes Pro and its credit', async () => {
   const e = env(), status = async () => (await (await (await import('../../shared/pro.js')).status(new Request('https://x/s', {headers: {'x-api-key': await keyOf('install-buyer-1')}}), e)).json());
   await post(e, sessionEvent('evt_pro', 'pro')); await post(e, sessionEvent('evt_up', 'upgrade', {payment_intent: 'pi_up', amount_total: 1000}));
   assert.deepEqual([(await status()).package, (await status()).hasCredit], ['pro-ai', true]);
