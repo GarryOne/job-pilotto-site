@@ -2,7 +2,7 @@
 // we can take from the website/master branch"): the filter labels both, holds the shorter one, and every published hero clip has a before.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {COMPARE, comparable, compareFilter} from '../../media/compare.mjs';
+import {COMPARE, comparable, compareFilter, outputsOf} from '../../media/compare.mjs';
 
 test('the two clips play side by side at one height, each labelled, the shorter one held on its last frame', () => {
   const filter = compareFilter([12.9, 9.2], {font: null});
@@ -16,4 +16,13 @@ test('every hero clip of a set that main publishes gets its before, the phone co
   const set = ['hero.mp4', 'hero.webm', 'hero-fill.mp4', 'hero-fill-720.mp4', 'hero-fill-poster.jpg', 'hero-new.mp4', 'sheets'];
   const main = ['hero.mp4', 'hero-fill.mp4', 'hero-fill-720.mp4', 'hero-fill-poster.jpg'];
   assert.deepEqual(comparable(set, main), ['hero', 'hero-fill', 'hero-fill-720']);
+});
+
+// The first PR with these clips was refused: the body check (tools/pr-screens.py) wants a | What changed | Before | After | row, the two sides apart.
+test('each piece also gets a GIF per side for the PR\'s Before and After columns', () => {
+  const files = outputsOf('hero-fill', '/out');
+  assert.equal(files.before_gif, '/out/hero-fill-before.gif');
+  assert.equal(files.after_gif, '/out/hero-fill-after.gif');
+  assert.equal(files.compare_mp4, '/out/hero-fill-compare.mp4');
+  assert.ok(COMPARE.sideWidth * 2 === COMPARE.gifWidth, 'a side is half the side-by-side');
 });

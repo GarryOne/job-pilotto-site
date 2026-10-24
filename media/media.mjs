@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {beatTimes, FIT_WARN, fromFirstLook, posterTime, renderPlan, RING} from './camera.mjs';
 import {dropChanges, frameCuts, STRAY_MAX, strayFrames, THUMB} from './cuts.mjs';
+import {joinFilter, openOnCard, transitions, withCards} from './transitions.mjs';
 import {captionAt, captionSize, captionTimes, SAY_FADE} from './captions.mjs';
 import {captureGaps, leftWords, pieceProblems, realEmails} from './check.mjs';
 import {brightness, duration, encodeStill, encodeVideo, missingEncoders} from './encode.mjs';
@@ -26,7 +27,7 @@ const FPS = 30;
 
 // One recorded clip (a piece, or a part of one): frames, log, the masters (recorded time; encode.mjs plays them `speed` times faster). Checked here.
 async function recordClip(name, persona, work) {
-  const piece = withPlan(VIDEOS[name], planOf(name));
+  const piece = openOnCard(withPlan(VIDEOS[name], planOf(name)));   // a part that comes in by a card opens on it (transitions.mjs)
   const stale = leftWords(`${piece.caption || ''} ${piece.shows} ${piece.alt || ''}`, persona.forbid);
   if (stale.length) throw new Error(`${name}: the plan's words name the default demo person (${stale.join(', ')}): run direct.mjs ${name} again`);
   const dir = path.join(work, name);
@@ -48,7 +49,8 @@ async function recordClip(name, persona, work) {
     if (!thumbs.has(key)) thumbs.set(key, execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(dir, 'frames', file), '-vf', `${crop},scale=${THUMB.w}:${THUMB.h},format=gray`, '-f', 'rawvideo', '-']));
     return thumbs.get(key);
   };
-  const log = piece.camera === 'steady' ? frameCuts({log: dropChanges(fromFirstLook(recorded)), thumb}) : recorded;
+  // a title card's time is added at its cut (transitions.mjs withCards): the beats, captions and the gate all read this log
+  const log = piece.camera === 'steady' ? withCards(frameCuts({log: dropChanges(fromFirstLook(recorded)), thumb}), piece.speed || 1) : recorded;
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));
   const scale = jpegWidth(first) / log.viewport.w, steady = piece.camera === 'steady';
@@ -73,10 +75,12 @@ async function recordClip(name, persona, work) {
   return {name, piece, log, master, phoneMaster, seconds: duration(master)};
 }
 
-// Masters of a piece's parts, one after the other (round 3, owner 24 Oct 2026: Apply starts in the app, then the browser). -> the joined file.
-function joined(files, out) {
+// Masters of a piece's parts, one after the other (round 3, owner 24 Oct 2026: Apply starts in the app, then the browser), each coming in by its
+// part's `into` (round 6: never an instant replacement; transitions.mjs joinFilter). -> the joined file.
+function joined(files, kinds, speed, out) {
   if (files.length === 1) return files[0];
-  execFileSync('ffmpeg', ['-v', 'error', '-y', ...files.flatMap(file => ['-i', file]), '-filter_complex', `${files.map((_, i) => `[${i}:v]`).join('')}concat=n=${files.length}:v=1[v]`,
+  const {filter, out: last} = joinFilter(files.map(file => duration(file)), kinds, speed);
+  execFileSync('ffmpeg', ['-v', 'error', '-y', ...files.flatMap(file => ['-i', file]), '-filter_complex', `${filter};${last}format=yuv420p[v]`,
     '-map', '[v]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '12', '-pix_fmt', 'yuv420p', out]);
   return out;
 }
@@ -87,8 +91,9 @@ async function makeVideo(name, persona, work, out) {
   for (const part of partsOf(name)) clips.push(await recordClip(part, persona, work));
   const {piece} = clips.find(clip => clip.name === name), speed = piece.speed || 1, dir = path.join(work, name);
   const starts = clips.map((_, i) => clips.slice(0, i).reduce((sum, clip) => sum + clip.seconds, 0));   // recorded seconds where each part starts
-  const master = joined(clips.map(clip => clip.master), path.join(dir, 'master-joined.mp4'));
-  const phoneMaster = clips[0].phoneMaster ? joined(clips.map(clip => clip.phoneMaster), path.join(dir, 'master-phone-joined.mp4')) : null;
+  const kinds = clips.slice(1).map(clip => clip.piece.into);   // how each later part comes in
+  const master = joined(clips.map(clip => clip.master), kinds, speed, path.join(dir, 'master-joined.mp4'));
+  const phoneMaster = clips[0].phoneMaster ? joined(clips.map(clip => clip.phoneMaster), kinds, speed, path.join(dir, 'master-phone-joined.mp4')) : null;
   const posterAt = clips.map((clip, i) => clip.piece.steps.some(step => step.poster) ? starts[i] + posterTime(clip.log.events) : null).filter(at => at !== null).at(-1) ?? 0;
   const {files, bytes} = encodeVideo({master, phoneMaster, name, piece, outDir: out, posterAt});
   console.log(`media: ${name}: ${Object.entries(bytes).map(([kind, n]) => `${kind} ${(n / 1e6).toFixed(2)} MB`).join(', ')}`);
@@ -97,7 +102,7 @@ async function makeVideo(name, persona, work, out) {
     const size = THUMB.w * THUMB.h, total = Math.floor(raw.length / size);
     const stray = clips.flatMap((clip, i) => {
       const from = Math.round(starts[i] / speed * FPS), to = i + 1 < clips.length ? Math.round(starts[i + 1] / speed * FPS) : total;
-      return strayFrames({log: clip.log, frames: to - from, thumb: j => raw.subarray((from + j) * size, (from + j + 1) * size), speed, fps: FPS})
+      return strayFrames({log: clip.log, frames: to - from, thumb: j => raw.subarray((from + j) * size, (from + j + 1) * size), speed, fps: FPS, windows: transitions(clip.log, speed)})
         .map(s => ({...s, at: Number((s.at + from / FPS).toFixed(2))}));
     });
     if (stray.length) throw new Error(stray.map(s => `media: ${name}: a frame of another page at ${s.at} s, ${s.side} the cut to ${JSON.stringify(s.look)} (differs ${s.diff} > ${STRAY_MAX}): record again; if it repeats, the cut's timing is wrong (cuts.mjs)`).join('\n'));

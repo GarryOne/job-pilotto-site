@@ -29,8 +29,9 @@ a tighter 4:3 copy for phones, and a **transition at every screen change** (roun
 5. **Place**: `tools/hero.sh --place <set dir>`, then the site tests `tools/site-run.sh node --test "test/**/*.test.js"`
    (`tools/hero.sh --preview` re-renders the side-by-side from what is placed).
 6. **Ship** from the worktree: `~/jobadabra/tools/ship.sh --background --body=<file>` (body per `~/jobadabra/tools/pr-body-template.md`, with
-   one row per changed clip: the compare GIF inline, linked to its MP4 (both published under a tag, not on the branch:
-   `GITHUB_REPOSITORY=GarryOne/jobadabra-web node ~/jobadabra/tools/pr-assets.mjs pr-assets-<branch> <gif> <mp4>`); stills only for what is not a clip); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
+   one `| What changed | Before | After |` row per changed clip: `<piece>-before.gif` | `<piece>-after.gif`, each linked to `<piece>-compare.mp4`
+   (the body check refuses one combined image; all published under a tag, not on the branch:
+   `GITHUB_REPOSITORY=GarryOne/jobadabra-web node ~/jobadabra/tools/pr-assets.mjs pr-assets-<branch> <files>`; at most 5 rows); stills only for what is not a clip); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
 After that, the daily `tools/media.sh` refresh re-records the hero pieces from origin/main with everything else; the hero needs this skill only to change.
 
 ## Where each thing lives
@@ -41,6 +42,7 @@ After that, the daily `tools/media.sh` refresh re-records the hero pieces from o
 | "2 weeks later" (Track): records changed for one clip | `media/personas/nurse-lyon/moments/later.json` (`applyEdits`: a key names a list, `"."` = the file is a list (runs.json), a map by id, or one record by its id; `null` drops a field, `_first`, `_drop`, `_add` creates) |
 | Beat times in the manifest (sheets, preview) | `media/camera.mjs` `beatTimes`, `media/manifest.mjs` `beats` |
 | Camera (steady, cut, phone gain) | `media/camera.mjs` |
+| Transitions (fade, slide, tiles, card): kinds, cards' time, part joins | `media/transitions.mjs` (scenes: a look's `into`/`card`, a part's `into`, a clip's `stageInto`); drawn by `media/render.cjs`, on the site by `hero-stage.js` `comeIn` |
 | App / extension recorders, look boxes | `media/record-app.mjs`, `media/record-extension.mjs`; a hold's entry and timing (pure) `media/hold.mjs` |
 | Stage markup, captions (`data-cap`, `data-sub`, `data-later`), phone posters | `web/public/index.html` `#hero-stage` |
 | Playback (order, cut on first frame, pause, steps) | `web/public/hero-stage.js` |
@@ -252,3 +254,6 @@ comes back at the next redo.
   through Electron (`live-review.mjs`); an `after:` part plays behind its piece. A hold without a look keeps its beat.
 - **Show where the user acts** (round 5, owner: "show the Action screen where we click on 'check gmail' card"): an empty panel waiting for a press
   reads as nothing; frame the screen and control the person really uses.
+- **Transitions and the stray-frame gate** (round 6): a transition's mixed frames are neither page, so `strayFrames` stops at a transition's start
+  and checks again from its end (`windows`); never raise `STRAY_MAX` for a transition. A title card adds its time to the clip (`withCards`), so
+  beats, captions and the gate read the log after it. Tests: `desktop/test/media-transitions.test.js` (every cut look, join and clip switch names one).

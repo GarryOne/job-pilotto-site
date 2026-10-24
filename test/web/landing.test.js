@@ -132,6 +132,19 @@ test('the stage script: plays in turn, steps jump, pause, phone posters, nothing
   assert.match(css, /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, the stage right');
 });
 
+// Round 6 (owner, 24 Oct 2026: "make a nice transition effect, not just an instant screen/image replacement"): every switch between clips (the end of
+// one, a step clicked, the loop back to Set up) comes in by the clip's data-into; reduced motion switches at once.
+test('every clip switch on the stage comes in by its transition, never an instant swap', () => {
+  const js = read('hero-stage.js'), css = read('home.css');
+  assert.match(js, /async function show\(i\) \{[\s\S]*?comeIn\(clips\[before\], clips\[on\]/, 'show() (ended, steps, the first clip) runs the transition');
+  assert.match(js, /if \(still \|\| !from \|\| from === to/, 'reduced motion: no transition');
+  for (const kind of ['fade', 'slide', 'tiles']) assert.match(js, new RegExp(`${kind}: \\d+`), `the script knows ${kind}`);
+  assert.match(css, /\.slide\.is-leaving \{ opacity: 1; z-index: 0; \}/, 'the old clip stays under the new one until it is in');
+  assert.match(css, /\.is-coming\.in-slide \{[^}]*mask-image: linear-gradient\(to right/, 'slide: a soft edge from the right');
+  assert.match(css, /\.is-coming\.in-tiles \{[^}]*radial-gradient\(circle, #000 var\(--tile\)/, 'tiles: tiles growing');
+  assert.match(css, /@property --tile/, 'the tiles size animates');
+});
+
 // Owner, 24 Oct 2026 ("allow pause of the video", shot of a click on the picture): the picture itself pauses and plays, through the same switch as the
 // button, and a paused stage shows a play mark over it, so a click on the video never does nothing.
 test('a click on the hero picture pauses and plays it, and a paused stage shows a play mark', () => {

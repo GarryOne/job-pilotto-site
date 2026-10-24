@@ -2,8 +2,9 @@
 // Draws a product video from recorded frames (media): each output frame is a recorded frame moved and scaled through the camera
 // (a float transform, so pans are smooth), plus a cursor and a click ring. The app's pixels are never redrawn. Electron's canvas does the drawing in a
 // hidden window; raw pixels go to ffmpeg, which writes one high-quality master (encode.mjs makes the site's files from it).
-// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge, tag}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
-// a frame's `say` is drawn as a caption band at the bottom (captions.mjs), fading in over sayFade seconds of sayAge
+// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge, tag, from?, kind?, mix?, card?, cardAlpha?}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
+// a frame's `say` is drawn as a caption band at the bottom (captions.mjs), fading in over sayFade seconds of sayAge; a transition (transitions.mjs)
+// mixes `from` (the old screen) by `kind` and `mix` (fade, slide, tiles), or lays a title `card` over the frame at `cardAlpha`
 const {app, BrowserWindow} = require('electron');
 const fs = require('node:fs');
 
@@ -23,14 +24,45 @@ async function draw(job) {
   const done = new Promise(resolve => ffmpeg.on('close', resolve));
   const write = buffer => new Promise(resolve => { if (ffmpeg.stdin.write(buffer)) resolve(); else ffmpeg.stdin.once('drain', resolve); });
   const s = job.scale, unit = job.width / 1600;   // frame px per page CSS px; the cursor's size follows the output width
-  let file = null, bitmap = null;
+  // recorded frames as bitmaps, the last few kept (a transition draws the old screen and the new one for many frames)
+  const bitmaps = new Map();
+  const load = async file => {
+    if (bitmaps.has(file)) { const kept = bitmaps.get(file); bitmaps.delete(file); bitmaps.set(file, kept); return kept; }
+    const made = await createImageBitmap(new Blob([fs.readFileSync(path.join(job.framesDir, file))], {type: 'image/jpeg'}));
+    bitmaps.set(file, made);
+    if (bitmaps.size > 4) { const [old, gone] = bitmaps.entries().next().value; gone.close(); bitmaps.delete(old); }
+    return made;
+  };
+  const view = (target, bitmap, v) => target.drawImage(bitmap, v.x * s, v.y * s, v.w * s, v.h * s, 0, 0, job.width, job.height);
+  const layer = document.createElement('canvas'); layer.width = job.width; layer.height = job.height;
+  const lctx = layer.getContext('2d'); lctx.imageSmoothingEnabled = true; lctx.imageSmoothingQuality = 'high';
+  const tiny = document.createElement('canvas'), tctx = tiny.getContext('2d');
+  // tiles: the screen drawn in blocks of `size` px (render a small copy, scale it up unsmoothed)
+  const blocks = (bitmap, v, size, alpha) => {
+    tiny.width = Math.max(1, Math.round(job.width / size)); tiny.height = Math.max(1, Math.round(job.height / size));
+    tctx.imageSmoothingEnabled = true; tctx.drawImage(bitmap, v.x * s, v.y * s, v.w * s, v.h * s, 0, 0, tiny.width, tiny.height);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.imageSmoothingEnabled = false; ctx.drawImage(tiny, 0, 0, job.width, job.height); ctx.restore();
+  };
   for (const frame of job.frames) {
-    if (frame.file !== file) {
-      bitmap?.close();
-      bitmap = await createImageBitmap(new Blob([fs.readFileSync(path.join(job.framesDir, frame.file))], {type: 'image/jpeg'}));
-      file = frame.file;
-    }
-    ctx.drawImage(bitmap, frame.x * s, frame.y * s, frame.w * s, frame.h * s, 0, 0, job.width, job.height);
+    const bitmap = await load(frame.file);
+    if (frame.from) {   // a transition (transitions.mjs): the old screen under the new one, mixed by kind
+      const old = await load(frame.from.file), m = frame.mix;
+      if (frame.kind === 'tiles') {   // blocks grow to ~1/30 of the width, the screens swap at the middle, then the blocks shrink
+        const size = Math.max(1, Math.round(job.width / 30 * Math.sin(Math.PI * m)));
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, job.width, job.height);
+        blocks(old, frame.from, size, 1);
+        blocks(bitmap, frame, size, Math.max(0, Math.min(1, (m - 0.35) / 0.3)));
+      } else {
+        view(ctx, old, frame.from);
+        lctx.globalCompositeOperation = 'source-over'; lctx.clearRect(0, 0, job.width, job.height); view(lctx, bitmap, frame);
+        if (frame.kind === 'slide') {   // a soft edge sweeping in from the right (half the width wide)
+          const edge = job.width * (1 - 1.5 * m), wipe = lctx.createLinearGradient(edge, 0, edge + job.width / 2, 0);
+          wipe.addColorStop(0, 'rgba(0,0,0,0)'); wipe.addColorStop(1, 'rgba(0,0,0,1)');
+          lctx.globalCompositeOperation = 'destination-in'; lctx.fillStyle = wipe; lctx.fillRect(0, 0, job.width, job.height);
+          ctx.drawImage(layer, 0, 0);
+        } else { ctx.save(); ctx.globalAlpha = m; ctx.drawImage(layer, 0, 0); ctx.restore(); }   // fade
+      }
+    } else view(ctx, bitmap, frame);
     const px = (frame.cx - frame.x) * job.width / frame.w, py = (frame.cy - frame.y) * job.height / frame.h;
     if (frame.press != null && frame.press < job.ring) {   // the click ring: grows and fades
       const k = frame.press / job.ring;
@@ -66,6 +98,19 @@ async function draw(job) {
       ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1.5;
       ctx.fillStyle = '#ffffff'; ctx.fill(arrow);
       ctx.shadowColor = 'transparent'; ctx.lineWidth = 1.4; ctx.strokeStyle = '#111111'; ctx.stroke(arrow);
+      ctx.restore();
+    }
+    if (frame.card && frame.cardAlpha > 0) {   // a title card over everything: the place's tag and a few words on the page colour
+      const size = Math.round(job.width * 0.03), font = `600 ${size}px -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif`;
+      const tagFont = `700 ${Math.round(size * 0.62)}px "SF Mono", Menlo, Consolas, monospace`, tag = (frame.card.tag || '').toUpperCase();
+      ctx.save(); ctx.globalAlpha = frame.cardAlpha; ctx.fillStyle = '#0b0f14'; ctx.fillRect(0, 0, job.width, job.height);
+      ctx.textBaseline = 'middle'; ctx.font = tagFont; const tw = tag ? ctx.measureText(tag).width + size * 0.8 : 0;
+      ctx.font = font; const ww = ctx.measureText(frame.card.text).width, gap = tag ? size * 0.6 : 0, x = (job.width - tw - gap - ww) / 2, y = job.height / 2;
+      if (tag) {
+        ctx.fillStyle = '#f2a93b'; ctx.beginPath(); ctx.roundRect(x, y - size * 0.7, tw, size * 1.4, size * 0.3); ctx.fill();
+        ctx.font = tagFont; ctx.fillStyle = '#1b1306'; ctx.fillText(tag, x + size * 0.4, y + size * 0.04);
+      }
+      ctx.font = font; ctx.fillStyle = '#ffffff'; ctx.fillText(frame.card.text, x + tw + gap, y + size * 0.04);
       ctx.restore();
     }
     await write(Buffer.from(ctx.getImageData(0, 0, job.width, job.height).data.buffer));

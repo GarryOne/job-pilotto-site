@@ -1,6 +1,8 @@
 // The landing hero's stage (index.html #hero-stage; owner, 24 Oct 2026): four short clips of one made-up person and one job, played in turn on one stage.
-// A clip ends, the next cuts in once its first frame is decoded (owner, 24 Oct 2026: "smooth transitions without blank frames or overlapping screens":
-// the old clip stays on screen until then, never its end-frame poster, never two screens at once); its caption goes above the stage (a "later" clip leads it with a tag, never over the video) and its step's line fills as it plays. The steps jump to a clip, the pause button
+// A clip ends, the next comes in once its first frame is decoded (owner, 24 Oct 2026: "smooth transitions without blank frames": the old clip stays on
+// screen until then, never its end-frame poster), by its `data-into` (round 6: "make a nice transition effect, not just an instant screen/image
+// replacement"; media/scenes.mjs stageInto): slide = a soft edge sweeping in from the right (from the left for a step back), tiles = growing tiles
+// (time passed), fade; reduced motion switches at once; its caption goes above the stage (a "later" clip leads it with a tag, never over the video) and its step's line fills as it plays. The steps jump to a clip, the pause button
 // (or a click on the picture, which then shows a play mark) holds it (as do a hidden tab and a stage scrolled out of view); the next clip is fetched while the current one plays. Phones (the 720 copies, 4:3) get
 // their own posters. With reduced motion nothing plays by itself: the posters show, a step switches them, play starts a clip. Guarded by test/web/landing.test.js.
 const root = document.getElementById('hero-stage');
@@ -33,15 +35,35 @@ if (root && clips.length) {
     check();
   });
 
+  // The incoming clip's mask moves across it (home.css .is-coming); the old one stays under it until the end.
+  const IN = {fade: 450, slide: 500, tiles: 700};
+  let leaving = null;
+  const comeIn = (from, to, back) => {
+    const kind = IN[to.dataset.into] ? to.dataset.into : 'fade';
+    leaving?.classList.remove('is-leaving');
+    if (still || !from || from === to || !to.animate) return;
+    from.classList.add('is-leaving'); leaving = from;
+    to.classList.add('is-coming', `in-${kind}`); to.classList.toggle('is-back', back);
+    const frames = kind === 'fade' ? [{opacity: 0}, {opacity: 1}]
+      : kind === 'tiles' ? [{'--tile': '0%'}, {'--tile': '100%'}]
+      : back ? [{maskPosition: '100% 0', webkitMaskPosition: '100% 0'}, {maskPosition: '0% 0', webkitMaskPosition: '0% 0'}]
+      : [{maskPosition: '0% 0', webkitMaskPosition: '0% 0'}, {maskPosition: '100% 0', webkitMaskPosition: '100% 0'}];
+    const run = to.animate(frames, {duration: IN[kind], easing: 'cubic-bezier(.45,0,.25,1)'});
+    const done = () => { from.classList.remove('is-leaving'); to.classList.remove('is-coming', 'is-back', 'in-fade', 'in-slide', 'in-tiles'); if (leaving === from) leaving = null; };
+    run.onfinish = done; run.oncancel = done;
+  };
+
   async function show(i) {
     const next = (i + clips.length) % clips.length, mine = ++ask;
     if (playing()) await ready(clips[next]);   // paused (or reduced motion): the poster is the picture, switch at once
     if (mine !== ask) return;   // a later step click won
+    const before = on;
     on = next;
     clips.forEach((clip, k) => {
       clip.classList.toggle('is-on', k === on);
       if (k !== on) clip.pause();
     });
+    comeIn(clips[before], clips[on], on < before && !(before === clips.length - 1 && on === 0));
     steps.forEach((step, k) => {
       if (k === on) step.setAttribute('aria-current', 'true'); else step.removeAttribute('aria-current');
       step.style.setProperty('--done', k < on ? '1' : '0');

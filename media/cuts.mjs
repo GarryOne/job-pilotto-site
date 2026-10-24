@@ -71,7 +71,9 @@ export function cutTime(log, i) {
   return (log.events.find(e => pageChange(e) && after(e)) ?? log.events.find(e => e.type === 'ready' && after(e)) ?? hold).t;
 }
 const meanDiff = (a, b) => { let sum = 0; for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]); return sum / a.length; };
-export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRAY_MAX}) {
+// windows: the transitions (transitions.mjs, recorded seconds): their mixed frames are neither page, so the check stops where one starts and
+// starts again where it ends.
+export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRAY_MAX, windows = []}) {
   const holds = log.events.filter(event => event.type === 'hold' && event.box);
   const video = t => Math.min(frames - 1, Math.round(t / speed * fps));
   const beat = hold => video(hold.t + hold.s * 0.9);
@@ -81,12 +83,13 @@ export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRA
     const prev = holds[k - 1], cut = cutTime(log, log.events.indexOf(hold));
     let worst = null;
     const look = (from, to, refs, side) => { for (let j = from; j < to; j++) { const diff = Math.min(...refs.map(ref => meanDiff(thumb(j), thumb(ref)))); if (diff > max && (!worst || diff > worst.diff)) worst = {look: hold.look, at: Number((j / fps).toFixed(2)), side, diff: Number(diff.toFixed(1))}; } };
-    look(video(prev.t + prev.s), video(cut), [beat(prev)], 'before');
+    const mixed = windows.find(w => w.from <= cut + 0.05 && w.to >= cut - 0.05);
+    look(video(prev.t + prev.s), video(mixed ? Math.min(cut, mixed.from) : cut), [beat(prev)], 'before');
     // After the cut, a look that fills in by itself (the search card's numbers) still differs from its own end: the frame half a second in is a second
     // reference, but only when it is the new page (twice as close to the new beat as to the old one), so an old page that lingers is still caught.
-    const end = Math.min(frames, video(cut) + Math.round(fps / 2)), settled = end - 1;
+    const start = mixed ? video(mixed.to) : video(cut), end = Math.min(frames, start + Math.round(fps / 2)), settled = end - 1;
     const isNew = 2 * meanDiff(thumb(settled), thumb(beat(hold))) < meanDiff(thumb(settled), thumb(beat(prev)));
-    look(video(cut) + 1, end, isNew ? [beat(hold), settled] : [beat(hold)], 'after');
+    look(start + 1, end, isNew ? [beat(hold), settled] : [beat(hold)], 'after');
     if (worst) out.push(worst);
   });
   return out;
