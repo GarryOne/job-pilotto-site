@@ -61,7 +61,7 @@ jobs:
           app-id: ${{ secrets.CI_APP_ID }}
           private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
           owner: GarryOne
-          repositories: job-pilotto-internal
+          repositories: jobadabra-lab
       - name: Candidates' CVs and the tape
         env:
           NET_RECORDS_READ_TOKEN: ${{ steps.records_app.outputs.token || secrets.NET_RECORDS_READ_TOKEN }}
