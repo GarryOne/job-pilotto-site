@@ -172,6 +172,7 @@ test('a look may keep its left part on purpose (lookWidth), never wider than the
   assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 760}, wide).box.width, 760);
   assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 2000}, wide).box.width, 1512);
   assert.deepEqual(holdEvent({hold: 1, look: 'x'}, wide).box, wide);
+  assert.equal(holdEvent({hold: 1, look: 'x', phoneLookWidth: 560}, wide, wide).phoneBox.width, 560, 'the phone copy names its part too');
 });
 
 // Round 2: a hold's entry is stamped after its boxes are measured; its `s` is the time left on screen, so beat frames and posters fall inside the look.

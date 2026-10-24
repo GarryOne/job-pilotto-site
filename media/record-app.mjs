@@ -53,10 +53,10 @@ const lookBox = async (page, look) => unionBox(await Promise.all([look].flat().m
 // posters landed after the page had moved on). The entry's t is stamped after measuring, so its `s` is this, and the recorder waits exactly this. Pure.
 export const holdLeft = (hold, startedMs, nowMs) => Math.max(0.3, hold - (nowMs - startedMs) / 1000);
 // A hold's log entry: what the camera needs (cameraKeys): its box, zoom, a cut at the page change, the phone copy's own zoom or box. `lookWidth` (CSS px)
-// keeps the look's left part on purpose (round 2: a 1512-px card whose words sit on its left; the camera shows a look whole, so a wide one reads small).
+// (`phoneLookWidth`: the same for the phone copy's own phoneLook) keeps the look's left part on purpose (round 2: a 1512-px card whose words sit on its left; the camera shows a look whole, so a wide one reads small).
 const leftPart = (box, width) => (box && width ? {...box, width: Math.min(box.width, width)} : box);
 export const holdEvent = (item, box, phoneBox = null, s = item.hold) => ({type: 'hold', look: item.look || null, box: leftPart(box, item.lookWidth), s, ...(item.zoom ? {zoom: item.zoom} : {}),
-  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox} : {}), ...(item.poster ? {poster: true} : {})});
+  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox: leftPart(phoneBox, item.phoneLookWidth)} : {}), ...(item.poster ? {poster: true} : {})});
 
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {

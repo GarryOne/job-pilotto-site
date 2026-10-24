@@ -117,3 +117,7 @@ comes back at the next redo.
   re-record Find after that fix merges.
 - **Not built yet**: a pre-recording storyboard (each look's box and fitted zoom without recording). Until then the `media: ... shown whole at zoom`
   lines and the beat sheets are the check.
+- **The capture can stall on a loaded Mac** (Set up, 24 Oct 2026: no frame for 5 s after Build, the proposal never on screen, a tiny poster): a frame gap
+  holding a click/press/page change is caught (`check.mjs captureGaps`), the piece is recorded again up to twice (`media: <piece>: the capture stalled`),
+  then fails. A clip whose file or poster shrank sharply against the last set is the hint to look.
+- **The phone copy's `phoneLook` is shown whole too**: give it the cells you mean (`[ROW .fit-cell, ROW .role]`) or its left part (`phoneLookWidth`), never a full-width row or banner.

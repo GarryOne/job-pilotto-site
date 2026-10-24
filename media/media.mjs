@@ -10,7 +10,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {beatTimes, FIT_WARN, fromFirstLook, posterTime, renderPlan, RING} from './camera.mjs';
-import {leftWords, pieceProblems, realEmails} from './check.mjs';
+import {captureGaps, leftWords, pieceProblems, realEmails} from './check.mjs';
 import {brightness, duration, encodeStill, encodeVideo, missingEncoders} from './encode.mjs';
 import {manifest, stillEntry, videoEntry} from './manifest.mjs';
 import {recordAppVideo, shootApp} from './record-app.mjs';
@@ -29,7 +29,15 @@ async function makeVideo(name, persona, work, out) {
   const dir = path.join(work, name);
   fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
   const record = piece.source === 'extension' ? recordExtensionVideo : recordAppVideo;
-  const recorded = await record({persona, piece, dir});
+  // a capture that stalled on a loaded Mac is recorded again (check.mjs captureGaps), at most twice; then pieceProblems fails the piece
+  let recorded;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    fs.rmSync(dir, {recursive: true, force: true}); fs.mkdirSync(dir, {recursive: true});
+    recorded = await record({persona, piece, dir});
+    const gaps = captureGaps(recorded);
+    if (!gaps.length || attempt === 3) break;
+    console.log(`media: ${name}: the capture stalled (no frame ${gaps.map(gap => `${gap.from.toFixed(1)}-${gap.to.toFixed(1)} s`).join(', ')}): recording again (${attempt + 1} of 3)`);
+  }
   const log = piece.camera === 'steady' ? fromFirstLook(recorded) : recorded;   // the hero starts at its first look (camera.mjs)
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));

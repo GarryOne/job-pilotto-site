@@ -2,7 +2,7 @@
 // form the extension did not fill each stop the run.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {missingFills, pieceProblems, realEmails, realSecrets} from '../../media/check.mjs';
+import {captureGaps, missingFills, pieceProblems, realEmails, realSecrets} from '../../media/check.mjs';
 import {missingEncoders} from '../../media/encode.mjs';
 
 test('only e-mail addresses on reserved test domains pass', () => {
@@ -49,4 +49,14 @@ test('the fictional form and its recorder are dark', async () => {
   const read = file => fs.readFileSync(new URL(`../../media/${file}`, import.meta.url), 'utf8');
   assert.match(read('form.html'), /prefers-color-scheme: dark/);
   assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'/);
+});
+
+// Round 2: Set up's capture sent no frame for 5 s after a click; the clip froze on the loading card. A still page may send no frames, an action may not.
+test('a frame gap holding a click, a press or a page change is a stall; a still page between actions is not', () => {
+  const frames = [0, 0.5, 1, 6, 6.5].map(t => ({t}));
+  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'click'}]}), [{from: 1, to: 6}]);
+  assert.deepEqual(captureGaps({frames, events: [{t: 0.7, type: 'mark'}]}), [{from: 1, to: 6}], 'a change just before the gap counts');
+  assert.deepEqual(captureGaps({frames, events: [{t: 2, type: 'hold'}]}), [], 'a hold on a still page sends no frames, that is fine');
+  const problems = pieceProblems({name: 'hero', source: 'app', log: {frames, events: [{t: 3, type: 'press'}], text: ''}, posterBrightness: 0.1, quiet: true});
+  assert.ok(problems.some(line => /capture stalled/.test(line)), problems.join(' / '));
 });

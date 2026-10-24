@@ -24,6 +24,19 @@ export const missingFills = filled => MUST_FILL.filter(field => !(filled || []).
 export const DARK_MAX = 0.35;
 
 // -> list of problems (empty = fine) for one recorded piece.
+// Capture stalls (round 2, 24 Oct 2026: on a loaded Mac the screencast sent no frame for 5 s after Set up's strategy appeared; the clip froze on the
+// loading card and the proposal never showed). A click, a press or a page change makes the page repaint, so a frame gap over `max` seconds that holds
+// one of them (or starts just before it) is a stall, not a still page. -> [{from, to}]. Pure.
+export function captureGaps(log, max = 2) {
+  const actions = (log.events || []).filter(event => ['click', 'press', 'mark'].includes(event.type)).map(event => event.t);
+  const gaps = [];
+  for (let i = 1; i < log.frames.length; i++) {
+    const from = log.frames[i - 1].t, to = log.frames[i].t;
+    if (to - from > max && actions.some(t => t >= from - 0.5 && t < to)) gaps.push({from, to});
+  }
+  return gaps;
+}
+
 export function pieceProblems({name, source, log, posterBrightness, forbid = [], quiet = false}) {
   const problems = [];
   const left = leftWords(log.text, forbid);
@@ -34,5 +47,6 @@ export function pieceProblems({name, source, log, posterBrightness, forbid = [],
   if (source === 'extension') { const missing = missingFills(log.filled); if (missing.length) problems.push(`${name}: the extension did not fill ${missing.join(', ')}`); }
   const seconds = log.frames.at(-1)?.t || 0;
   if (quiet ? log.frames.length < 2 : log.frames.length < seconds * 5) problems.push(`${name}: only ${log.frames.length} frames in ${seconds.toFixed(1)} s (the capture stalled)`);   // a quiet piece (a still page that changes only on a click) sends a frame per change, so it needs two
+  for (const gap of captureGaps(log)) problems.push(`${name}: no frame from ${gap.from.toFixed(1)} s to ${gap.to.toFixed(1)} s after an action (the capture stalled)`);
   return problems;
 }
