@@ -12,6 +12,7 @@ export const SETTLE = 0.25;        // output seconds the camera stays on a click
 export const RING = 0.6;           // seconds a click ring grows and fades
 
 import {pageChange} from './hold.mjs';
+import {blendAt, cutMoment, transitions} from './transitions.mjs';
 
 export const ease = x => { const u = Math.max(0, Math.min(1, x)); return u * u * (3 - 2 * u); };
 
@@ -69,9 +70,7 @@ export function cameraKeys({viewport, events, speed = 1, steady = false, phone =
     if (steady && first) { keys[0] = {t: 0, ...target}; return; }
     const lastLook = earlier.filter(prev => prev.type === 'hold').at(-1);
     if (event.cut) {
-      const change = earlier.find(prev => pageChange(prev) && (!lastLook || prev.t > lastLook.t));   // the first: the old page left then (cuts.mjs)
-      const shown = earlier.find(prev => prev.type === 'ready' && (!lastLook || prev.t > lastLook.t));   // no action: the page changed by itself, cut when it showed
-      const at = change ? change.t : shown ? shown.t : event.t;
+      const at = cutMoment(events, i);   // the first page change since the last look, else when the page changed by itself (transitions.mjs)
       move(at - 0.001, {cx: keys.at(-1).cx, cy: keys.at(-1).cy, z: keys.at(-1).z});
       move(at, target);
       return;
@@ -140,14 +139,19 @@ export function beatTimes(events = [], steps = [], speed = 1) {
   return stills.map((step, i) => (step.beat && holds[i] ? {t: Number(((holds[i].t + holds[i].s * 0.9) / speed).toFixed(2)), beat: step.beat} : null)).filter(Boolean);
 }
 
-// Every output frame of a video at `fps`: which recorded frame, the page area shown, the cursor. What render.cjs draws. Pure.
+// Every output frame of a video at `fps`: which recorded frame, the page area shown, the cursor, and inside a transition (transitions.mjs) the old
+// screen and how far it is mixed (`from`, `kind`, `mix`) or a card's words and opacity (`card`, `cardAlpha`). What render.cjs draws. Pure.
 // log: {viewport, frames: [{t, file}], events}. cursor: false hides it (a piece with no clicks). steady/phone: as cameraKeys.
 export function renderPlan(log, fps = 30, speed = 1, {steady = false, phone = null, onFit = null} = {}) {
   const keys = cameraKeys({...log, speed, steady, phone, onFit}), end = log.frames.at(-1).t, cursor = log.events.some(event => event.type === 'click');
-  const out = [];
+  const list = steady ? transitions(log, speed) : [], out = [];
   for (let i = 0; i <= Math.floor(end * fps); i++) {
-    const t = i / fps, view = cameraAt(keys, t, log.viewport, speed, phone), at = cursorAt(log.events, t, log.viewport);
-    out.push({file: log.frames[frameAt(log.frames, t)].file, ...view, cx: at.x, cy: at.y, press: at.press, cursor});
+    const t = i / fps, view = cameraAt(keys, t, log.viewport, speed, phone), at = cursorAt(log.events, t, log.viewport), blend = blendAt(list, t, speed);
+    // fade, slide, tiles: the old screen is the frame shown just before the cut, through the camera it had then (render.cjs mixes them)
+    const before = blend?.kind ? blend.at - 0.002 : null;
+    const from = before === null ? {} : {from: {file: log.frames[frameAt(log.frames, before)].file, ...cameraAt(keys, before, log.viewport, speed, phone)}, kind: blend.kind, mix: blend.mix};
+    const card = blend?.card ? {card: blend.card, cardAlpha: blend.alpha} : {};
+    out.push({file: log.frames[frameAt(log.frames, t)].file, ...view, cx: at.x, cy: at.y, press: at.press, cursor, ...from, ...card});
   }
   return out;
 }
