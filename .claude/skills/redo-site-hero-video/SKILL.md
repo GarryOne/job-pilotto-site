@@ -43,6 +43,23 @@ After that, the daily `tools/media.sh` refresh re-records the hero pieces from o
 | The side-by-side | `tools/hero-preview.mjs` |
 Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web/landing.test.js`, `test/web/hero-redo.test.js`.
 
+## The toolbox: every way to tell a step, and when it fits (owner, 24 Oct 2026)
+Pick per moment, by what the viewer must understand; never one method everywhere. A method not built yet is built into the tool (with a test), not faked in a scene.
+| Method | Use it when | Example |
+|---|---|---|
+| Zoom on a look | one thing on the screen is the point | her job's fit, the count |
+| Pan (one camera move) | the point moves within the same screen | the count → "Ready to submit" |
+| Click zoom + short hold | how she got to the next screen must be seen | Find: her row → the drawer |
+| One after another (parts) | one place finishes before the next starts | Jobs → Applying → Chrome |
+| Picture in picture, swapped | two places change at once and one leads at a time; swap when the lead changes | Apply: the card follows Chrome's fill |
+| Side by side (split) | two places change at once and matter equally | (sketched, not used yet) |
+| Slide | moving from one screen to another | a page, Jobadabra ↔ Chrome, the next clip |
+| Tiles | time passed in reality | the search ran, "2 weeks later" |
+| Title card | the flow is not obvious: say how she got there | "She opens Jobadabra to check her mail" |
+| Fade | the same screen changing | the AI's proposal replacing "reading your CV" |
+| Something drawn in the page | it happens outside the app | the Gmail notification |
+| Caption + tag chip | always: what happens and where | every step |
+
 ## Scene vocabulary (`media/scenes.mjs`)
 - A piece: `env` (extra app env for that recording, e.g. `JOB_PILOTTO_DEMO_STRATEGY_DELAY` so the demo "Claude reads your CV" step lasts), `camera: 'steady'` (opens framed, clicks never move it), `phone: PHONE` (the 720×540 copy), `budget` (bytes), `speed`, `moment`,
   `motion: 'reduce'` (extension: no aurora/shimmer sweep), `settings` (app wizard state), `caption`.
@@ -136,9 +153,11 @@ Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web
     between the two screens; it adds its time to the clip.
   - **Fade**: the same screen changing (a result appearing, the AI's proposal replacing "reading your CV"), the softest.
   - Every cut look, part join and clip switch names its transition; pick by the meaning above, never one style everywhere.
-- Apply side by side (sketch https://claude.ai/artifact/GdQuKaFdKnQp3du6QDsuJX): split screen, Chrome | her card; the side that changes grows to
-  60% and zooms in (Chrome while fields fill, then the card's count), both zoom out at "Ready to submit". It replaces round 5's one after
-  another; on phones the two stack (Chrome on top, the card below).
+- Apply: **picture in picture, swapped twice** (owner: "I'd like picture in picture, but swapping them at some point"; it replaces round 5's one
+  after another and the split-screen sketch https://claude.ai/artifact/GdQuKaFdKnQp3du6QDsuJX): (1) Jobadabra's Applying screen and session card
+  main, Chrome in the inset; (2) swap: Chrome full screen while the fields fill, the session card in the inset, ticking; (3) swap back: the card
+  main at "Ready to submit", Chrome in the inset.
+- "The skill should possess all of these possibilities ... and we should use whenever it's the right time for that method": the toolbox below.
 
 ## When something is wrong: fix the mechanism, then the scene (owner, 24 Oct 2026: "did you fix the root causes permanently?")
 A bad crop, a missing step or a wrong frame is first a question about the tool: which camera/recorder/tool rule let it through? Fix that rule, add a test
