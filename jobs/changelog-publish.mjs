@@ -9,7 +9,7 @@ import {MODEL, ask} from '../admin/build-digest.js';
 import {MERGE_PROMPT, MODEL_PROMPT, cleanGroups, problems, versionOf} from '../admin/changelog.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
-const repo = process.env.GITHUB_REPOSITORY || process.env.REPO || 'GarryOne/job-pilotto';
+const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/job-pilotto';
 const base = process.env.CHANGELOG_URL || 'https://www.jobpilotto.top/changelog/data';
 // Only what a user can see reaches the AI (owner, 18 Oct 2026: "I have 5000 commits, be careful"): a commit that touches only tests, e2e, fixtures, recordings, scripts, docs, tools or CI is not read at all.
 export const PATHSPEC = ['desktop', 'src', 'config', 'extension', 'worker/src', 'requirements.txt', ':(exclude)desktop/e2e', ':(exclude)desktop/test', ':(exclude)desktop/scripts', ':(exclude)desktop/docs',
