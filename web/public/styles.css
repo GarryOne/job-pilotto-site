@@ -314,48 +314,6 @@ table.access { width: 100%; min-width: 640px; border-collapse: collapse; font-si
 .setup-cta { margin-top: 20px; }
 @media (max-width: 900px) { .setup-cols { grid-template-columns: minmax(0, 1fr); } .setup-cols > * { min-width: 0; } }
 
-/* Pricing: boarding passes */
-.passes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
-.pass { --surface: #f7f3ea; --raised: #eee7da; --ink: #1b2430; --muted: #5f6b78; --line: #e0d7c8; --line-strong: #cdbfaa;
-  --signal: #132439; --navy: #132439; --navy-ink: #f7f3ea; color: var(--ink);
-  --notch: 14px; display: grid; grid-template-columns: 1fr 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
-.pass-main { display: grid; gap: 16px; align-content: start; padding: 28px 30px; }
-.pass-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.pass-airline { font: 500 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.pass-route { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 14px; padding: 6px 0 4px; }
-.pass-route small { display: block; font: 500 .62rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.pass-route b { font: 500 2.2rem/1 var(--display); letter-spacing: -.02em; }
-.pass-line { position: relative; border-top: 2px dashed var(--line-strong); margin-bottom: 12px; }
-.pass-line::after { content: "✈"; position: absolute; left: 50%; top: -12px; transform: translateX(-50%); background: var(--surface); color: var(--signal); padding: 0 6px; font-size: 15px; line-height: 1; }
-.pass h3 { font: 500 1.5rem var(--display); letter-spacing: -.015em; }
-.pass ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; color: var(--muted); font-size: .94rem; }
-.pass li { display: flex; gap: 10px; }
-.pass li::before { content: "→"; color: var(--signal); font-family: var(--mono); }
-.pass .btn { justify-self: start; margin-top: 6px; }
-.pass .btn-primary { box-shadow: 0 8px 22px rgb(19 36 57 / .25); }
-.pass .alt-download svg { color: #0078d4; }
-.pass-fine { font-size: .82rem; color: var(--muted); }
-.pass-fine a { color: inherit; text-underline-offset: 3px; }
-.pass-stub { position: relative; display: grid; align-content: start; gap: 16px; padding: 28px 22px; background: var(--raised); border-left: 2px dashed var(--line-strong); }
-/* The notches show the section behind the ticket, whichever band it sits on. */
-.pass-stub::before, .pass-stub::after { content: ""; position: absolute; left: calc(-1 * var(--notch) - 1px); width: calc(var(--notch) * 2); height: calc(var(--notch) * 2); border-radius: 50%; background: var(--section-bg, var(--paper)); }
-.pass-stub::before { top: calc(-1 * var(--notch)); }
-.pass-stub::after { bottom: calc(-1 * var(--notch)); }
-.pass-stub small { display: block; font: 500 .6rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.pass-stub b { font: 600 1rem var(--mono); letter-spacing: .04em; }
-.barcode { display: block; height: 58px; margin-top: auto; border-radius: 3px; opacity: .8;
-  background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 12px); }
-.pass.soon .pass-stub b { color: var(--muted); }
-.tag { font: 500 .62rem var(--mono); letter-spacing: .12em; text-transform: uppercase; background: #ffb224; color: #14110c; padding: 4px 9px; border-radius: 999px; }
-.tag.soon { background: var(--line); color: var(--ink); }
-@media (max-width: 980px) { .passes { grid-template-columns: 1fr; } }
-@media (max-width: 520px) {
-  .pass { grid-template-columns: 1fr; }
-  .pass-stub { grid-template-columns: repeat(3, 1fr); border-left: 0; border-top: 2px dashed var(--line-strong); }
-  .pass-stub::before, .pass-stub::after { top: calc(-1 * var(--notch)); bottom: auto; }
-  .pass-stub::before { left: calc(-1 * var(--notch)); } .pass-stub::after { left: auto; right: calc(-1 * var(--notch)); }
-  .barcode { grid-column: 1 / -1; }
-}
 
 /* Waitlist */
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

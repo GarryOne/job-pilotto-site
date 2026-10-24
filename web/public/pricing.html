@@ -6,12 +6,12 @@
 <title>Pricing · Jobadabra</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="description" content="Jobadabra is free to start: the whole app for 20 applications or 60 days, Free AI included. Pro, coming soon: $29 once, no subscription.">
+<meta name="description" content="Jobadabra is free to start: the whole app for 20 applications or 60 days, Free AI included. Pro, coming soon: one-time payment from €9, no subscription.">
 <link rel="canonical" href="https://www.jobadabra.top/pricing">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jobadabra">
 <meta property="og:title" content="Pricing · Jobadabra">
-<meta property="og:description" content="Jobadabra is free to start: the whole app for 20 applications or 60 days, Free AI included. Pro, coming soon: $29 once, no subscription.">
+<meta property="og:description" content="Jobadabra is free to start: the whole app for 20 applications or 60 days, Free AI included. Pro, coming soon: one-time payment from €9, no subscription.">
 <meta property="og:url" content="https://www.jobadabra.top/pricing">
 <meta property="og:image" content="https://www.jobadabra.top/images/logo-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="effects.css">
 <link rel="stylesheet" href="home.css">
 <link rel="stylesheet" href="pages.css">
+<link rel="stylesheet" href="pricing.css">
 </head>
 <body data-page="pricing">
 <div class="wrap">
@@ -40,60 +41,104 @@
 
   <header class="page-head">
     <span class="eyebrow">Pricing</span>
-    <h1>Free to start. Pro when you want more.</h1>
-    <p class="lede">Free AI is included, nothing to set up. Add your own Claude or ChatGPT key if you want stronger letters and interview prep.</p>
+    <h1>Pay <em>once</em>.<br>No subscription.</h1>
+    <p class="lede">Start with a free trial. Unlock Pro with a single payment when it launches.</p>
   </header>
 
   <section class="block first" id="plans">
-    <div class="passes">
-      <article class="pass">
+    <div class="passes three">
+      <article class="pass" id="plan-free">
         <div class="pass-main">
-          <div class="pass-top"><span class="pass-airline">✈ Jobadabra</span><span class="tag">Boarding now</span></div>
-          <div class="pass-route"><div><small>From</small><b>ZRH</b></div><span class="pass-line" aria-hidden="true"></span><div><small>To</small><b>OFFER</b></div></div>
-          <h3>Free trial · Mac and Windows</h3>
+          <div class="pass-name"><h3>Free trial</h3><span class="tag">Available now</span></div>
+          <div class="pass-price"><b>€0</b></div>
+          <p class="pass-promise">20 applications or 60 days.<br><b>Whichever lasts longer.</b></p>
+          <hr class="pass-rule">
           <ul>
-            <li>Every stop: find, prepare, apply, track</li>
-            <li>Interviews transcribed on your computer</li>
-            <li>Always on: runs while your computer is off, with your free GitHub</li>
-            <li>The shared employer pool, updated daily, plus your own employers</li>
-            <li>Source available: read or run the code yourself</li>
-            <li>Free trial: the whole app for 20 applications or 60 days, whichever lasts longer</li>
-            <li>Our AI is included, no key needed; your own Claude or ChatGPT writes stronger letters</li>
-            <li>Try Always on during your free trial</li>
+            <li>Find, prepare, apply, and track</li>
+            <li>AI included, no API key needed</li>
+            <li>Local interview transcription</li>
+            <li>Try Always on with your GitHub account</li>
           </ul>
           <div class="downloads"><a class="btn btn-primary" href="/download/mac?from=pricing">Download for Mac</a><a class="btn btn-primary" href="/download/windows?from=pricing">Download for Windows</a></div>
-          <span class="pass-fine">Mac: Apple silicon (M1 or newer) · Windows 10 or 11 (beta) · <a href="/download">setup</a></span>
+          <span class="pass-fine">Apple silicon · Windows 10 or 11 (beta) · <a href="/download">setup</a></span>
         </div>
-        <div class="pass-stub">
-          <div><small>Class</small><b>FREE</b></div>
-          <div><small>Fare</small><b>$0</b></div>
-          <div><small>Gate</small><b>NOW</b></div>
-          <span class="barcode" aria-hidden="true"></span>
-        </div>
+        <div class="pass-stub"><span class="pass-word">Jobadabra</span><span class="barcode" aria-hidden="true"></span></div>
       </article>
-      <article class="pass soon">
+      <article class="pass soon" id="plan-pro">
         <div class="pass-main">
-          <div class="pass-top"><span class="pass-airline">✈ Jobadabra</span><span class="tag soon">Coming soon</span></div>
-          <div class="pass-route"><div><small>From</small><b>ZRH</b></div><span class="pass-line" aria-hidden="true"></span><div><small>To</small><b>OFFER</b></div></div>
-          <h3>Pro</h3>
+          <div class="pass-name"><h3>Pro</h3><span class="tag soon">Coming soon</span></div>
+          <div class="pass-price"><b>€9</b><span>one-time payment</span></div>
+          <p class="pass-chip">No recurring app fee</p>
+          <hr class="pass-rule">
           <ul>
-            <li>Unlimited applications: after the trial, Pro removes the 20-application limit</li>
-            <li>$5 of our AI included, plus top-ups ($5, $10 or $20)</li>
-            <li>Your own AI key, without limits</li>
-            <li>Hosted Always on, with email alerts (coming)</li>
+            <li>Everything in the trial</li>
+            <li>No application limit</li>
+            <li>Bring your own AI key</li>
+            <li>Or buy AI top-ups when you need them</li>
           </ul>
-          <a class="btn btn-ghost" href="#early">Join the Pro waitlist</a>
-          <span class="pass-fine">$29 one-time, no subscription · $19 launch price for early adopters</span>
+          <a class="btn btn-primary" href="#early">Join the Pro waitlist</a>
+          <span class="pass-fine">Get notified when Pro launches.</span>
         </div>
-        <div class="pass-stub">
-          <div><small>Class</small><b>PRO</b></div>
-          <div><small>Fare</small><b>$29</b></div>
-          <div><small>Gate</small><b>SOON</b></div>
-          <span class="barcode" aria-hidden="true"></span>
+        <div class="pass-stub"><span class="pass-word">Jobadabra</span><span class="barcode" aria-hidden="true"></span></div>
+      </article>
+      <article class="pass soon" id="plan-pro-ai">
+        <div class="pass-main">
+          <div class="pass-name"><h3>Pro + AI</h3><span class="tag soon">Coming soon</span></div>
+          <div class="pass-price"><s aria-label="was €29">€29</s><b>€19</b><span>one-time payment</span></div>
+          <p class="pass-chip">No recurring app fee</p>
+          <hr class="pass-rule">
+          <ul>
+            <li>Everything in Pro</li>
+            <li>About €5 of our AI included</li>
+            <li>AI credit never expires</li>
+            <li>Top-ups when you need more</li>
+          </ul>
+          <a class="btn btn-primary" href="#early">Join the Pro waitlist</a>
+          <span class="pass-fine">Get notified when Pro launches.</span>
         </div>
+        <div class="pass-stub"><span class="pass-word">Jobadabra</span><span class="barcode" aria-hidden="true"></span></div>
       </article>
     </div>
-    <p class="source-note">Pro: no application limit, $5 of AI credit (top up with $5, $10 or $20), up to 3 of your computers, a 14-day refund for any reason. The AI credit never expires; there is no renewal. Details in the <a href="/terms">Terms</a>.</p>
+
+    <div class="callout">
+      <span class="mark" aria-hidden="true">✦</span>
+      <div><b>One app purchase. Optional AI top-ups.</b><p>Pro + AI includes about €5 in AI credit. Extra AI credit is bought separately. Your own API key is billed by your provider.</p></div>
+    </div>
+
+    <div class="faq more">
+      <details><summary>Compare all features</summary><div class="more-body">
+        <p><b>Free trial</b></p>
+        <ul>
+          <li>Every stop: find, prepare, apply, track</li>
+          <li>Interviews transcribed on your computer</li>
+          <li>Always on: runs while your computer is off, with your free GitHub</li>
+          <li>The shared employer pool, updated daily, plus your own employers</li>
+          <li>Source available: read or run the code yourself</li>
+          <li>Our AI is included, no key needed; your own Claude or ChatGPT writes stronger letters</li>
+        </ul>
+        <p><b>Pro (€9)</b></p>
+        <ul>
+          <li>Unlimited applications: after the trial, Pro removes the 20-application limit</li>
+          <li>Your own AI key, without limits, or AI top-ups (€5, €10 or €20)</li>
+          <li>Hosted Always on, with email alerts (coming)</li>
+          <li>Up to 3 of your computers</li>
+          <li>A 14-day refund for any reason</li>
+        </ul>
+        <p><b>Pro + AI (€19)</b></p>
+        <ul>
+          <li>Everything in Pro, plus about €5 of our AI included</li>
+          <li>The AI credit never expires; there is no renewal</li>
+        </ul>
+        <p>One-time payment, no subscription, VAT included. Details in the <a href="/terms">Terms</a>.</p>
+      </div></details>
+      <details><summary>How does the free trial work?</summary><div class="more-body">
+        <p>The whole app is free for your first 20 applications or your first 60 days, whichever lasts longer. Our AI is included, so there is nothing to set up. You can try Always on during the trial.</p>
+      </div></details>
+      <details><summary>How do AI credits work?</summary><div class="more-body">
+        <p>Pro + AI includes about €5 of our AI, about one whole job search. If you search heavily, top up with €5, €10 or €20; each top-up is a one-time payment. The AI credit never expires and there is no renewal.</p>
+        <p>Free AI is included in the trial, nothing to set up. Add your own Claude or ChatGPT key if you want stronger letters and interview prep: your own key is unlimited and billed by your provider.</p>
+      </div></details>
+    </div>
   </section>
 
   <section class="block" id="early">
@@ -101,7 +146,7 @@
       <div>
         <span class="eyebrow">Pro · early access</span>
         <h2>Be first to try Pro</h2>
-        <p>Pro is a one-time payment of $29, no subscription, with a $19 launch price for early adopters. Leave your email and you'll hear from us once, when Pro is ready.</p>
+        <p>Pro is a one-time payment from €9, no subscription. Leave your email and you'll hear from us once, when Pro is ready.</p>
       </div>
       <form id="waitlist" novalidate>
         <label for="email">Email</label>
