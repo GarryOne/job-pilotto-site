@@ -1,6 +1,7 @@
 // Pro accounts and the AI credit ledger (spec docs/superpowers/specs/2026-10-16-pro-plan.md §1, §3): who is Pro, how much credit is left,
 // the devices (3 per account), GET /api/pro/status for the app. Money is micro-USD; the app only ever sees a percent and a warning step, never dollars.
 // Guards: test/shared/pro-credit.test.js. Payments (Stripe) are the next PR: they call addCredit/refund/link here. Switch: env.PRO_PLAN = off | test | live.
+import {OFFERS, packageOf} from './pro-packages.js';
 import {authorize, digestOf, flag} from './guard.js';
 
 // The key ai_calls.who has for an install (aicost.js digests the install's digest again, keeps 8 characters): join pro_devices.install to ai_calls through it.
@@ -72,8 +73,9 @@ export async function status(request, env) {
   const access = given && await authorize(env, given.install, given.token, 'ai');
   if (!access?.ok) return Response.json({ok: false, error: 'unauthorized'}, {status: 401});
   const account = await accountOf(env, given.install);
-  // The price to show (the launch price while there is one: PRO_LAUNCH_USD empty ends it), so the app never hard-codes a number. A trial account is Free until it pays.
-  if (!account || account.status !== 'active' || account.plan !== 'pro') return Response.json({ok: true, plan: 'free', mode: env.PRO_PLAN, offer: {price: env.PRO_PRICE_USD || '29', launch: env.PRO_LAUNCH_USD ?? '19'}});
-  const percent = percentOf(account);
-  return Response.json({ok: true, plan: 'pro', mode: env.PRO_PLAN, creditPercent: percent, warn: warnOf(percent), devices: DEVICES_PER_ACCOUNT});
+  // The offers to show (ids, euro prices, the list price), so the app never hard-codes a number. A trial account is Free until it pays.
+  if (!account || account.status !== 'active' || account.plan !== 'pro') return Response.json({ok: true, plan: 'free', mode: env.PRO_PLAN, offers: OFFERS});
+  // A Pro account that never had credit (the €9 package) has no bar and no "used up" warning.
+  const hasCredit = account.credit_added_micro > 0, percent = percentOf(account);
+  return Response.json({ok: true, plan: 'pro', package: await packageOf(env, account), mode: env.PRO_PLAN, hasCredit, creditPercent: percent, warn: hasCredit ? warnOf(percent) : null, devices: DEVICES_PER_ACCOUNT, offers: OFFERS});
 }

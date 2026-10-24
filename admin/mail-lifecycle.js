@@ -4,6 +4,7 @@
 import {digestOf} from '../shared/guard.js';
 import {addrOf, send} from '../shared/mail.js';
 import {FREE_APPLICATIONS, stand} from '../shared/trial.js';
+import {OFFERS} from '../shared/pro-packages.js';
 
 export const PRICING_URL = 'https://www.jobadabra.top/pricing';
 const DAY = 24 * 60 * 60 * 1000;
@@ -62,7 +63,7 @@ export async function launch(env, {send: really = false, now = new Date()} = {})
   const todo = [];
   for (const {email} of rows) if (!await sentSince(env, email, 'pro-launch', '')) todo.push(email);
   if (!really) return {would: todo.length};
-  const data = {price: env.PRO_PRICE_USD || '29', launch: env.PRO_LAUNCH_USD ?? '19', pricingUrl: PRICING_URL};
+  const data = {pro: OFFERS[0].price, proAi: OFFERS[1].price, pricingUrl: PRICING_URL};
   let sent = 0;
   for (const email of todo) if ((await send(env, 'pro-launch', email, data, {now})).ok) sent++;
   return {sent, skipped: todo.length - sent};

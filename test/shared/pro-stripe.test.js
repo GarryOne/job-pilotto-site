@@ -18,7 +18,7 @@ function d1() {
 }
 const kv = () => { const m = new Map(); return {m, get: async k => m.get(k) ?? null, put: async (k, v) => { m.set(k, v); }}; };
 const env = (extra = {}) => ({WAITLIST: kv(), STATS: d1(), STATS_SALT: 'salt', PRO_PLAN: 'test', STRIPE_SECRET_KEY: 'sk_test_fake', STRIPE_WEBHOOK_SECRET: SECRET,
-  STRIPE_PRICE_PRO: 'price_pro', STRIPE_PRICE_TOPUP5: 'price_t5', STRIPE_PRICE_TOPUP10: 'price_t10', STRIPE_PRICE_TOPUP20: 'price_t20', ...extra});
+  STRIPE_PRICE_PRO: 'price_pro', STRIPE_PRICE_PRO_AI: 'price_proai', STRIPE_PRICE_UPGRADE: 'price_up', STRIPE_PRICE_TOPUP5: 'price_t5', STRIPE_PRICE_TOPUP10: 'price_t10', STRIPE_PRICE_TOPUP20: 'price_t20', ...extra});
 const keyOf = async install => `JPF1.${install}.${await tokenFor(install, {STATS_SALT: 'salt'}, 'ai')}`;
 const now = new Date('2026-10-16T10:00:00Z');
 const hmac = async (secret, text) => { const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
@@ -28,7 +28,7 @@ const stripeFake = (fee = 88) => { const calls = []; return {calls, fetcher: asy
   if (String(url).includes('/checkout/sessions')) return Response.json({url: 'https://checkout.stripe.test/c/pay_1'});
   return fee === null ? new Response('{}', {status: 500}) : Response.json({latest_charge: {balance_transaction: {fee}}}); }}; };
 const sessionEvent = (id, kind, extra = {}) => ({id, type: 'checkout.session.completed', data: {object: {payment_status: 'paid', payment_intent: `pi_${id}`, client_reference_id: 'install-buyer-1', metadata: {kind},
-  customer_details: {email: 'Buyer@Example.com', address: {country: 'CH'}}, amount_total: 1900, currency: 'USD', total_details: {amount_tax: 142}, ...extra}}});
+  customer_details: {email: 'Buyer@Example.com', address: {country: 'CH'}}, amount_total: 1900, currency: 'EUR', total_details: {amount_tax: 142}, ...extra}}});
 const refundEvent = (id, pi, refunded, amount) => ({id, type: 'charge.refunded', data: {object: {payment_intent: pi, amount_refunded: refunded, amount}}});
 const post = async (e, event, {secret = SECRET, at = now, body = JSON.stringify(event), signed = body, fake = stripeFake()} = {}) => {
   const t = Math.floor(at.getTime() / 1000), signature = `t=${t},v1=${await hmac(secret, `${t}.${signed}`)}`;
@@ -47,15 +47,16 @@ test('a webhook that is not genuinely signed is a 400 and writes nothing: no hea
 });
 
 test('every handled event, in one loop: a Pro payment and each top-up add exactly their credit, the account and the device, with country, VAT and fee kept', async () => {
-  assert.deepEqual(CREDIT, {pro: 5_000_000, topup5: 2_800_000, topup10: 5_800_000, topup20: 11_800_000}, 'the owner\'s numbers: $5 included, $2.80 / $5.80 / $11.80');
+  assert.deepEqual(CREDIT, {pro: 0, 'pro-ai': 5_000_000, upgrade: 5_000_000, topup5: 2_800_000, topup10: 5_800_000, topup20: 11_800_000}, 'the owner\'s numbers: Pro no credit, Pro + AI and the upgrade $5, top-ups $2.80 / $5.80 / $11.80');
   for (const kind of Object.keys(CREDIT)) {
     const e = env(), response = await post(e, sessionEvent(`evt_${kind}`, kind));
     assert.equal(response.status, 200, kind);
     assert.deepEqual(one(e, 'SELECT credit_micro, credit_added_micro, status FROM pro_accounts'), {credit_micro: CREDIT[kind], credit_added_micro: CREDIT[kind], status: 'active'}, kind);
+    assert.equal(rows(e, 'SELECT * FROM pro_credit').length, CREDIT[kind] > 0 ? 1 : 0, `${kind}: a ledger row only when credit is added`);
     assert.deepEqual(one(e, 'SELECT install FROM pro_devices'), {install: 'install-buyer-1'}, 'the paying device is linked, as the raw install id');
     assert.deepEqual(one(e, 'SELECT kind, status, amount_cents, currency, country, tax_cents, fee_cents, provider, provider_ref, credit_micro FROM pro_purchases'),
-      {kind, status: 'paid', amount_cents: 1900, currency: 'usd', country: 'CH', tax_cents: 142, fee_cents: 88, provider: 'stripe', provider_ref: `pi_evt_${kind}`, credit_micro: CREDIT[kind]}, kind);
-    assert.deepEqual(one(e, 'SELECT reason, delta_micro FROM pro_credit'), {reason: 'purchase', delta_micro: CREDIT[kind]});
+      {kind, status: 'paid', amount_cents: 1900, currency: 'eur', country: 'CH', tax_cents: 142, fee_cents: 88, provider: 'stripe', provider_ref: `pi_evt_${kind}`, credit_micro: CREDIT[kind]}, kind);
+    if (CREDIT[kind] > 0) assert.deepEqual(one(e, 'SELECT reason, delta_micro FROM pro_credit'), {reason: 'purchase', delta_micro: CREDIT[kind]});
   }
 });
 
@@ -64,7 +65,7 @@ test('the e-mail is the account: a second payment adds to the same account; the 
   await post(e, sessionEvent('evt_a', 'pro'), {fake});
   await post(e, sessionEvent('evt_b', 'topup5', {customer_details: {email: ' buyer@example.com', address: {country: 'DE'}}}), {fake});
   assert.equal(rows(e, 'SELECT * FROM pro_accounts').length, 1);
-  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, CREDIT.pro + CREDIT.topup5);
+  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, CREDIT.topup5);
   assert.deepEqual(rows(e, 'SELECT fee_cents FROM pro_purchases').map(r => r.fee_cents), [null, null]);
 });
 
@@ -133,7 +134,26 @@ test('checkout: a one-time payment for the install, with the terms consent and b
   assert.deepEqual([sent.get('mode'), sent.get('line_items[0][price]'), sent.get('client_reference_id'), sent.get('metadata[kind]'), sent.get('consent_collection[terms_of_service]'),
     sent.get('billing_address_collection'), sent.get('automatic_tax[enabled]')], ['payment', 'price_pro', 'install-buyer-1', 'pro', 'required', 'required', 'true']);
   assert.doesNotMatch(init.body, /sk_test/);
-  for (const kind of ['topup5', 'topup10', 'topup20']) assert.equal(new URLSearchParams((await (async () => { const f = stripeFake(); await checkout(await checkoutRequest(kind), e, now, f.fetcher); return f.calls[0].init; })()).body).get('line_items[0][price]'), `price_t${kind.slice(5)}`);
+  const priceOf = async kind => { const f = stripeFake(); const answer = await checkout(await checkoutRequest(kind), e, now, f.fetcher); return answer.status === 200 ? new URLSearchParams(f.calls[0].init.body).get('line_items[0][price]') : answer.status; };
+  assert.equal(await priceOf('pro-ai'), 'price_proai');
+  for (const kind of ['topup5', 'upgrade']) assert.equal(await priceOf(kind), 409, `${kind}: a Free install gets Pro first`);
+  await post(e, sessionEvent('evt_pro', 'pro'));   // the install is now a Pro account without AI
+  for (const [kind, price] of [['upgrade', 'price_up'], ['topup5', 'price_t5'], ['topup10', 'price_t10'], ['topup20', 'price_t20']]) assert.equal(await priceOf(kind), price, kind);
+  for (const kind of ['pro', 'pro-ai']) assert.equal(await priceOf(kind), 409, `${kind}: already Pro`);
+  await post(e, sessionEvent('evt_up', 'upgrade'));
+  assert.equal(await priceOf('upgrade'), 409, 'Pro + AI has nothing to upgrade to');
+  assert.equal(one(e, 'SELECT credit_micro FROM pro_accounts').credit_micro, CREDIT.upgrade);
+});
+
+test('a refunded upgrade takes back its $5 and the account is Pro without AI again; a refunded Pro + AI removes Pro and its credit', async () => {
+  const e = env(), status = async () => (await (await (await import('../../shared/pro.js')).status(new Request('https://x/s', {headers: {'x-api-key': await keyOf('install-buyer-1')}}), e)).json());
+  await post(e, sessionEvent('evt_pro', 'pro')); await post(e, sessionEvent('evt_up', 'upgrade', {payment_intent: 'pi_up', amount_total: 1000}));
+  assert.deepEqual([(await status()).package, (await status()).hasCredit], ['pro-ai', true]);
+  await post(e, refundEvent('evt_r1', 'pi_up', 1000, 1000));
+  assert.deepEqual(one(e, 'SELECT credit_micro, status FROM pro_accounts'), {credit_micro: 0, status: 'active'});
+  assert.equal((await status()).package, 'pro');
+  const f = env(); await post(f, sessionEvent('evt_ai', 'pro-ai', {payment_intent: 'pi_ai', amount_total: 1900})); await post(f, refundEvent('evt_r2', 'pi_ai', 1900, 1900));
+  assert.deepEqual(one(f, 'SELECT credit_micro, status FROM pro_accounts'), {credit_micro: 0, status: 'refunded'});
 });
 
 test('checkout refuses: plan off (404), a bad key (401), an unknown purchase (400), a test key in live mode (503), no price set (503), too many tries (429)', async () => {

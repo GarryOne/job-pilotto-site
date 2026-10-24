@@ -11,7 +11,8 @@ export async function proLane(env, install) {
   if (!planOn(env) || !install) return null;   // a founder/friend key (JP1.) has no install: the Free rules
   const account = await accountOf(env, install);
   if (!account || account.status !== 'active' || account.plan !== 'pro') return null;   // a trial account has the Free rules
-  return account.credit_micro <= -OVERDRAFT_MICRO ? {blocked: CREDIT_OUT} : {account};
+  // Pro without AI (the €9 package) never had credit: our AI is not part of it, so no overdraft either; top-up, upgrade or own key.
+  return account.credit_added_micro <= 0 || account.credit_micro <= -OVERDRAFT_MICRO ? {blocked: CREDIT_OUT} : {account};
 }
 
 // The call's own cost (micro-USD, the figure ai_calls records) from the credit; nothing for the Free rules.

@@ -53,11 +53,11 @@ export const TEMPLATES = {
     button: ({reason, pricingUrl, pro}) => (reason !== 'inactive' && pro ? {label: 'Get Pro to keep it running', url: pricingUrl} : null),
     text: ({reason}) => (reason === 'inactive' ? "You haven't opened Jobadabra for 14 days, so the daily searches stopped. Open the app to resume." : 'Your free trial has ended, so the daily searches stopped.'),
     html: ({reason}) => (reason === 'inactive' ? "<p>You haven't opened Jobadabra for 14 days, so the daily searches stopped. Open the app to resume.</p>" : '<p>Your free trial has ended, so the daily searches stopped.</p>')},
-  // The marketing list: sent by hand (admin/mail-lifecycle.js launch), only to opted-in addresses and only with env.MARKETING_MAIL = "on". Data: {price, launch, pricingUrl}.
+  // The marketing list: sent by hand (admin/mail-lifecycle.js launch), only to opted-in addresses and only with env.MARKETING_MAIL = "on". Data: {pro, proAi, pricingUrl} (euro prices from shared/pro-packages.js).
   'pro-launch': {list: 'marketing',
     subject: () => 'Jobadabra Pro is out',
     title: () => 'Jobadabra Pro is out',
     button: ({pricingUrl}) => ({label: 'See Pro', url: pricingUrl}),
-    text: ({price, launch}) => `One payment, no subscription: ${launch ? `$${launch} at launch (then $${price})` : `$${price}`}, VAT included.`,
-    html: ({price, launch}) => `<p>One payment, no subscription: ${launch ? `$${esc(launch)} at launch (then $${esc(price)})` : `$${esc(price)}`}, VAT included.</p>`},
+    text: ({pro, proAi}) => `One payment, no subscription: Pro €${pro}, or Pro + AI €${proAi} with AI credit included. VAT included.`,
+    html: ({pro, proAi}) => `<p>One payment, no subscription: Pro €${esc(pro)}, or Pro + AI €${esc(proAi)} with AI credit included. VAT included.</p>`},
 };

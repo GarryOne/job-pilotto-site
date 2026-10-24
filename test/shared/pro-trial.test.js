@@ -57,7 +57,7 @@ test('a trial account is Free: status says free, the AI keeps the Free rules eve
 test('a payment on the same e-mail flips the trial account to Pro: same account, same device, credit added, trial start kept', async () => {
   const e = env(), id = await createAccount(e, 'Buyer@Example.com', now, {plan: 'trial'});
   await link(e, id, 'install-buyer-1', now);
-  const event = {id: 'evt_t1', type: 'checkout.session.completed', data: {object: {payment_status: 'paid', payment_intent: 'pi_t1', client_reference_id: 'install-buyer-1', metadata: {kind: 'pro'},
+  const event = {id: 'evt_t1', type: 'checkout.session.completed', data: {object: {payment_status: 'paid', payment_intent: 'pi_t1', client_reference_id: 'install-buyer-1', metadata: {kind: 'pro-ai'},
     customer_details: {email: ' buyer@example.com', address: {country: 'CH'}}, amount_total: 1900, currency: 'usd', total_details: {amount_tax: 142}}}};
   const body = JSON.stringify(event), t = Math.floor(now.getTime() / 1000);
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('whsec_t'), {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
