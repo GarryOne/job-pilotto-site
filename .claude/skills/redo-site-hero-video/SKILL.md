@@ -22,7 +22,8 @@ a tighter 4:3 copy for phones, and a cut (never a crossfade, never a blank) betw
 5. **Place**: `tools/hero.sh --place <set dir>`, then the site tests `tools/site-run.sh node --test "test/**/*.test.js"`
    (`tools/hero.sh --preview` re-renders the side-by-side from what is placed).
 6. **Ship** from the worktree: `~/job-pilotto/tools/ship.sh --background --body=<file>` (body per `~/job-pilotto/tools/pr-body-template.md`, with the
-   preview as Before/After); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
+   preview halves as Before/After: `tools/hero-preview.mjs --only desktop|phone`, committed under `docs/pr-shots/<topic>/`, linked as
+   `https://github.com/GarryOne/jobadabra-web/raw/<branch>/docs/pr-shots/<topic>/<x>.jpg`: the check wants a link ending in .jpg/.png, never `?raw=1`); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
 After that, the daily `tools/media.sh` refresh re-records the hero pieces from origin/main with everything else; the hero needs this skill only to change.
 
 ## Where each thing lives
