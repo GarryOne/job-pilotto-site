@@ -31,12 +31,12 @@ test('every listed page has the landing\'s footer, and loads the shared script',
   for (const name of pages.filter(page => !NO_MENU.includes(page))) assert.match(read(name), /<script src="\/?site\.js"/, name);
 });
 
-test('every footer carries the maker line once, as a muted line and not a boxed card (owner, 24 Oct 2026)', () => {
+test('every footer carries the maker line once, as one small badge on the right (owner, 24 Oct 2026)', () => {
   for (const name of pages.filter(page => foot(read(page)))) {
-    const found = foot(read(name)).match(/<p class="maker">Built by an SRE in Geneva who needed it for a real job search, and now uses it every day\.<\/p>/g) || [];
+    const found = foot(read(name)).match(/<p class="maker"><span class="spark solid" aria-hidden="true"><\/span>Built by an SRE in Geneva who uses it every day\.<\/p>/g) || [];
     assert.equal(found.length, 1, `${name}: the maker line is not there exactly once`);
   }
-  assert.doesNotMatch(read('styles.css'), /\.maker[^{]*\{[^}]*border/, 'the maker line is not a boxed card');
+  assert.doesNotMatch(read('styles.css'), /\.maker/, 'the old hero card styles are gone');
 });
 
 test('Mac and Windows downloads are equally visible wherever a download is offered (owner, 20 Oct 2026)', () => {
