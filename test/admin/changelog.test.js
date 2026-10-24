@@ -57,7 +57,7 @@ test('no static file shadows /changelog.json: a file in public/ is served before
 
 test('the page reads changelog.json, shows the three category labels and the channel, writes text (never HTML), is in the sitemap and linked from the footer', () => {
   const html = pub('changelog.html'), script = pub('changelog.js');
-  for (const label of ['New', 'Improved', 'Fixed']) assert.match(script, new RegExp(`'${label}'`));
+  for (const label of ['New', 'Improved', 'Fix']) assert.match(script, new RegExp(`'${label}'`));
   assert.match(script, /Beta/);
   assert.match(script, /fetch\('changelog\.json'\)/);
   assert.doesNotMatch(script, /innerHTML/);
@@ -82,10 +82,10 @@ test('every page with the top menu links to "What\'s new", on desktop (link row)
   }
 });
 
-test('the changelog header stacks its one-line intro, and an empty list says the notes are coming', () => {
+test('the changelog header has its one-line intro and the app note at its right, and an empty list says the notes are coming', () => {
   const html = pub('changelog.html');
-  assert.match(html, /<header class="section-head stacked"/);
-  assert.match(html, /Every version of Jobadabra, in plain words\./);
+  assert.match(html, /<header class="cl cl-head"/);
+  assert.match(html, /Product updates, improvements and fixes\./);
+  assert.match(html, /Updates are offered in the app\./);
   assert.match(html, /The first release notes are coming soon\./);
-  assert.match(pub('styles.css'), /\.section-head\.stacked \{ grid-template-columns: 1fr; \}/);
 });

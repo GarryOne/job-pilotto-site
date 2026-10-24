@@ -15,14 +15,16 @@ test('the page loads its own script and styles, with the tab strip outside the l
   assert.doesNotMatch(page, /<style>/, 'no one-off CSS in the page');
 });
 
-test('no emoji is drawn: the labels are New / Improved / Fixed and the data\'s per-line emoji is ignored', () => {
-  assert.match(script, /\['features', 'New'\], \['improvements', 'Improved'\], \['fixes', 'Fixed'\]/);
+test('no emoji is drawn: the labels are New / Improved / Fix and the data\'s per-line emoji is ignored', () => {
+  assert.match(script, /\['features', 'New'\], \['improvements', 'Improved'\], \['fixes', 'Fix'\]/);
   assert.doesNotMatch(script, /item\.emoji|\\u\{1F/);
 });
 
 test('a long release folds under "View all N changes", older ones are compact rows, more load on demand', () => {
   assert.match(script, /View all \$\{all\.length\} changes/);
   assert.match(script, /'release row'/);
+  assert.match(script, /'release card latest'/);
+  assert.match(script, /HIGHLIGHTS = 3/);
   assert.match(script, /Load earlier releases/);
 });
 
