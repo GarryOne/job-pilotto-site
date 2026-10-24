@@ -32,15 +32,22 @@ async function makeVideo(name, persona, work, out) {
   const log = await record({persona, piece, dir});
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));
-  const scale = jpegWidth(first) / log.viewport.w;
-  const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS, piece.speed || 1), scale, width: piece.width, height: piece.height, fps: FPS, ring: RING,
-    out: path.join(dir, 'master.mp4'), ffmpeg: 'ffmpeg'};
-  fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(job));
-  const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), path.join(dir, 'job.json')], {stdio: 'inherit', timeout: 15 * 60000});
-  if (run.status !== 0) throw new Error(`media: ${name}: the renderer failed (${run.status ?? run.signal})`);
+  const scale = jpegWidth(first) / log.viewport.w, steady = piece.camera === 'steady';
+  // The site's copy, and for a piece with a phone shape ({width, height}: the hero) a second master with its own tighter camera (camera.mjs PHONE_*).
+  const render = (out, width, height, phone = null) => {
+    const job = {framesDir: path.join(dir, 'frames'), frames: renderPlan(log, FPS, piece.speed || 1, {steady, phone}), scale, width, height, fps: FPS, ring: RING, out, ffmpeg: 'ffmpeg'};
+    const file = path.join(dir, `${path.basename(out, '.mp4')}.json`);
+    fs.writeFileSync(file, JSON.stringify(job));
+    const run = spawnSync(path.join(desktop, 'node_modules', '.bin', 'electron'), [path.join(here, 'render.cjs'), file], {stdio: 'inherit', timeout: 15 * 60000});
+    if (run.status !== 0) throw new Error(`media: ${name}: the renderer failed (${run.status ?? run.signal})`);
+    return out;
+  };
+  const master = render(path.join(dir, 'master.mp4'), piece.width, piece.height);
+  const phoneShape = typeof piece.phone === 'object' ? piece.phone : null;
+  const phoneMaster = phoneShape ? render(path.join(dir, 'master-phone.mp4'), phoneShape.width, phoneShape.height, {aspect: phoneShape.width / phoneShape.height}) : null;
   const problems = pieceProblems({name, source: piece.source, log, posterBrightness: brightness(path.join(dir, 'frames', log.frames[0].file)), forbid: persona.forbid, quiet: piece.quiet});
   if (problems.length) throw new Error(problems.join('\n'));
-  const {files, bytes} = encodeVideo({master: job.out, name, piece, outDir: out, posterAt: posterTime(log.events)});
+  const {files, bytes} = encodeVideo({master, phoneMaster, name, piece, outDir: out, posterAt: posterTime(log.events)});
   console.log(`media: ${name}: ${Object.entries(bytes).map(([kind, n]) => `${kind} ${(n / 1e6).toFixed(2)} MB`).join(', ')}`);
   return videoEntry({name, piece, files, bytes, seconds: duration(path.join(out, files.mp4))});
 }

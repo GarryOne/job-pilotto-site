@@ -7,18 +7,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {startRealExtension} from '../desktop/e2e/lib/real-extension.mjs';
+import {holdEvent, unionBox} from './record-app.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {answerReply, formHost, formHtml} from './stand-in.mjs';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 export const VIEW = {width: 1440, height: 900};   // 16:10, captured at 2x
 
-const panelBox = page => page.evaluate(() => {
-  const host = document.getElementById('jobpilotto-review-host');
-  const card = host?.shadowRoot?.querySelector('.card, .jp, [class*=panel]') || host;
-  const r = card?.getBoundingClientRect();
-  return r && r.width ? {x: r.x, y: r.y, width: r.width, height: r.height} : null;
-});
+// The panel at rest: while a fill step shows it sits centred over the dimmed page (review.js place()), then it goes back to its corner. A look measured
+// mid-move framed the empty centre and lost the panel (hero, 24 Oct 2026), so this waits (up to 8 s) for the corner, then for the box to stop moving.
+const panelBox = async page => {
+  await page.waitForFunction(() => { const host = document.getElementById('jobpilotto-review-host'); return host && !host.style.transform; }, null, {timeout: 8000}).catch(() => {});
+  const measure = () => page.evaluate(() => {
+    const host = document.getElementById('jobpilotto-review-host');
+    const card = host?.shadowRoot?.querySelector('.card:not([hidden]), .jp') || host;
+    const r = card?.getBoundingClientRect();
+    return r && r.width ? {x: r.x, y: r.y, width: r.width, height: r.height} : null;
+  });
+  let box = await measure();
+  for (let i = 0; i < 20; i++) { await page.waitForTimeout(150); const next = await measure(); if (JSON.stringify(next) === JSON.stringify(box)) break; box = next; }
+  return box;
+};
 
 export async function recordExtensionVideo({persona, piece, dir}) {
   const template = fs.readFileSync(path.join(here, 'form.html'), 'utf8');
@@ -30,7 +39,9 @@ export async function recordExtensionVideo({persona, piece, dir}) {
     const host = formHost(persona.job);
     await context.route(`https://${host}/**`, route => route.fulfill({status: 200, contentType: 'text/html', body: formHtml(template, persona.job)}));
     await page.setViewportSize(VIEW);
-    await page.emulateMedia({colorScheme: 'dark'});   // Playwright emulates light unless told: the form (form.html) and the extension's panel both follow it
+    // Playwright emulates light unless told: the form (form.html) and the extension's panel both follow it. A piece with motion 'reduce' (the hero, owner
+    // 24 Oct 2026: "remove the large colour sweep") records the panel without its aurora and shimmer (panel-overlay-fx.js adds none under reduced motion).
+    await page.emulateMedia({colorScheme: 'dark', ...(piece.motion === 'reduce' ? {reducedMotion: 'reduce'} : {})});
     const cdp = await context.newCDPSession(page);
     await cdp.send('Emulation.setDeviceMetricsOverride', {width: VIEW.width, height: VIEW.height, deviceScaleFactor: 2, mobile: false});
     await page.goto(`https://${host}/jobs/apply`);
@@ -46,8 +57,10 @@ export async function recordExtensionVideo({persona, piece, dir}) {
       }
       if (item.hold) {
         await page.waitForTimeout(250);
-        const box = item.look === 'panel' ? await panelBox(page) : item.look ? await page.locator(item.look).first().boundingBox() : null;
-        log.add({type: 'hold', look: item.look || null, box, s: item.hold, ...(item.poster ? {poster: true} : {})});
+        const boxOf = async look => (look ? unionBox(await Promise.all([look].flat().map(one => (one === 'panel' ? panelBox(page) : page.locator(one).first().boundingBox())))) : null);
+        const box = await boxOf(item.look);
+        if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
+        log.add(holdEvent(item, box, await boxOf(item.phoneLook)));
         await page.waitForTimeout(item.hold * 1000 - 250);
       }
     }

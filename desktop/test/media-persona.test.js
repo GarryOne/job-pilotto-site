@@ -7,7 +7,8 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {leftWords} from '../../media/check.mjs';
 import {loadPersona} from '../../media/options.mjs';
-import {personaCopy, shiftDates, weekShift} from '../../media/persona-copy.mjs';
+import {applyEdits, personaCopy, shiftDates, weekShift} from '../../media/persona-copy.mjs';
+import {VIDEOS} from '../../media/scenes.mjs';
 import {formHost} from '../../media/stand-in.mjs';
 
 const media = path.join(import.meta.dirname, '..', '..', 'media');
@@ -69,4 +70,52 @@ test('the nurse persona has enough data for every screen the videos zoom into: a
   assert.ok(Object.keys(interviews.records).length >= 1, 'a review to open');
   const text = JSON.stringify([jobs, interviews]);
   assert.deepEqual(leftWords(text, loadPersona(folder).forbid), [], 'no default-demo words in the new data');
+});
+
+// Moments (owner, 24 Oct 2026: one person and one job throughout, "2 weeks later" before Track): a clip may play the persona later in time, as a few
+// record edits in <persona>/moments/<name>.json laid over the copy.
+test('a moment edits records by id: fields set, null removes one, _first moves it to the front, _drop removes it; an unknown id fails loudly', () => {
+  const data = {jobs: [{id: 1, stage: 'Interview scheduled', next_interview: 'x'}, {id: 4, stage: ''}], items: [{page_id: 'a'}, {page_id: 'b'}, {page_id: 'c'}]};
+  const out = applyEdits(data, {jobs: {1: {stage: 'Applied', next_interview: null}, 4: {stage: 'Interview scheduled'}}, items: {c: {_first: true, v: 1}, a: {_drop: true}}});
+  assert.deepEqual(out.jobs, [{id: 1, stage: 'Applied'}, {id: 4, stage: 'Interview scheduled'}]);
+  assert.deepEqual(out.items, [{page_id: 'c', v: 1}, {page_id: 'b'}]);
+  assert.throws(() => applyEdits(data, {jobs: {9: {stage: 'x'}}}), /no record 9/);
+});
+
+test('a recording with a moment gets the moment\'s edits, dates shifted like the rest; the moments folder itself is not copied', () => {
+  const folder = path.join(media, 'personas', 'nurse-lyon');
+  const persona = loadPersona(folder);
+  const now = new Date('2026-10-26T09:00:00Z');   // two weeks after the anchor
+  const data = personaCopy(persona, {demo, now, moment: 'later'});
+  try {
+    assert.ok(!fs.existsSync(path.join(data, 'moments')));
+    const {jobs} = JSON.parse(fs.readFileSync(path.join(data, 'jobs.json'), 'utf8'));
+    const job = jobs.find(one => one.company === persona.job.company && one.title === persona.job.title);
+    assert.match(job.next_interview, /^2026-10-28T/, 'the interview moved with the recording week');
+  } finally { fs.rmSync(data, {recursive: true, force: true}); }
+  assert.throws(() => personaCopy(persona, {demo, now, moment: 'nope'}), /no moment nope/);
+});
+
+test('the hero follows ONE job: the form\'s job is in the list the Find clip opens, the draft names roles, and later it has the interview Focus and the calendar show', () => {
+  const folder = path.join(media, 'personas', 'nurse-lyon');
+  const persona = loadPersona(folder);
+  const read = name => JSON.parse(fs.readFileSync(path.join(folder, name), 'utf8'));
+  const {job} = persona;
+  assert.ok(read('jobs.json').jobs.some(one => one.company === job.company && one.title === job.title), 'the job is in the list');
+  const find = VIDEOS.hero.steps.find(step => step.click?.includes('job-row'));
+  assert.ok(find && find.click.includes(job.title.split(', ').at(-1)), `the Find clip opens that job (${find?.click})`);
+  const draft = read('draft.json').draft;
+  assert.ok(draft.search.target_roles?.length >= 3, 'step 3 shows roles, not "Not set"');
+  assert.ok(typeof draft.usd === 'number', 'a draft always has its cost (the setup screen reads it)');
+  const track = VIDEOS['hero-track'];
+  assert.equal(track.moment, 'later');
+  const data = personaCopy(persona, {demo, now: new Date('2026-10-12T09:00:00Z'), moment: 'later'});
+  try {
+    const later = file => JSON.parse(fs.readFileSync(path.join(data, file), 'utf8'));
+    const jobs = later('jobs.json').jobs.filter(one => one.next_interview && one.next_interview >= persona.today).sort((a, b) => a.next_interview.localeCompare(b.next_interview));
+    assert.equal(`${jobs[0].company} ${jobs[0].title}`, `${job.company} ${job.title}`, 'the next interview on the calendar is that job');
+    const first = later('focus.json').items[0];
+    assert.equal(first.kind, 'prepare');
+    assert.equal(first.company, job.company, 'Focus leads with preparing for it');
+  } finally { fs.rmSync(data, {recursive: true, force: true}); }
 });

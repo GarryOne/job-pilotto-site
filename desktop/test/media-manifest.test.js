@@ -19,13 +19,15 @@ test('a video entry carries the agreed fields; a partial run keeps the other ent
   assert.equal(again.made_from, 'def');
 });
 
-test('every piece has the words the site needs; video captions are 6 words at most; the hero fits 2.5 MB and has a phone copy', () => {
+test('every piece has the words the site needs; video captions are 6 words at most; the hero clips fit 2.5 MB and have phone copies', () => {
   for (const [name, piece] of Object.entries(VIDEOS)) {
     for (const key of ['shows', 'caption', 'alt']) assert.ok(piece[key], `${name}.${key}`);
     assert.ok(piece.caption.split(/\s+/).length <= 6, `${name}: caption over 6 words`);
     assert.equal(piece.width / piece.height, 1.6, `${name}: 16:10`);
     assert.ok(piece.budget > 0 && piece.steps.length, name);
   }
-  assert.ok(VIDEOS.hero.budget <= 2.5e6 && VIDEOS.hero.phone === 720);
+  const slides = Object.values(VIDEOS).filter(piece => piece.slide);
+  assert.ok(slides.reduce((sum, piece) => sum + piece.budget, 0) <= 2.5e6, 'the four hero clips together fit 2.5 MB');
+  assert.ok(slides.every(piece => piece.phone?.width === 720 && piece.phone.budget) && slides.reduce((sum, piece) => sum + piece.phone.budget, 0) <= 1.1e6, 'phone copies about 1 MB together');
   for (const [name, item] of [...Object.entries(STILLS), ...Object.entries(SNIPS)]) assert.ok(item.shows && item.steps.length, name);
 });

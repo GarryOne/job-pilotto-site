@@ -2,7 +2,7 @@
 // the view never leaves the page, every output frame maps to a recorded frame.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, posterTime, renderPlan} from '../../media/camera.mjs';
+import {cameraAt, cameraKeys, clipTo, cursorAt, frameAt, MAX_ZOOM, PHONE_GAIN, PHONE_MAX, posterTime, renderPlan} from '../../media/camera.mjs';
 
 const viewport = {w: 1800, h: 1125};
 const box = {x: 250, y: 500, width: 1200, height: 540};
@@ -81,4 +81,38 @@ test('the poster is the end of the hold marked poster (the filled form), else th
   const events = [{type: 'hold', t: 1, s: 1.2}, {type: 'mark', t: 2.3}, {type: 'hold', t: 3, s: 5, poster: true}, {type: 'hold', t: 8, s: 3.2}];
   assert.equal(posterTime(events), 7.5);
   assert.equal(posterTime(events.map(({poster, ...event}) => event)), 0);
+});
+
+// The hero's camera (owner, 24 Oct 2026: "fewer, more deliberate zooms"): steady pieces never zoom on a click and open already framed;
+// a page change cuts; the phone copy has its own, tighter camera.
+test('a steady piece opens on its first look and never moves for a click; the next look is the one deliberate move', () => {
+  const click = {x: 1600, y: 1000, width: 120, height: 40};
+  const events = [{t: 0.2, type: 'hold', box, zoom: 1.5}, {t: 2, type: 'click', box: click}, {t: 2.7, type: 'press', box: click}, {t: 3, type: 'hold', box: {x: 900, y: 200, width: 500, height: 300}, zoom: 2.2}];
+  const keys = cameraKeys({viewport, events, steady: true});
+  assert.ok(cameraAt(keys, 0, viewport).w < viewport.w, 'framed from the first frame, no whole-screen opening');
+  assert.deepEqual(cameraAt(keys, 2.9, viewport), cameraAt(keys, 1, viewport), 'the click moved nothing');
+  assert.ok(Math.abs(cameraAt(keys, 5, viewport).w - viewport.w / 2.2) < 1e-6, 'then zoomed toward the result');
+  assert.equal(keys.length, 2, 'one framing, one move');
+});
+
+test('a look marked cut switches at the page change, not with a glide', () => {
+  const events = [{t: 0, type: 'hold', box, zoom: 2}, {t: 2, type: 'mark'}, {t: 3, type: 'hold', box: {x: 1300, y: 100, width: 300, height: 200}, zoom: 2, cut: true}];
+  const keys = cameraKeys({viewport, events, steady: true});
+  const before = cameraAt(keys, 1.99, viewport), after = cameraAt(keys, 2.001, viewport);
+  assert.ok(before.x < 600 && after.x >= 899, `jumped at the mark (${before.x} -> ${after.x})`);
+});
+
+test('the phone copy: its own aspect, a tighter zoom (gain or its own), capped, inside the page', () => {
+  const phone = {aspect: 4 / 3};
+  const events = [{t: 0, type: 'hold', box: {x: 860, y: 360, width: 450, height: 130}, zoom: 2.2}, {t: 3, type: 'hold', box: {x: 260, y: 750, width: 400, height: 60}, zoom: 2, phoneZoom: 3.2}];
+  const keys = cameraKeys({viewport, events, steady: true, phone});
+  assert.equal(keys[0].z, Math.min(PHONE_MAX, 2.2 * PHONE_GAIN));
+  assert.equal(keys.at(-1).z, 3.2, 'a step may set its own phone zoom');
+  for (let t = 0; t < 6; t += 0.1) {
+    const view = cameraAt(keys, t, viewport, 1, phone);
+    assert.ok(Math.abs(view.w / view.h - 4 / 3) < 1e-6, 'a 4:3 view');
+    assert.ok(view.x >= 0 && view.y >= -1e-9 && view.x + view.w <= viewport.w + 1e-9 && view.y + view.h <= viewport.h + 1e-9, `inside the page at ${t.toFixed(1)}`);
+  }
+  const whole = cameraKeys({viewport, events: [{t: 0, type: 'hold', box, zoom: 1}], phone});
+  assert.ok(cameraAt(whole, 1, viewport, 1, phone).h <= viewport.h + 1e-9, 'even "the whole screen" fits the page height at 4:3');
 });

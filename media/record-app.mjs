@@ -15,8 +15,8 @@ const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.j
 export const WINDOW = {width: 1440, height: 900};   // 16:10, the site's hero shape; the app's own zoom lays it out wider, Retina capture is 2x
 
 // The app on a temp copy of the persona (persona-copy.mjs); demo mode reads its data from there too (JOB_PILOTTO_DEMO_DIR, lib/demo.js).
-export async function launchApp({persona = {folder: path.join(desktop, 'demo')}, settings = null} = {}) {
-  const data = personaCopy(persona, {demo: path.join(desktop, 'demo')});
+export async function launchApp({persona = {folder: path.join(desktop, 'demo')}, settings = null, moment = null} = {}) {
+  const data = personaCopy(persona, {demo: path.join(desktop, 'demo'), moment});
   if (settings) {   // a piece may start the app in another state (the first-run wizard: setupDone false), on the temp copy only
     const file = path.join(data, 'settings.json');
     fs.writeFileSync(file, JSON.stringify({...JSON.parse(fs.readFileSync(file, 'utf8')), ...settings}, null, 1));
@@ -40,10 +40,31 @@ export async function launchApp({persona = {folder: path.join(desktop, 'demo')},
   return {app, page, data, close};
 }
 
-// One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes).
+// The box a look frames: one selector, or several (their union: the form and the extension's panel together). -> null when none is on screen.
+export function unionBox(boxes) {
+  const found = boxes.filter(Boolean);
+  if (!found.length) return null;
+  const x = Math.min(...found.map(b => b.x)), y = Math.min(...found.map(b => b.y));
+  return {x, y, width: Math.max(...found.map(b => b.x + b.width)) - x, height: Math.max(...found.map(b => b.y + b.height)) - y};
+}
+const lookBox = async (page, look) => unionBox(await Promise.all([look].flat().map(selector => page.locator(selector).first().boundingBox())));
+
+// A hold's log entry: what the camera needs (cameraKeys): its box, zoom, a cut at the page change, the phone copy's own zoom or box.
+export const holdEvent = (item, box, phoneBox = null) => ({type: 'hold', look: item.look || null, box, s: item.hold, ...(item.zoom ? {zoom: item.zoom} : {}),
+  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox} : {}), ...(item.poster ? {poster: true} : {})});
+
+// One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {
-  if (item.go) { await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await page.waitForTimeout(900); await settle(page); return; }
-  if (item.js) { await page.evaluate(item.js); await page.waitForTimeout(900); return; }
+  if (item.go) { await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); log.add({type: 'mark'}); await page.waitForTimeout(900); await settle(page); return; }
+  if (item.js) { await page.evaluate(item.js); log.add({type: 'mark'}); await page.waitForTimeout(900); return; }
+  if (item.tap) {   // the cursor glides to a control and presses it, nothing is clicked (a demo-disabled control, or the clip's last gesture), then `then` runs
+    const box = await page.locator(item.tap).first().boundingBox();
+    if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
+    log.add({type: 'click', selector: item.tap, box, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box});
+    if (item.then) { await page.evaluate(item.then); log.add({type: 'mark'}); }
+    await page.waitForTimeout(item.then ? 900 : 300);
+    return;
+  }
   if (item.press) { await page.keyboard.press(item.press); await page.waitForTimeout(400); return; }
   if (item.click) {
     const target = page.locator(item.click).first();
@@ -53,20 +74,22 @@ async function step(page, item, log) {
     await page.waitForTimeout(700);   // the cursor's glide, drawn by the renderer
     log.add({type: 'press', selector: item.click, box});
     await target.click();
+    if (item.zoom) Object.assign(log.events.at(-2), {zoom: item.zoom, ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})});
     return;
   }
   if (item.hold) {
     await page.waitForTimeout(250);
-    const box = item.look ? await page.locator(item.look).first().boundingBox() : null;
+    const box = item.look ? await lookBox(page, item.look) : null;
     if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
-    log.add({type: 'hold', look: item.look || null, box, s: item.hold, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.poster ? {poster: true} : {})});
+    const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
+    log.add(holdEvent(item, box, phoneBox));
     await page.waitForTimeout(item.hold * 1000 - 250);
   }
 }
 
 // A video piece: frames + log.json in `dir`. -> the log.
 export async function recordAppVideo({persona, piece, dir}) {
-  const {page, close} = await launchApp({persona, settings: piece.settings});
+  const {page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment});
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock);

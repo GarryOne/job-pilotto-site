@@ -1,0 +1,19 @@
+{
+ "jobs.json": {
+  "jobs": {
+   "4": {"stage": "Interview scheduled", "status": "applied", "next_interview": "2026-10-14T10:00:00+01:00",
+    "reason": "Cardiac care unit with telemetry, your daily work; permanent contract, days with one weekend a month."},
+   "1": {"stage": "Applied", "next_interview": null}
+  }
+ },
+ "focus.json": {
+  "items": {
+   "demo-prepare": {"_first": true, "headline": "Prepare for Institut Cardio Rhône", "badge": "Interview Wed 10:00",
+    "meta": ["Registered Nurse, Cardiac Care Unit", "Kit from 09 Oct · questions to practise"],
+    "title": "Prepare: Institut Cardio Rhône — Registered Nurse, Cardiac Care Unit",
+    "detail": "Interview Wed 14 Oct, 10:00. Read the posting and your kit, and practise the topics you answered weakly before.",
+    "company": "Institut Cardio Rhône", "job": "Registered Nurse, Cardiac Care Unit", "at": "2026-10-14T09:00:00+00:00"},
+   "demo-waiting": {"_drop": true}
+  }
+ }
+}

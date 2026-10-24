@@ -27,17 +27,47 @@ export function shiftDates(text, days, year) {
     });
 }
 
-// -> the temp folder: the app's demo files, then the persona's (a persona lists only what it changes), dates shifted. media.json stays out.
-export function personaCopy({folder, today}, {demo, now = new Date()}) {
+// A moment's record edits over one file's JSON (owner, 24 Oct 2026: the same person "2 weeks later" for the Track clip). edits: {<list key>: {<id>: fields}}:
+// a record is found by its id, page_id or code; a field set to null is removed; _first moves the record to the front, _drop removes it. Pure.
+export function applyEdits(json, edits) {
+  const out = structuredClone(json);
+  for (const [key, byId] of Object.entries(edits)) {
+    let list = out[key];
+    if (!Array.isArray(list)) throw new Error(`media: moment: ${key} is not a list`);
+    for (const [id, fields] of Object.entries(byId)) {
+      const at = list.findIndex(record => [record.id, record.page_id, record.code].some(value => value != null && String(value) === id));
+      if (at < 0) throw new Error(`media: moment: no record ${id} in ${key}`);
+      const {_first, _drop, ...set} = fields;
+      if (_drop) { list = list.filter((_, i) => i !== at); continue; }
+      const record = {...list[at], ...set};
+      for (const [field, value] of Object.entries(set)) if (value === null) delete record[field];
+      list = _first ? [record, ...list.filter((_, i) => i !== at)] : list.map((old, i) => (i === at ? record : old));
+    }
+    out[key] = list;
+  }
+  return out;
+}
+
+// -> the temp folder: the app's demo files, then the persona's (a persona lists only what it changes), dates shifted. media.json and moments/ stay out;
+// `moment` lays <persona>/moments/<moment>.json (record edits per file, applyEdits) over the copy, its dates shifted the same way.
+export function personaCopy({folder, today}, {demo, now = new Date(), moment = null}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'jp-media-'));
   const days = weekShift(today, now), year = Number(String(today || '').slice(0, 4)) || now.getFullYear();
   for (const source of [...new Set([path.resolve(demo), path.resolve(folder)])]) {
     for (const file of fs.readdirSync(source)) {
       const from = path.join(source, file);
-      if (file === 'media.json') continue;
+      if (file === 'media.json' || file === 'moments') continue;
       if (fs.statSync(from).isDirectory()) { fs.cpSync(from, path.join(data, file), {recursive: true}); continue; }   // config/: the engine's settings
       if (/\.(json|jsonl|md)$/.test(file)) fs.writeFileSync(path.join(data, file), shiftDates(fs.readFileSync(from, 'utf8'), days, year));
       else fs.copyFileSync(from, path.join(data, file));
+    }
+  }
+  if (moment) {
+    const file = path.join(folder, 'moments', `${moment}.json`);
+    if (!fs.existsSync(file)) { fs.rmSync(data, {recursive: true, force: true}); throw new Error(`media: ${path.basename(folder)} has no moment ${moment} (moments/${moment}.json)`); }
+    for (const [name, edits] of Object.entries(JSON.parse(shiftDates(fs.readFileSync(file, 'utf8'), days, year)))) {
+      const target = path.join(data, name);
+      fs.writeFileSync(target, `${JSON.stringify(applyEdits(JSON.parse(fs.readFileSync(target, 'utf8')), edits), null, 1)}\n`);
     }
   }
   return data;

@@ -48,5 +48,5 @@ test('the fictional form and its recorder are dark', async () => {
   const fs = await import('node:fs');
   const read = file => fs.readFileSync(new URL(`../../media/${file}`, import.meta.url), 'utf8');
   assert.match(read('form.html'), /prefers-color-scheme: dark/);
-  assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'\}\)/);
+  assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'/);
 });
