@@ -229,7 +229,7 @@ async function download(request, env, now = new Date()) {
 }
 
 // The central scout's measured job boards (24 Oct 2026, owner: "A. Central scout measures boards"): per country, a board whose search page gave jobs
-// LOCATED in that country (never worldwide remote). Stored in the same `sitefacts` table installs share boards in, one row per board and country
+// LOCATED in that country (never worldwide remote); the url is a search template with {role} or the board's own section page (no placeholder). Stored in the same `sitefacts` table installs share boards in, one row per board and country
 // under the install id `central-scout-<cc>`, so agreedSites serves them as the same fact ({kind: 'board', relevant: [{country, family, installs: 1, in_places}]})
 // after one "install" (BOARDS_K) and installs rank them like their own. A fact not measured again within SCOUT_BOARD_DAYS leaves.
 export const SCOUT_BOARD_PREFIX = 'central-scout-', SCOUT_BOARD_DAYS = 30, MAX_SCOUT_BOARDS = 400, MIN_LOCAL_JOBS = 3;
@@ -243,7 +243,7 @@ export function boardFactsOf(list) {
     const country = item.country;
     const families = [...new Set((Array.isArray(item.families) ? item.families : []).filter(f => FAMILIES.includes(f)))];
     const jobs = Math.floor(Number(item.local_jobs));
-    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host) || !url.startsWith('https://') || url.length > 300 || !url.includes('{role}') || urlHost !== host.replace(/^www\./, '')
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host) || !url.startsWith('https://') || url.length > 300 || urlHost !== host.replace(/^www\./, '')
       || (url.match(/\{(\w*)\}/g) || []).some(token => !['{role}', '{place}'].includes(token)) || !COUNTRIES.includes(country) || !families.length
       || !(jobs >= MIN_LOCAL_JOBS)) continue;
     out.set(`${host}\n${country}`, {host, url, country, families, local_jobs: Math.min(jobs, 5000)});
