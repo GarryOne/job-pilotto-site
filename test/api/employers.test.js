@@ -188,7 +188,7 @@ test('published feeds land in D1 with their regions, and an install gets only it
   assert.deepEqual(got.feeds.find(f => f.slug === 'bad').regions, ['europe'], 'unknown region words are dropped');
   const remote = await (await sliced(e, 'remote,evil', await holder())).json();
   assert.deepEqual(remote.feeds.map(f => f.slug).sort(), ['nowhere', 'rem']);
-  // An older app (no regions) still gets the whole list from KV.
+  // A call without regions gets the whole list, from D1.
   assert.equal((await (await call(e, 'GET', await holder())).json()).feeds.length, 5);
 });
 
@@ -203,7 +203,7 @@ test('the slice needs a token like the whole list, and a later publish replaces 
   assert.deepEqual(got.feeds.map(f => f.slug).sort(), Array.from({length: 10}, (_, i) => `g${i}`).sort());
 });
 
-test('a list too large for one KV value still goes to D1, and older apps keep the last list that fit', async () => {
+test('a list too large for one KV value still goes to D1, and a call without regions gets the fresh whole list, not the stale KV copy', async () => {
   store.clear();
   const e = {...env(), STATS: d1()};
   await call(e, 'PUT', auth, {feeds: [feed('small', {regions: ['europe']})]});
@@ -211,7 +211,7 @@ test('a list too large for one KV value still goes to D1, and older apps keep th
   const answer = await (await call(e, 'PUT', auth, {feeds: big})).json();
   assert.equal(answer.legacy, 'too large, unchanged');
   assert.equal((await (await sliced(e, 'europe', await holder())).json()).feeds.length, 4000);
-  assert.equal((await (await call(e, 'GET', await holder())).json()).feeds.length, 1);
+  assert.equal((await (await call(e, 'GET', await holder())).json()).feeds.length, 4000, 'no regions: the fresh list, not the 1-feed KV copy');
 });
 
 test('the central scout sends its own numbers with the index; they are checked to a fixed shape and shown on /intel', async () => {

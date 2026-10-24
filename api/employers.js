@@ -194,7 +194,9 @@ async function boardCells(env, k) {
 
 async function download(request, env, now = new Date()) {
   const regions = regionsOf(request);
-  const stored = (regions && await slice(env, regions)) || await env.WAITLIST.get(KEY);
+  // No regions (an install that has no search yet, or an older app): the whole fresh D1 list, never the one-value KV copy, which stops being
+  // updated once the list outgrows it (24 Oct 2026: it still held the 8 Oct list, 2,184 of 4,606 feeds). The KV copy is only the fallback.
+  const stored = (regions ? await slice(env, regions) : await slice(env, REGIONS).catch(() => null)) || await env.WAITLIST.get(KEY);   // no D1 table yet: the KV copy
   if (!stored) return text(404, JSON.stringify({ok: false, error: 'No index published yet'}), {'Content-Type': 'application/json'});
   if (new URL(request.url).searchParams.get('summary') === '1') {
     const counts = (!regions && await env.WAITLIST.get(SUMMARY_KEY)) || JSON.stringify(summary(stored));
