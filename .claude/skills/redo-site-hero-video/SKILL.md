@@ -50,6 +50,13 @@ Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web
   sequence, one beat per step**, at least three beats (Apply excepted). Write the beats first (the storyboard), then the steps.
 - Steps: `{go: 'jobs'}` (a page: the camera may `cut` here), `{js: '...'}`, `{click: sel, zoom}`, `{tap: sel}` (shows a press without clicking),
   `{fill: true}` (extension), `{hold: s, look: sel | [sels] | 'panel', zoom, phoneZoom, phoneLook, cut, poster}`.
+- **Every step that names a beat `say`s a caption** (round 3, owner: "we need to explain the journey better"; ≤ 44 characters, test: media-captions):
+  drawn under the clip from the step's moment, a cut look's from its cut, until the next one. Write the says with the beats: the viewer reads them.
+- **A clip in two places** (round 3, Apply: "start on the Jobs screen... then moving to the browser"): `before: '<part>'` records a `part: true` piece first
+  (its own `moment`, app state and steps) and plays it ahead; both parts share `speed`, `camera` and the one-move budget; each opens on its own look.
+- **Demo mode refuses a real action** (Use Free AI, Check Gmail now, Apply): `{tap: sel, then: js}` shows the press, then the page script moves the
+  app on (a wizard step through its sidebar entry; a session opened through its row on the Applying page's list, which opens the page on it).
+- **Something not in the app** (a new e-mail arriving): draw it in the page with a `js` step (plain, no brand), hold on it, remove it in the next step.
 - **The camera shows a hero look whole across** (`fitWidth`, round 2): a look wider than its zoomed view gets a lower zoom, never a cut edge; the log says
   `media: <piece>: look ... shown whole at zoom X (asked Y)` and adds `SMALL TEXT, pick a narrower look` when it dropped below 85%: then look at a part
   (a row's cells, a card's column), never raise the zoom back. The phone copy keeps its tighter crop unless it names its own `phoneLook`.
@@ -131,5 +138,15 @@ comes back at the next redo.
   `cuts.mjs dropChanges` cuts those frames out (the cut lands on the first frame after `ready`). The gate `cuts.mjs strayFrames` reads the played clip
   and fails a piece with "a frame of another page at <s>, before/after the cut to <look>" (clean cuts ≤ 0.7, glitches 5.6–16.9). Look at every cut
   frame by frame (`ffmpeg ... fps=10,tile`) before showing the owner; the sheets show one frame per beat and miss these.
+- **A page that changes by itself is noticed late** (round 3: the strategy proposal showed 1-3 frames under the loading look's framing; polling plus two
+  repaints noticed it ~0.1 s late, and the hold's first 250 ms were not watched at all). Now the hold watches for its own cut look from its start, and
+  `cuts.mjs frameCuts` moves such a cut to the first recorded frame that looks like the new page (thumbnails of the frames themselves), and cuts out
+  old frames after any cut (a page painted late, the calendar).
+- **A look that fills in by itself failed the gate** (round 3: the searching card went 0 → 31 found; its first frames differed 3.8 from its end):
+  right after a cut the gate also accepts the frame half a second in, but only when that frame is the new page; never raise `STRAY_MAX` for this.
+- **A zoomed press before a cut holds the camera past the cut** (round 3: the tap on Use Free AI zoomed, the camera stayed on it after the page changed):
+  a press right before a page change gets no zoom; frame the button inside the look before it instead.
+- **The demo shows another person's data where a persona lacks a file** (round 3: the nurse had no `ready.json`, so the DevOps list marked her job "Review & submit"):
+  when a screen shows something odd, check which demo file feeds it and give the persona its own.
 - **A cut hides how she got there**: a cut look is a jump. Where the owner wants the way in seen (Find: the click on a job, the drawer opening),
   use a click zoom and a short hold on the in-between screen, not `cut`.

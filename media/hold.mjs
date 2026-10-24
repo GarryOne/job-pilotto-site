@@ -7,7 +7,7 @@ export const holdLeft = (hold, startedMs, nowMs) => Math.max(0.3, hold - (nowMs 
 // (`phoneLookWidth`: the same for the phone copy's own phoneLook) keeps the look's left part on purpose (round 2: a 1512-px card whose words sit on its left; the camera shows a look whole, so a wide one reads small).
 export const leftPart = (box, width) => (box && width ? {...box, width: Math.min(box.width, width)} : box);
 export const holdEvent = (item, box, phoneBox = null, s = item.hold) => ({type: 'hold', look: item.look || null, box: leftPart(box, item.lookWidth), s, ...(item.zoom ? {zoom: item.zoom} : {}),
-  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox: leftPart(phoneBox, item.phoneLookWidth)} : {}), ...(item.poster ? {poster: true} : {})});
+  ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox: leftPart(phoneBox, item.phoneLookWidth)} : {}), ...(item.poster ? {poster: true} : {}), ...(item.say ? {say: item.say} : {})});
 // The look the recorder watches for after step i (record-app.mjs logs 'ready' when it is on screen, cuts.mjs drops the frames before it): the next look
 // if it is marked `cut`, else null. Pure.
 export const nextCut = (steps, i) => { const look = steps.slice(i + 1).find(step => step.hold && step.look); return look?.cut ? {look: look.look} : null; };

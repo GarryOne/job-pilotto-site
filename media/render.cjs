@@ -2,7 +2,8 @@
 // Draws a product video from recorded frames (media): each output frame is a recorded frame moved and scaled through the camera
 // (a float transform, so pans are smooth), plus a cursor and a click ring. The app's pixels are never redrawn. Electron's canvas does the drawing in a
 // hidden window; raw pixels go to ffmpeg, which writes one high-quality master (encode.mjs makes the site's files from it).
-// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press}], scale, width, height, fps, out, ffmpeg}
+// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
+// a frame's `say` is drawn as a caption band at the bottom (captions.mjs), fading in over sayFade seconds of sayAge
 const {app, BrowserWindow} = require('electron');
 const fs = require('node:fs');
 
@@ -35,6 +36,17 @@ async function draw(job) {
       const k = frame.press / job.ring;
       ctx.beginPath(); ctx.arc(px, py, (16 + 50 * k) * unit, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255, 150, 60, ${0.9 * (1 - k)})`; ctx.lineWidth = 4 * unit; ctx.stroke();
+    }
+    if (frame.say) {   // the step's caption (captions.mjs): a band low in the frame, under the cursor, fading in
+      let size = job.captionSize;
+      const font = px => `600 ${px}px -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif`;
+      ctx.save(); ctx.font = font(size);
+      while (ctx.measureText(frame.say).width > job.width * 0.86 && size > 10) { size -= 1; ctx.font = font(size); }
+      const w = ctx.measureText(frame.say).width, padX = size * 0.75, h = size * 1.9, x = (job.width - w) / 2 - padX, y = job.height - h - size * 0.8;
+      ctx.globalAlpha = Math.min(1, (frame.sayAge || 0) / (job.sayFade || 0.25));
+      ctx.fillStyle = 'rgba(10, 12, 16, 0.86)'; ctx.beginPath(); ctx.roundRect(x, y, w + 2 * padX, h, size * 0.5); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'middle'; ctx.fillText(frame.say, x + padX, y + h / 2 + size * 0.04);
+      ctx.restore();
     }
     if (frame.cursor !== false) {
       const c = 1.3 * unit * (frame.press != null && frame.press < 0.12 ? 0.88 : 1);   // pressed: a touch smaller

@@ -247,4 +247,26 @@ test('the played clip is checked for a frame of another page on either side of e
   assert.equal(strayFrames({log, thumb, frames: clip.length})[0]?.side, 'after');
   clip[50] = page(91);   // a cursor or a progress bar: a small difference passes
   assert.deepEqual(strayFrames({log, thumb, frames: clip.length}), []);
+  // a look that fills in by itself (the search card: 0 found, then 31): its first frames differ from its end, not from the frames just after the cut
+  const filling = Array.from({length: 96}, (_, j) => (j / 30 < 1.6 ? page(40) : page(Math.min(90, 80 + Math.floor((j - 48) / 4)))));
+  assert.deepEqual(strayFrames({log, thumb: j => filling[j], frames: filling.length}), [], 'a card filling in after its cut passes');
+  filling.fill(page(40), 48, 64);   // ...but the old page lingering for half a second after the cut is still caught
+  assert.equal(strayFrames({log, thumb: j => filling[j], frames: filling.length})[0]?.side, 'after');
+});
+
+test('each cut is checked against its frames: a page that changes by itself is cut at its first frame, a page painted late loses its old frames (cuts.mjs frameCuts)', async () => {
+  const {frameCuts, cutTime, THUMB} = await import('../../media/cuts.mjs');
+  const thumb = file => new Uint8Array(THUMB.w * THUMB.h).fill(file === 'old' ? 40 : 200);
+  const framesFrom = paint => [0, 0.5, 1, 1.5, 1.9, 2.0, 2.05, 2.2, 2.6, 3].map(t => ({t, file: t >= paint ? 'new' : 'old'}));
+  // no action between the looks: 'ready' came at 2.05, the new page painted at 1.9
+  const self = {frames: framesFrom(1.9), events: [{type: 'hold', t: 0, s: 1, box: {}}, {type: 'ready', t: 2.05}, {type: 'hold', t: 2.1, s: 1, box: {}, cut: true}]};
+  const fixed = frameCuts({log: self, thumb});
+  assert.equal(cutTime(fixed, fixed.events.findIndex(e => e.cut)), 1.899, 'cut at the first frame of the new page');
+  // a click before the cut look, the new page on screen from the cut: left alone
+  const acted = {frames: framesFrom(1.9), events: [{type: 'hold', t: 0, s: 1, box: {}}, {type: 'press', t: 1.95}, {type: 'ready', t: 2.05}, {type: 'hold', t: 2.1, s: 1, box: {}, cut: true}]};
+  assert.equal(frameCuts({log: acted, thumb}), acted);
+  // the same click, the new page painted late (2.2): the old frames after the cut are cut out
+  const late = frameCuts({log: {...acted, frames: framesFrom(2.2)}, thumb});
+  assert.ok(late.frames.filter(f => f.t >= 1.95).every(f => f.file === 'new'), 'no old frame after the cut');
+  assert.equal(late.frames.at(-1).t, 2.75, 'later frames move up by what was cut');
 });
