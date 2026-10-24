@@ -32,7 +32,7 @@ export async function issues(env, scope, fetcher = fetch) {
 export async function fixer(env, fetcher = fetch) {
   if (!env.GITHUB_TOKEN || !env.GITHUB_REPO) return {pulls: [], verdicts: [], run: null};
   const github = path => cached(`https://api.github.com/repos/${env.GITHUB_REPO}${path}`, {headers: {Authorization: `Bearer ${env.GITHUB_TOKEN}`,
-    Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site'}}, fetcher).catch(() => null);
+    Accept: 'application/vnd.github+json', 'User-Agent': 'jobadabra-web'}}, fetcher).catch(() => null);
   const [pulls, verdicts, runs] = await Promise.all([github('/pulls?state=all&per_page=100'), github('/issues?labels=sentry-fix-verdict&state=all&per_page=100'),
     github('/actions/workflows/sentry-fix.yml/runs?per_page=1')]);
   return {pulls: (pulls || []).filter(pr => String(pr.head?.ref || '').startsWith('sentry-fix/')), verdicts: verdicts || [], run: runs?.workflow_runs?.[0] || null};

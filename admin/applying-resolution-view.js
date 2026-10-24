@@ -19,7 +19,7 @@ export const RESOLUTION_SCRIPT = `
   // ONE definition of an ending (owner, 15 Oct 2026: "held" counted 20, 17 and 12): a row's ending is its newest main run's, the same list the Outcomes pills count; a row with none is "no ending yet", never guessed from its status.
   const NO_ENDING = 'none', endingWordOf = s => (endingOf(s) ? endingOf(s).ending : NO_ENDING);
   const endingMatch = s => !endingPick || endingWordOf(s) === endingPick;
-  const runOf = item => item.source === 'ci' ? (item.run ? el('a', {href: 'https://github.com/GarryOne/job-pilotto/actions/runs/' + item.run, target: '_blank', rel: 'noopener', textContent: item.day + ' · CI', onclick: event => event.stopPropagation()}) : item.day + ' · CI') : item.day + ' · Mac';
+  const runOf = item => item.source === 'ci' ? (item.run ? el('a', {href: 'https://github.com/GarryOne/jobadabra/actions/runs/' + item.run, target: '_blank', rel: 'noopener', textContent: item.day + ' · CI', onclick: event => event.stopPropagation()}) : item.day + ' · CI') : item.day + ' · Mac';
   const endingLine = s => { const item = endingOf(s); return item ? el('span', {className: 'stack muted endline', title: ENDING_MEANS[item.ending] + (item.since ? ' · since the previous run: ' + (SINCE[item.since] || '') : '')},
     el('span', {className: 'pill mini ' + ENDING_TONE[item.ending], textContent: item.ending.replace('_', ' ')}), item.cause ? ' ' + CAUSES[item.cause] : '', ' · ', runOf(item), item.since ? ' · ' + item.since : '') : null; };
   // A snapshot computed before this tile existed (the page's data is kept 10 minutes) has no resolution: an empty tile, an empty box.

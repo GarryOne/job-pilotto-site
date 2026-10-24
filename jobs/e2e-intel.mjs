@@ -8,7 +8,7 @@ import {promisify} from 'node:util';
 import {writeFileSync} from 'node:fs';
 import {CAUSES, RULES_VERSION, causeOf, suiteOfJob} from '../admin/e2e-causes.js';
 
-const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/job-pilotto';
+const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/jobadabra';
 const base = process.env.E2E_INTEL_URL || 'https://www.jobpilotto.top/e2e/data';
 const execAsync = promisify(execFile);
 const MAX_LOGS = 80;   // a log is megabytes and a call takes seconds (eight at a time): the newest reds of one collector run are read; an older red with no log read is "unknown", never a guess. 24 left 44 of 58 reds unread (24 Oct 2026)

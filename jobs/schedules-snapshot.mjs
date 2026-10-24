@@ -7,8 +7,8 @@ import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
 import {billedWeight, parseWorkerCrons, parseWorkflow, RUN_DOTS} from '../shared/schedules-model.js';
 
-const REPOS = (process.env.SCHEDULES_REPOS || 'GarryOne/job-pilotto,GarryOne/job-pilotto-site,GarryOne/job-pilotto-internal').split(',');
-const WORKER_REPO = 'GarryOne/job-pilotto', WORKER_FILE = 'worker/src/scheduler.js';
+const REPOS = (process.env.SCHEDULES_REPOS || 'GarryOne/jobadabra,GarryOne/jobadabra-web,GarryOne/jobadabra-lab').split(',');
+const WORKER_REPO = 'GarryOne/jobadabra', WORKER_FILE = 'worker/src/scheduler.js';
 const base = process.env.SCHEDULES_URL || 'https://www.jobpilotto.top/ops/data?kind=schedules';
 const WEEK = 7 * 86400000;
 

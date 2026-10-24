@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
 import {RULES_VERSION, prRow} from '../admin/ops-categories.js';
 
-const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/job-pilotto';
+const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/jobadabra';
 const base = process.env.OPS_URL || 'https://www.jobpilotto.top/ops/data';
 const gh = (...args) => JSON.parse(execFileSync('gh', args, {encoding: 'utf8', maxBuffer: 1 << 28}) || 'null');
 

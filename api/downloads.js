@@ -7,7 +7,7 @@ import {OWN_HOSTS} from '../shared/hosts.js';
 import {net} from './attribution.js';
 import {device} from '../shared/device.js';
 
-const RELEASE = 'https://github.com/GarryOne/job-pilotto/releases/latest/download/';
+const RELEASE = 'https://github.com/GarryOne/jobadabra/releases/latest/download/';
 export const FILES = {mac: 'Job-Pilotto-mac-arm64.dmg', windows: 'Job-Pilotto-windows-x64.exe'};
 const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|curl|wget|python|monitor/i;
 
@@ -56,12 +56,12 @@ export async function hit(request, env, now = new Date()) {
 // cache); if GitHub doesn't answer, the fixed name above still works.
 const VERSIONED = {mac: /^Job-Pilotto-\d[\w.-]*-arm64\.dmg$/, windows: /^Job-Pilotto-\d[\w.-]*-x64\.exe$/};
 export async function versioned(platform, env, fetcher = globalThis.fetch, cache = globalThis.caches?.default) {
-  const api = `https://api.github.com/repos/${env.GITHUB_REPO || 'GarryOne/job-pilotto'}/releases/latest`;
+  const api = `https://api.github.com/repos/${env.GITHUB_REPO || 'GarryOne/jobadabra'}/releases/latest`;
   try {
     let response = cache && await cache.match(api);
     if (!response) {
       // Signed in with the site's GitHub token when it has one: 5,000 lookups an hour, not 60 per (shared) address.
-      response = await fetcher(api, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site',
+      response = await fetcher(api, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'jobadabra-web',
         ...(env.GITHUB_TOKEN ? {Authorization: `Bearer ${env.GITHUB_TOKEN}`} : {})}});
       if (!response.ok) return null;
       response = new Response(response.body, response);
