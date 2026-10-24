@@ -21,21 +21,27 @@ export function missingEncoders(list = execFileSync('ffmpeg', ['-hide_banner', '
   return ENCODERS.filter(name => !new RegExp(`\\s${name}\\s`).test(list));   // whole names: libwebp_anim is not libwebp
 }
 
+// Every video is written BT.709 and tagged BT.709 + the sRGB transfer (the app's CSS colours): untagged, Chrome decoded our
+// BT.601 files as BT.709 and drew the app's cards bluer (owner, 24 Oct 2026: "a different background than it is actually on the
+// real app"); tagged with the BT.709 transfer, it crushed the darks. Measured in Chrome: card 16,25,32 vs the app's 16,25,33.
+export const COLOR_TAGS = ['-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'iec61966-2-1', '-color_range', 'tv'];
+export const videoFilter = scale => `${scale}:out_color_matrix=bt709:out_range=tv,format=yuv420p`;   // scale ends in its own options. Pure.
+
 // -> {mp4, webm, poster, phone?, gif?}: file names in outDir, plus the bytes of each.
 export function encodeVideo({master, phoneMaster = null, name, piece, outDir, posterAt = 0}) {
   const files = {mp4: `${name}.mp4`, webm: `${name}.webm`, poster: `${name}-poster.jpg`};
   const at = file => path.join(outDir, file);
   const fast = piece.speed > 1 ? `setpts=PTS/${piece.speed},fps=30,` : '';   // a sped-up clip: the whole flow in about 3 s
   const scale = `${fast}scale=${piece.width}:${piece.height}:flags=lanczos`;
-  withinBudget(crf => ff('-i', master, '-vf', `${scale},format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', '-an', at(files.mp4)),
+  withinBudget(crf => ff('-i', master, '-vf', videoFilter(scale), ...COLOR_TAGS, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', '-an', at(files.mp4)),
     at(files.mp4), piece.budget, crfLadder(22, 34));
-  withinBudget(crf => ff('-i', master, '-vf', scale, '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', String(crf), '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-an', at(files.webm)),
+  withinBudget(crf => ff('-i', master, '-vf', videoFilter(scale), ...COLOR_TAGS, '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', String(crf), '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-an', at(files.webm)),
     at(files.webm), piece.budget, crfLadder(34, 50));
   ff('-ss', String(posterAt), '-i', master, '-vf', scale, '-frames:v', '1', '-q:v', '3', at(files.poster));
   if (piece.phone) {   // a width (the desktop master made smaller), or {width, height, budget} with its own tighter master (the hero, owner 24 Oct 2026)
     const width = typeof piece.phone === 'object' ? piece.phone.width : piece.phone;
     files.phone = `${name}-${width}.mp4`;
-    withinBudget(crf => ff('-i', phoneMaster || master, '-vf', `${fast}scale=${width}:-2:flags=lanczos,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', '-an', at(files.phone)),
+    withinBudget(crf => ff('-i', phoneMaster || master, '-vf', videoFilter(`${fast}scale=${width}:-2:flags=lanczos`), ...COLOR_TAGS, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', '-an', at(files.phone)),
       at(files.phone), piece.phone.budget, crfLadder(24, 34));
     if (phoneMaster) {   // the phone's own first frame: the site shows it before the clip plays
       files.phonePoster = `${name}-${width}-poster.jpg`;
