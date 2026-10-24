@@ -21,14 +21,16 @@ a tighter 4:3 copy for phones, and a **transition at every screen change** (roun
    (`sheets/<piece>.png`, `sheets/<piece>-720.png`; the log prints `hero: <piece> beat <n> <t> s: <words>`) and `preview.png`, and opens the preview.
    **Never edit `tools/hero.sh` while it runs** (bash reads it as it goes; the tail breaks): make the sheets/preview by hand then.
 3. **Read the sheets, then the preview** (checklist below). Fix and re-record only the pieces that are wrong.
-4. **Owner's yes** (copy `preview.png` to `<your session's short name>-hero-preview.png` before opening it): the preview IS the side-by-side (left: today's live hero at three moments, right: this set inside the real page at **every beat**,
-   desktop 1440 and phone 390; one strip per phase; the file name starts with your session's short name). Open it for him, ask AskUserQuestion (ship / change what) with a recommendation. Never ship clips he hasn't seen.
+4. **Owner's yes on VIDEO** (owner, 24 Oct 2026: "the before/after should be on video clips, not screenshots ... the before we can take from the
+   website/master branch"): `node media/compare.mjs <set dir> <scratch>/compare` makes, per clip, `<piece>-compare.mp4` (left: main's published clip,
+   `git show origin/main:web/public/media/<piece>.mp4`; right: this set; labelled, the shorter held) and a GIF of it, phone copies too. Open the
+   changed pieces' MP4s for him (file names start with your session's short name), plus `preview.png` as the overview of every beat; ask
+   AskUserQuestion (ship / change what) with a recommendation. Never ship clips he hasn't watched.
 5. **Place**: `tools/hero.sh --place <set dir>`, then the site tests `tools/site-run.sh node --test "test/**/*.test.js"`
    (`tools/hero.sh --preview` re-renders the side-by-side from what is placed).
-6. **Ship** from the worktree: `~/jobadabra/tools/ship.sh --background --body=<file>` (body per `~/jobadabra/tools/pr-body-template.md`, with the
-   After = `tools/hero-preview.mjs --only desktop|phone --out docs/pr-shots/<topic>/<x>.jpg`, Before = an image too (the body check refuses a text cell:
-   tile main's four `hero*-poster.jpg` / `-720-poster.jpg`), committed under `docs/pr-shots/<topic>/`, linked as
-   `https://github.com/GarryOne/jobadabra-web/raw/<branch>/docs/pr-shots/<topic>/<x>.jpg`: the check wants a link ending in .jpg/.png, never `?raw=1`); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
+6. **Ship** from the worktree: `~/jobadabra/tools/ship.sh --background --body=<file>` (body per `~/jobadabra/tools/pr-body-template.md`, with
+   one row per changed clip: the compare GIF inline, linked to its MP4 (both published under a tag, not on the branch:
+   `GITHUB_REPOSITORY=GarryOne/jobadabra-web node ~/jobadabra/tools/pr-assets.mjs pr-assets-<branch> <gif> <mp4>`); stills only for what is not a clip); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
 After that, the daily `tools/media.sh` refresh re-records the hero pieces from origin/main with everything else; the hero needs this skill only to change.
 
 ## Where each thing lives
@@ -111,7 +113,8 @@ Pick per moment, by what the viewer must understand; never one method everywhere
 ## Every owner rule, round by round (24 Oct 2026; read all before a redo, a newer round wins)
 **How we work on the hero**
 - Medium or large change: an Artifact sketch first (mockups on real frames, decisions with a recommendation), build after the yes.
-- Every set: the side-by-side preview (today | new, desktop + phone) and the owner's yes before shipping; then ship at once.
+- Every set: the before | after as VIDEO (`node media/compare.mjs`: main's published clip | the new one, desktop + phone), the still preview
+  as the overview, and the owner's yes before shipping; then ship at once. The PR shows the same clips (GIF linked to MP4), never only stills.
 - "Whatever fixes you do now for the hero video, document them, update the skill/command/script, so next time we don't repeat the same mistakes":
   every fix lands as a tool rule + test + a trap line here; "check against yourself for other bugs" before showing anything.
 - "Did you fix the root causes permanently?": fix the tool's rule first, then the scene (section below).
