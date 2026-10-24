@@ -173,6 +173,14 @@ function d1() {
     all: async () => ({results: db.prepare(sql).all(...args)}), first: async () => db.prepare(sql).get(...args)});
   return {db, prepare: sql => statement(sql)};
 }
+function d1sitefacts() {
+  const handle = d1();
+  for (const file of ['0037_pool_sitefacts.sql', '0038_sitefacts_layout.sql', '0094_sitefacts_board_yield.sql']) {
+    try { handle.db.exec(readFileSync(new URL(`../../db/migrations/${file}`, import.meta.url), 'utf8')); } catch (error) { if (!/duplicate column|already exists/.test(String(error))) throw error; }
+  }
+  handle.batch = async statements => { for (const statement of statements) await statement.run(); };
+  return handle;
+}
 const sliced = (e, regions, headers) => worker.fetch(new Request(`https://www.jobpilotto.top/api/index?regions=${regions}`, {headers}), e, {});
 
 test('published feeds land in D1 with their regions, and an install gets only its regions plus feeds of unknown places', async () => {
@@ -313,4 +321,29 @@ test('the central scout\'s dead ends are published up to the cap (20 Oct 2026: 5
   const got = await (await sliced(e, 'europe', await holder())).json();
   assert.equal(got.nofeed.length, 6000);
   assert.equal(MAX_NOFEED, 10000);
+});
+
+
+test('the central scout\'s measured boards are served as the same board fact installs share, one row per country, and a missing field keeps them (24 Oct 2026)', async () => {
+  store.clear();
+  const e = {...env(), STATS: d1sitefacts()};
+  const good = {host: 'delucru.md', url: 'https://delucru.md/search?q={role}', country: 'md', families: ['software_dev', 'nonsense'], local_jobs: 14};
+  const board_facts = [good, {...good, host: 'rabota.md', url: 'https://rabota.md/jobs?q={role}&place={place}', local_jobs: 22},
+    {...good, host: 'few.md', url: 'https://few.md/?q={role}', local_jobs: 2},                  // under 3 local jobs
+    {...good, host: 'evil.example', url: 'https://other.example/?q={role}'},                      // address not on its own host
+    {...good, host: 'plain.md', url: 'http://plain.md/?q={role}'},                                // not https
+    {...good, host: 'tok.md', url: 'https://tok.md/?q={role}&t={token}'},                         // another placeholder
+    {...good, host: 'zz.md', country: 'zz'}, {...good, host: 'nofam.md', families: ['nonsense']}];
+  const put = await (await call(e, 'PUT', auth, {feeds: [feed('a')], board_facts})).json();
+  assert.equal(put.board_facts, 2);
+  const {agreedSites} = await import('../../api/employers.js');
+  const facts = (await agreedSites(e)).filter(fact => fact.kind === 'board').sort((a, b) => a.host.localeCompare(b.host));
+  assert.deepEqual(facts.map(f => [f.host, f.url, f.recipe, f.installs, f.relevant]), [
+    ['delucru.md', good.url, {countries: ['md']}, 1, [{family: 'software_dev', country: 'md', installs: 1, in_places: 14, fit70: 0}]],
+    ['rabota.md', 'https://rabota.md/jobs?q={role}&place={place}', {countries: ['md']}, 1, [{family: 'software_dev', country: 'md', installs: 1, in_places: 22, fit70: 0}]]]);
+  await call(e, 'PUT', auth, {feeds: [feed('a')]});   // a publish without the field keeps the facts
+  assert.equal((await agreedSites(e)).filter(fact => fact.kind === 'board').length, 2);
+  e.STATS.db.prepare("UPDATE sitefacts SET day = '2000-01-01' WHERE host = 'rabota.md'").run();
+  await call(e, 'PUT', auth, {feeds: [feed('a')], board_facts: [good]});   // one not measured again for 30 days leaves
+  assert.deepEqual((await agreedSites(e)).filter(fact => fact.kind === 'board').map(f => f.host), ['delucru.md']);
 });

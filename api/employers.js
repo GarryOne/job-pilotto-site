@@ -228,6 +228,39 @@ async function download(request, env, now = new Date()) {
   return text(200, request.method === 'HEAD' ? null : stored, headers);
 }
 
+// The central scout's measured job boards (24 Oct 2026, owner: "A. Central scout measures boards"): per country, a board whose search page gave jobs
+// LOCATED in that country (never worldwide remote). Stored in the same `sitefacts` table installs share boards in, one row per board and country
+// under the install id `central-scout-<cc>`, so agreedSites serves them as the same fact ({kind: 'board', relevant: [{country, family, installs: 1, in_places}]})
+// after one "install" (BOARDS_K) and installs rank them like their own. A fact not measured again within SCOUT_BOARD_DAYS leaves.
+export const SCOUT_BOARD_PREFIX = 'central-scout-', SCOUT_BOARD_DAYS = 30, MAX_SCOUT_BOARDS = 400, MIN_LOCAL_JOBS = 3;
+export function boardFactsOf(list) {
+  const out = new Map();
+  for (const item of (Array.isArray(list) ? list : []).slice(0, MAX_SCOUT_BOARDS * 3)) {
+    const url = String(item?.url || '').trim();
+    const host = String(item?.host || '').toLowerCase();
+    let urlHost = '';
+    try { urlHost = new URL(url.replace('{role}', 'x')).hostname.toLowerCase().replace(/^www\./, ''); } catch { continue; }
+    const country = item.country;
+    const families = [...new Set((Array.isArray(item.families) ? item.families : []).filter(f => FAMILIES.includes(f)))];
+    const jobs = Math.floor(Number(item.local_jobs));
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host) || !url.startsWith('https://') || url.length > 300 || !url.includes('{role}') || urlHost !== host.replace(/^www\./, '')
+      || (url.match(/\{(\w*)\}/g) || []).some(token => !['{role}', '{place}'].includes(token)) || !COUNTRIES.includes(country) || !families.length
+      || !(jobs >= MIN_LOCAL_JOBS)) continue;
+    out.set(`${host}\n${country}`, {host, url, country, families, local_jobs: Math.min(jobs, 5000)});
+  }
+  return [...out.values()].slice(0, MAX_SCOUT_BOARDS);
+}
+
+async function storeBoardFacts(db, facts, date) {
+  const statements = facts.map(fact => db.prepare(`INSERT INTO sitefacts (install, day, host, kind, url, body, in_places, fit70, countries, families) VALUES (?, ?, ?, 'board', ?, ?, ?, 0, ?, ?)
+    ON CONFLICT(install, host, kind) DO UPDATE SET day = excluded.day, url = excluded.url, body = excluded.body, in_places = excluded.in_places, fit70 = 0,
+    countries = excluded.countries, families = excluded.families`)
+    .bind(`${SCOUT_BOARD_PREFIX}${fact.country}`, date, fact.host, fact.url, JSON.stringify({countries: [fact.country]}), fact.local_jobs, fact.country, fact.families.join(',')));
+  const cutoff = new Date(Date.parse(date) - SCOUT_BOARD_DAYS * 86400000).toISOString().slice(0, 10);
+  statements.push(db.prepare(`DELETE FROM sitefacts WHERE install LIKE ? AND kind = 'board' AND day < ?`).bind(`${SCOUT_BOARD_PREFIX}%`, cutoff));
+  if (db.batch) await db.batch(statements); else for (const statement of statements) await statement.run();
+}
+
 async function publish(request, env) {
   const key = env.INDEX_PUBLISH_KEY;
   const given = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
@@ -252,6 +285,9 @@ async function publish(request, env) {
     .slice(0, MAX_NOFEED).map(item => ({key: item.key, company: String(item.company || '').slice(0, 120), host: /^[a-z0-9.-]+\.[a-z]{2,}$/.test(item.host || '') ? item.host : null, last: item.last}));
   if (env.WAITLIST) await env.WAITLIST.put(NOFEED_KEY, JSON.stringify(nofeed));
   if (env.WAITLIST && Array.isArray(body.boards)) await env.WAITLIST.put(BOARDS_KEY, JSON.stringify(boardsOf(body.boards)));
+  // The scout's measured boards, only when it sent some (an absent field keeps what is there); never a reason to refuse the index.
+  const boardFacts = boardFactsOf(body.board_facts);
+  if (env.STATS && boardFacts.length) await storeBoardFacts(env.STATS, boardFacts, generated.slice(0, 10)).catch(() => false);
   // The day's snapshot for /admin/scouting's growth: counts only; never a reason to refuse the index.
   if (env.STATS) {
     const pooled = await pooledKeys(env.STATS);
@@ -265,7 +301,7 @@ async function publish(request, env) {
   const legacy = JSON.stringify({version: 1, generated, feeds});
   const kept = legacy.length <= MAX_BYTES;
   if (kept) await env.WAITLIST.put(KEY, legacy);
-  return Response.json({ok: true, feeds: feeds.length, d1: !!env.STATS, legacy: kept ? 'updated' : 'too large, unchanged'});
+  return Response.json({ok: true, feeds: feeds.length, ...(boardFacts.length ? {board_facts: boardFacts.length} : {}), d1: !!env.STATS, legacy: kept ? 'updated' : 'too large, unchanged'});
 }
 
 // Is a feed worth rewriting? (14 Oct 2026: 11.7k feed writes a day, 23k rows, though most feeds only had a new "checked"/"ok" date or a drifting job count.)
