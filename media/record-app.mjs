@@ -68,22 +68,23 @@ async function watch(page, ms, log, rest = true) {
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {
   // a page change is stamped BEFORE its action (round 3: stamped after, a frame of the new page could arrive first and show under the old framing)
-  if (item.go) { log.add({type: 'mark'}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
-  if (item.js) { log.add({type: 'mark'}); await page.evaluate(item.js); await watch(page, 900, log); return; }
+  const say = item.say && !item.hold ? {say: item.say} : {};   // a caption on an action shows from its moment (captions.mjs)
+  if (item.go) { log.add({type: 'mark', ...say}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
+  if (item.js) { log.add({type: 'mark', ...say}); await page.evaluate(item.js); await watch(page, 900, log); return; }
   if (item.tap) {   // the cursor glides to a control and presses it, nothing is clicked (a demo-disabled control, or the clip's last gesture), then `then` runs
     const box = await page.locator(item.tap).first().boundingBox();
     if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
-    log.add({type: 'click', selector: item.tap, box, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box});
+    log.add({type: 'click', selector: item.tap, box, ...say, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box});
     if (item.then) { log.add({type: 'mark'}); await page.evaluate(item.then); }
     await watch(page, item.then ? 900 : 300, log);
     return;
   }
-  if (item.press) { log.add({type: 'mark'}); await page.keyboard.press(item.press); await watch(page, 400, log); return; }   // a key changes the page too (Escape closes a dialog)
+  if (item.press) { log.add({type: 'mark', ...say}); await page.keyboard.press(item.press); await watch(page, 400, log); return; }   // a key changes the page too (Escape closes a dialog)
   if (item.click) {
     const target = page.locator(item.click).first();
     const box = await target.boundingBox();
     if (!box) throw new Error(`media: nothing to click at ${item.click} (has the screen changed? update scenes.mjs)`);
-    log.add({type: 'click', selector: item.click, box});
+    log.add({type: 'click', selector: item.click, box, ...say});
     await page.waitForTimeout(700);   // the cursor's glide, drawn by the renderer
     log.add({type: 'press', selector: item.click, box});
     await target.click();
@@ -93,7 +94,8 @@ async function step(page, item, log) {
   }
   if (item.hold) {
     const started = Date.now();
-    await page.waitForTimeout(250);
+    // a cut look not yet seen is watched for from here too (round 3: the proposal replaced "reading your CV" in this gap, cut 0.4 s late)
+    if (log.self) { const after = log.next; log.next = log.self; await watch(page, 250, log); log.next = after; } else await page.waitForTimeout(250);
     const box = item.look ? await lookBox(page, item.look) : null;
     if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
     const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
@@ -110,7 +112,10 @@ export async function recordAppVideo({persona, piece, dir}) {
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock, cast.paint);
-    for (const [i, item] of piece.steps.entries()) { log.next = nextCut(piece.steps, i); await step(page, item, log); }
+    for (const [i, item] of piece.steps.entries()) {
+      log.self = item.hold && item.cut && !(log.next?.ready && log.next.look === item.look) ? {look: item.look} : null;
+      log.next = nextCut(piece.steps, i); await step(page, item, log);
+    }
     await page.waitForTimeout(200);
     const frames = await cast.stop();
     const result = {viewport: await viewportOf(page), frames, events: log.events, text: await pageText(page)};

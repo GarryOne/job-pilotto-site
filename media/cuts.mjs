@@ -61,6 +61,14 @@ export function dropChanges(raw) {
 // -> [{look, at, side, diff}] for each cut with a stray frame (its worst one). Pure.
 export const STRAY_MAX = 3;
 export const THUMB = {w: 64, h: 40};
+// When the camera cuts to the look at log.events[i] (as cameraKeys does): the first page change after the previous look, else the moment the page
+// changed by itself ('ready'), else the hold's start. Pure.
+export function cutTime(log, i) {
+  const hold = log.events[i], prev = log.events.slice(0, i).filter(e => e.type === 'hold' && e.box).at(-1);
+  if (!prev) return hold.t;
+  const after = event => event.t > prev.t && event.t <= hold.t + FIRST_LAG;
+  return (log.events.find(e => (e.type === 'mark' || e.type === 'press') && after(e)) ?? log.events.find(e => e.type === 'ready' && after(e)) ?? hold).t;
+}
 const meanDiff = (a, b) => { let sum = 0; for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]); return sum / a.length; };
 export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRAY_MAX}) {
   const holds = log.events.filter(event => event.type === 'hold' && event.box);
@@ -69,14 +77,42 @@ export function strayFrames({log, thumb, frames, speed = 1, fps = 30, max = STRA
   const out = [];
   holds.forEach((hold, k) => {
     if (!hold.cut || !k) return;
-    const prev = holds[k - 1];
-    const after = event => event.t > prev.t && event.t <= hold.t + FIRST_LAG;
-    const cut = (log.events.find(e => (e.type === 'mark' || e.type === 'press') && after(e)) ?? log.events.find(e => e.type === 'ready' && after(e)) ?? hold).t;
+    const prev = holds[k - 1], cut = cutTime(log, log.events.indexOf(hold));
     let worst = null;
-    const look = (from, to, ref, side) => { for (let j = from; j < to; j++) { const diff = meanDiff(thumb(j), thumb(ref)); if (diff > max && (!worst || diff > worst.diff)) worst = {look: hold.look, at: Number((j / fps).toFixed(2)), side, diff: Number(diff.toFixed(1))}; } };
-    look(video(prev.t + prev.s), video(cut), beat(prev), 'before');
-    look(video(cut) + 1, Math.min(frames, video(cut) + Math.round(fps / 2)), beat(hold), 'after');
+    const look = (from, to, refs, side) => { for (let j = from; j < to; j++) { const diff = Math.min(...refs.map(ref => meanDiff(thumb(j), thumb(ref)))); if (diff > max && (!worst || diff > worst.diff)) worst = {look: hold.look, at: Number((j / fps).toFixed(2)), side, diff: Number(diff.toFixed(1))}; } };
+    look(video(prev.t + prev.s), video(cut), [beat(prev)], 'before');
+    // After the cut, a look that fills in by itself (the search card's numbers) still differs from its own end: the frame half a second in is a second
+    // reference, but only when it is the new page (twice as close to the new beat as to the old one), so an old page that lingers is still caught.
+    const end = Math.min(frames, video(cut) + Math.round(fps / 2)), settled = end - 1;
+    const isNew = 2 * meanDiff(thumb(settled), thumb(beat(hold))) < meanDiff(thumb(settled), thumb(beat(prev)));
+    look(video(cut) + 1, end, isNew ? [beat(hold), settled] : [beat(hold)], 'after');
     if (worst) out.push(worst);
   });
+  return out;
+}
+
+// Each cut checked against the recorded frames themselves (round 3): 'ready' is noticed by polling, so a page that changes by itself (no click or page step
+// before its cut look: the AI's proposal replacing "reading your CV") painted up to ~0.1 s before it, and a page painted late (the calendar) still showed
+// after it. Read in the new look's box (what the camera shows: a card appearing in a wide page barely changes the whole page). A frame is the new page
+// when it is twice as close to the new look's beat frame as to the previous look's. So: a self-changing page is cut at its
+// first new frame; old frames after any cut are cut out (cutOut). thumb(file, box): a recorded frame's thumbnail of that box (CSS px). -> the log. Pure.
+export function frameCuts({log, thumb}) {
+  let out = log;
+  const count = log.events.filter(event => event.type === 'hold' && event.box).length;
+  for (let k = 1; k < count; k++) {
+    const holds = out.events.filter(event => event.type === 'hold' && event.box), hold = holds[k], prev = holds[k - 1];
+    if (!hold.cut) continue;
+    const cut = cutTime(out, out.events.indexOf(hold)), seen = prev.t + prev.s * 0.9;
+    const old = out.frames[frameAt(out.frames, seen)], fresh = out.frames[frameAt(out.frames, hold.t + hold.s * 0.9)];
+    if (!old || !fresh || old.file === fresh.file) continue;
+    const box = hold.box, a = thumb(old.file, box), b = thumb(fresh.file, box);
+    if (meanDiff(a, b) <= STRAY_MAX) continue;   // nothing to tell apart
+    const looksNew = frame => 2 * meanDiff(thumb(frame.file, box), b) < meanDiff(thumb(frame.file, box), a);   // mostly there: a fade's first third stays out
+    const byAction = out.events.some(event => (event.type === 'mark' || event.type === 'press') && event.t > prev.t && event.t === cut);
+    const early = !byAction && out.frames.find(frame => frame.t > seen && frame.t < cut && looksNew(frame));
+    if (early) { out = {...out, events: [...out.events, {type: 'ready', t: round(early.t - 0.001)}].sort((x, y) => x.t - y.t)}; continue; }
+    const after = out.frames.slice(frameAt(out.frames, cut)).filter(frame => frame.t <= cut + 1.5), firstNew = after.find(looksNew);
+    if (firstNew && after[0] && !looksNew(after[0])) out = cutOut(out, cut, firstNew.t);
+  }
   return out;
 }

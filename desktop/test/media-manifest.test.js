@@ -21,6 +21,7 @@ test('a video entry carries the agreed fields; a partial run keeps the other ent
 
 test('every piece has the words the site needs; video captions are 6 words at most; the hero clips fit 2.5 MB and have phone copies', () => {
   for (const [name, piece] of Object.entries(VIDEOS)) {
+    if (piece.part) { assert.ok(piece.shows && piece.steps.length, name); continue; }   // played inside the piece that names it `before` (Apply, round 3)
     for (const key of ['shows', 'caption', 'alt']) assert.ok(piece[key], `${name}.${key}`);
     assert.ok(piece.caption.split(/\s+/).length <= 6, `${name}: caption over 6 words`);
     assert.equal(piece.width / piece.height, 1.6, `${name}: 16:10`);

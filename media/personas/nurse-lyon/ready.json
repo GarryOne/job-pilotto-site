@@ -1,0 +1,92 @@
+{
+ "owner": true,
+ "settings": {
+  "on": false,
+  "minFit": 60,
+  "perNight": 10
+ },
+ "tonight": [
+  {
+   "code": "d10",
+   "title": "Telemetry Nurse",
+   "company": "Clinique Belvédère",
+   "fit": 88
+  },
+  {
+   "code": "d11",
+   "title": "Cardiac Rehabilitation Nurse",
+   "company": "Centre de Réadaptation Saône",
+   "fit": 84
+  },
+  {
+   "code": "d12",
+   "title": "Nurse, Cardiology Day Hospital",
+   "company": "Hôpital de Jour Cardio Confluence",
+   "fit": 83
+  },
+  {
+   "code": "d13",
+   "title": "Intensive Care Nurse",
+   "company": "Clinique Saint-Exupéry",
+   "fit": 80
+  }
+ ],
+ "site": {
+  "ok": true,
+  "batch": {
+   "night": "2026-10-18",
+   "state": "finished",
+   "costUsd": 0.31,
+   "expiresAt": "2026-10-18T05:00:00Z"
+  },
+  "jobs": [
+   {
+    "job": "d10",
+    "video": true,
+    "host": "jobs.example",
+    "state": "prepared",
+    "filled": 9,
+    "left_empty": 0,
+    "wall": ""
+   },
+   {
+    "job": "d11",
+    "video": true,
+    "host": "careers.example.org",
+    "state": "partial",
+    "filled": 6,
+    "left_empty": 2,
+    "wall": ""
+   },
+   {
+    "job": "d12",
+    "video": true,
+    "host": "apply.example.net",
+    "state": "wall",
+    "filled": 0,
+    "left_empty": 0,
+    "wall": "account"
+   },
+   {
+    "job": "d13",
+    "host": "boards.example.com",
+    "state": "failed",
+    "filled": 0,
+    "left_empty": 0,
+    "wall": "the night could not start"
+   }
+  ]
+ },
+ "names": {
+  "d10": "Telemetry Nurse · Clinique Belvédère",
+  "d11": "Cardiac Rehabilitation Nurse · Centre de Réadaptation Saône",
+  "d12": "Nurse, Cardiology Day Hospital · Hôpital de Jour Cardio Confluence",
+  "d13": "Intensive Care Nurse · Clinique Saint-Exupéry"
+ },
+ "sent": {
+  "sig": "demo",
+  "night": "demo",
+  "count": 4,
+  "at": "2026-10-18T16:40:00.000Z"
+ }
+}

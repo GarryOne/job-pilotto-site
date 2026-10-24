@@ -55,7 +55,7 @@ test('a frame\'s width is read from its JPEG header', () => {
 
 test('the hero clips play at most 2x and every zoomed view stays on screen long enough to read (owner, 21 Oct 2026)', () => {
   for (const [name, piece] of Object.entries(VIDEOS)) {
-    if (!piece.slide) continue;
+    if (!piece.slide && !piece.part) continue;
     assert.ok((piece.speed || 1) <= 2, `${name} plays at ${piece.speed}x`);
     for (const step of piece.steps.filter(item => item.look)) {
       const seen = step.hold / (piece.speed || 1);
@@ -71,8 +71,9 @@ test('every hero clip is steady, makes at most one deliberate move, holds a zoom
   assert.deepEqual(slides.map(([, piece]) => piece.slide).sort(), [1, 2, 3, 4]);
   for (const [name, piece] of slides) {
     assert.equal(piece.camera, 'steady', `${name}: no zoom on every click`);
-    const looks = piece.steps.filter(step => step.look);
-    const moves = looks.slice(1).filter(step => !step.cut).length + piece.steps.filter(step => (step.click || step.tap) && step.zoom).length;
+    // Apply plays its app part first (round 3): one clip, one budget of moves; each part opens on its own first look (the join is a cut)
+    const parts = [VIDEOS[piece.before], piece].filter(Boolean).map(part => part.steps);
+    const moves = parts.reduce((sum, steps) => sum + steps.filter(step => step.look).slice(1).filter(step => !step.cut).length + steps.filter(step => (step.click || step.tap) && step.zoom).length, 0);
     assert.ok(moves <= 1, `${name}: ${moves} camera moves`);
     const result = piece.steps.find(step => step.poster);
     assert.ok(result && result.look && result.zoom >= 1.6, `${name}: a zoomed result marked poster`);
