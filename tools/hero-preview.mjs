@@ -119,7 +119,7 @@ try {
     ${rows.map(row => `<h2>${row.size} · ${row.phase}</h2>${before ? strip(`Today (${before})`, row.then, row.size.startsWith('Phone')) : ''}${strip('New', row.now, row.size.startsWith('Phone'))}`).join('')}`;
   const sheet = await (await browser.newContext({viewport: {width: 1800, height: 900}})).newPage();
   await sheet.setContent(html, {waitUntil: 'load'});
-  fs.writeFileSync(out, await sheet.screenshot({fullPage: true}));
+  fs.writeFileSync(out, await sheet.screenshot({fullPage: true, ...(/\.jpe?g$/i.test(out) ? {type: 'jpeg', quality: 82} : {})}));   // a PR's .jpg is a real JPEG (round 2: PNG bytes under .jpg)
   rows.forEach(row => row.now.forEach(shot => console.log(`hero-preview: ${row.size} · ${row.phase}: ${shot.caption}`)));
   console.log(`hero-preview: ${out}`);
 } finally { await browser.close(); server.close(); }
