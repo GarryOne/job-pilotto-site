@@ -1,6 +1,7 @@
 # jobadabra-web: notes for Claude
 
 The website, `/admin` and the scheduled jobs that feed them: **private**, split out of the public `GarryOne/jobadabra` on 20 Oct 2026 (owner: "leave open-source rather less than more").
+**Visibility (owner, 24 Oct 2026):** this repo is public until 1 Nov 2026, then private again; nothing secret in it meanwhile.
 Read [README.md](README.md) first, then the public repo's `docs/rules/private-site.md` (`~/jobadabra`, or `gh repo view GarryOne/jobadabra`).
 
 ## The one rule
