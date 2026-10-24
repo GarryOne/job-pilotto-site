@@ -1,4 +1,4 @@
-// The AI page (/intelligence): a journey strip of six sections, a short card per step with its long text folded, the "sees / never" chips visible,
+// The AI page (/intelligence): a journey strip of six sections, every step shown, a quiet "Data used" line per card, "your AI" not "Claude",
 // every anchor working, and the next-page card clear of the section above it (owner, 24 Oct 2026: "looks cooler", "a bit of spacing").
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -23,14 +23,25 @@ test('every step is a card: a title, a promise line, and its long text folded un
   }
 });
 
-test('the privacy lines stay visible: a card that says Claude never sees something shows it as a chip, outside the fold', () => {
+test('every step stays on the page, none hidden behind a fold (owner, 24 Oct 2026: "I want to show them all")', () => {
+  assert.doesNotMatch(page, /class="ai-all"/);
+  assert.ok([...page.matchAll(/<article class="ai-step">/g)].length >= 47);
+});
+
+test('the privacy lines stay visible: a card that says what the AI never sees shows it in its Data used line, outside the fold', () => {
   const cards = [...page.matchAll(/<article class="ai-step">([\s\S]*?)<\/article>/g)].map(m => m[1]);
   for (const card of cards) {
     const folded = card.match(/<details>[\s\S]*<\/details>/)[0];
     const visible = card.replace(folded, '');
-    if (/Claude sees [^.]*never/i.test(folded)) assert.match(visible, /class="no"/, `a card that says what Claude never sees shows it: ${card.match(/<h3>(.*?)<\/h3>/)[1]}`);
+    if (/(?:Claude|your AI) sees [^.]*never/i.test(folded)) assert.match(visible, /class="never"/, `a card that says what the AI never sees shows it: ${card.match(/<h3>(.*?)<\/h3>/)[1]}`);
   }
-  assert.ok((page.match(/class="no"/g) || []).length >= 20, 'the never chips are there');
+  assert.ok((page.match(/class="never"/g) || []).length >= 20, 'the never lines are there');
+  assert.doesNotMatch(page, /class="sees"/, 'the repeated pills are gone');
+});
+
+test('"Claude" means one provider only where it names a Claude-only feature or plan; otherwise the page says "your AI"', () => {
+  const text = page.replace(/<[^>]+>/g, ' ');
+  for (const [, context] of text.matchAll(/(.{0,30}Claude.{0,12})/g)) assert.match(context, /Apply with Claude|Claude Code|Claude plan|Claude or OpenAI/, context);
 });
 
 test('the NEW badges are gone, the page title tells the real count, and the page links its own stylesheet', () => {
@@ -42,4 +53,12 @@ test('the NEW badges are gone, the page title tells the real count, and the page
 test('the end-of-page card has room above it on every page that uses it', () => {
   const rule = read('pages.css').match(/\.next-page \{[^}]*margin-block: (\d+)px/);
   assert.ok(rule && Number(rule[1]) >= 40, 'margin above .next-page');
+});
+
+test('the title and og:title give the real step count (the page is the one source), and the end card names both platforms', () => {
+  const count = [...page.matchAll(/<article class="ai-step">/g)].length;
+  assert.match(page, new RegExp(`<title>[^<]*\\b${count} steps`));
+  assert.match(page, new RegExp(`og:title" content="[^"]*\\b${count} steps`));
+  assert.match(page, /Free app for Mac and Windows/);
+  assert.doesNotMatch(page, /Free Mac app/);
 });
