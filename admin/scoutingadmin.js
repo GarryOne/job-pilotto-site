@@ -8,6 +8,7 @@ import {section as botChecks} from './bot-checks.js';
 import {EUROPE} from '../shared/pool-tags.js';
 import {CHART_STYLE, TOOLTIP} from '../shared/scoutingcharts.js';
 import {floorFor, cellsOf, gaps, heatmap, history, runs, sources, tiles, topKind, trends} from '../shared/scoutingvisual.js';
+import {section as readMethods} from '../shared/readmethods.js';
 import {day, snapshot, gather} from '../shared/scouting-snapshot.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
@@ -77,6 +78,7 @@ ${gaps(cells, data.demand || {})}
 ${trends(cells, past)}
 ${sources(data.central)}
 ${runs(data.central)}
+${readMethods(data.reads)}
 <h2 class="more">The numbers behind the charts</h2>
 ${fold('🇪🇺 Coverage by kind of role and country (table)', `<section class="card"><small class="muted">European employers by the kind they mostly hire for and the countries their jobs are in. Red: under the country's floor (25 big markets, 10 mid-size, 5 small), a gap the scout aims at next.</small>
 <div class="scroll"><table class="countries"><tr><th>Kind</th>${EUROPE.map(country => `<th>${country.toUpperCase()}</th>`).join('')}</tr>

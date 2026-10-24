@@ -2,6 +2,7 @@
 // seconds, a role family from a fixed list, a country, a city candidate). This is the second check on the server: only the listed fields survive, each
 // with the shape it must have. Stored in the telemetry table (90 days, like every technical report); the Lab page's "Real installs" tab reads them.
 // A city is shown only when 3+ installs share it (k >= 3 at read time). Tests: test/shared/telemetry.test.js.
+import {READ_FIELDS} from './readmethods.js';
 const count = v => Number.isInteger(v) && v >= 0 && v < 1e6;
 export const FAMILIES = ['software', 'sales_b2b', 'sales_retail', 'logistics', 'hospitality', 'healthcare', 'creative_media', 'finance_admin', 'education', 'trades', 'other'];
 export const FIELDS = {
@@ -12,6 +13,7 @@ export const FIELDS = {
   engine: v => ['api', 'cli', 'openai', 'codex'].includes(v),
   trigger: v => ['first', 'you', 'schedule', 'telegram', 'other'].includes(v),
   result: v => ['done', 'failed', 'stopped'].includes(v),   // a search that did not finish sends only this, its engine and its trigger
+  ...READ_FIELDS,   // read_<method>_<measure>: how its sources were read (shared/readmethods.js; /admin/scouting)
 };
 const ENVELOPE = ['kind', 'at', 'install', 'version', 'platform', 'os', 'source'];
 
