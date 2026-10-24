@@ -182,3 +182,69 @@ test('a hold logs the seconds it has left after measuring, and the recorder wait
   assert.equal(holdLeft(1, 1000, 3000), 0.3, 'a slow measure still leaves a moment on screen');
   assert.equal(holdEvent({hold: 2.2, look: 'x'}, {x: 0, y: 0, width: 10, height: 10}, null, 1.5).s, 1.5);
 });
+
+// Owner, 24 Oct 2026: "a small glitch in the first clip (showing something about Sonnet)": 0.6 s of the CV step's framing over the next page.
+test('a cut look starts when its content is on screen: no frame from between the page change and it, on either side of the cut', async () => {
+  const {changeSpans, dropChanges, readyAtFrames} = await import('../../media/cuts.mjs');
+  const looks = [{x: 100, y: 100, width: 600, height: 300}, {x: 900, y: 600, width: 600, height: 300}, {x: 100, y: 600, width: 600, height: 300}];
+  const frames = Array.from({length: 120}, (_, i) => ({t: i / 10, file: `r${i}.jpg`}));   // a frame every 0.1 s, its name its recorded time
+  // look 1; a page change (mark), the look on screen (ready), a second action (mark), look 2; a click (press) and look 3 with no 'ready' (falls back);
+  // look 4 after no action: the page changed by itself (ready during look 3's hold)
+  const events = [{t: 0, type: 'hold', box: looks[0], s: 1.5}, {t: 1.6, type: 'mark'}, {t: 1.9, type: 'ready'}, {t: 2.5, type: 'mark'}, {t: 3.4, type: 'hold', box: looks[1], cut: true, s: 2},
+    {t: 5.5, type: 'click', box: looks[0]}, {t: 6.2, type: 'press', box: looks[0]}, {t: 7.0, type: 'hold', box: looks[2], cut: true, s: 2},
+    {t: 8.4, type: 'ready'}, {t: 9.2, type: 'hold', box: looks[0], cut: true, s: 2}];
+  const raw = {viewport, frames, events};
+  const spans = changeSpans(readyAtFrames(raw));
+  assert.deepEqual(spans.map(span => [span.from, Number(span.to.toFixed(3))]), [[1.6, 2.0], [6.2, 7.0 + FIRST_LAG]], 'from the FIRST change to the first frame after the look showed');
+  const log = dropChanges(raw);
+  const recordedAt = file => Number(file.slice(1, -4)) / 10;
+  const keys = cameraKeys({...log, steady: true});
+  const framing = box => cameraAt(cameraKeys({viewport, events: [{t: 0, type: 'hold', box}], steady: true}), 0, viewport).x;
+  // which look's page a recorded moment shows: look 1 until the first change, look 2 from the frame after its ready (1.9 -> 2.0), look 3 from its
+  // fallback, look 4 from the frame after its ready (8.4 -> 8.5): a frame recorded at the 'ready' moment itself still shows the old page
+  const pageOf = at => (at <= 1.6 ? 0 : at >= 8.5 ? 3 : at >= 7.3 ? 2 : at >= 2.0 && at <= 6.2 ? 1 : -1);   // a frame at the change itself still shows the old page
+  const plan = renderPlan(log, 30, 1, {steady: true});
+  for (const [i, frame] of plan.entries()) {
+    const t = i / 30, at = recordedAt(frame.file), page = pageOf(at);
+    assert.notEqual(page, -1, `frame ${i} (${t.toFixed(2)} s) shows a recorded moment that was cut (${at} s)`);
+    if (at === 0.0 && t > 0) continue;
+    assert.ok(Math.abs(cameraAt(keys, t, viewport).x - framing(looks[page === 3 ? 0 : page])) < 1, `frame ${i} (${t.toFixed(2)} s): the camera frames look ${page + 1}, whose page it shows (recorded ${at} s)`);
+  }
+  assert.ok(log.frames.at(-1).t < raw.frames.at(-1).t - 0.9, 'the clip is shorter by what was cut');
+  const click = log.events.findIndex(event => event.type === 'click');
+  assert.equal(log.events[click + 1]?.type, 'press', 'a click keeps its press');
+});
+
+test('every hero step before a cut look watches for it (hold.mjs nextCut), and every cut look has a page change to cut at', async () => {
+  const {nextCut} = await import('../../media/hold.mjs');
+  const {VIDEOS: pieces} = await import('../../media/scenes.mjs');
+  const changes = step => step.go || step.js || step.click || step.press || (step.tap && step.then);
+  for (const [name, piece] of Object.entries(pieces).filter(([, piece]) => piece.camera === 'steady')) {
+    piece.steps.forEach((step, i) => {
+      if (!(step.hold && step.look && step.cut)) return;
+      const prevLook = piece.steps.slice(0, i).findLastIndex(prev => prev.hold && prev.look);
+      const between = piece.steps.slice(prevLook + 1, i);
+      // no step between: the page changes by itself during the previous hold, which then watches for the look
+      assert.ok(between.some(changes) || piece.steps[i - 1]?.hold, `${name}: cut look ${JSON.stringify(step.look)} has a step that changes the page before it`);
+      if (!between.length) assert.deepEqual(nextCut(piece.steps, i - 1), {look: step.look}, `${name}: the hold before ${JSON.stringify(step.look)} watches for it`);
+      between.forEach((_, j) => assert.deepEqual(nextCut(piece.steps, prevLook + 1 + j), {look: step.look}, `${name}: step ${prevLook + 1 + j} watches for ${JSON.stringify(step.look)}`));
+    });
+  }
+});
+
+test('the played clip is checked for a frame of another page on either side of each cut (cuts.mjs strayFrames)', async () => {
+  const {strayFrames, THUMB} = await import('../../media/cuts.mjs');
+  const size = THUMB.w * THUMB.h, page = level => new Uint8Array(size).fill(level);
+  const look = {x: 100, y: 100, width: 600, height: 300};
+  // look 1 (0-1.5 s), a change at 1.6, look 2 cut (from 1.6), played at 1x, 30 fps
+  const log = {viewport, frames: [], events: [{t: 0, type: 'hold', box: look, s: 1.5, look: 'a'}, {t: 1.6, type: 'mark'}, {t: 1.6, type: 'hold', box: look, cut: true, s: 1.5, look: 'b'}]};
+  const clip = Array.from({length: 96}, (_, j) => (j / 30 < 1.6 ? page(40) : page(90)));
+  const thumb = j => clip[j];
+  assert.deepEqual(strayFrames({log, thumb, frames: clip.length}), [], 'a clean cut passes');
+  clip[47] = page(90);   // 1.567 s: the new page under the old framing (the "Sonnet" glitch)
+  assert.equal(strayFrames({log, thumb, frames: clip.length})[0]?.side, 'before');
+  clip[47] = page(40); clip[50] = page(40);   // 1.667 s: the old page under the new framing (the calendar, painted late)
+  assert.equal(strayFrames({log, thumb, frames: clip.length})[0]?.side, 'after');
+  clip[50] = page(91);   // a cursor or a progress bar: a small difference passes
+  assert.deepEqual(strayFrames({log, thumb, frames: clip.length}), []);
+});

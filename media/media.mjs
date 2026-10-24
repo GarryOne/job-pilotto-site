@@ -10,6 +10,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {beatTimes, FIT_WARN, fromFirstLook, posterTime, renderPlan, RING} from './camera.mjs';
+import {dropChanges, STRAY_MAX, strayFrames, THUMB} from './cuts.mjs';
 import {captureGaps, leftWords, pieceProblems, realEmails} from './check.mjs';
 import {brightness, duration, encodeStill, encodeVideo, missingEncoders} from './encode.mjs';
 import {manifest, stillEntry, videoEntry} from './manifest.mjs';
@@ -38,7 +39,7 @@ async function makeVideo(name, persona, work, out) {
     if (!gaps.length || attempt === 3) break;
     console.log(`media: ${name}: the capture stalled (no frame at ${gaps.map(gap => `${gap.t.toFixed(1)} s`).join(', ')}): recording again (${attempt + 1} of 3)`);
   }
-  const log = piece.camera === 'steady' ? fromFirstLook(recorded) : recorded;   // the hero starts at its first look (camera.mjs)
+  const log = piece.camera === 'steady' ? dropChanges(fromFirstLook(recorded)) : recorded;   // the hero starts at its first look (camera.mjs), each cut look when it shows (cuts.mjs)
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);
   const first = fs.readFileSync(path.join(dir, 'frames', log.frames[0].file));
   const scale = jpegWidth(first) / log.viewport.w, steady = piece.camera === 'steady';
@@ -60,6 +61,12 @@ async function makeVideo(name, persona, work, out) {
   if (problems.length) throw new Error(problems.join('\n'));
   const {files, bytes} = encodeVideo({master, phoneMaster, name, piece, outDir: out, posterAt: posterTime(log.events)});
   console.log(`media: ${name}: ${Object.entries(bytes).map(([kind, n]) => `${kind} ${(n / 1e6).toFixed(2)} MB`).join(', ')}`);
+  if (steady) {   // no frame of another page around a cut (cuts.mjs strayFrames), read off the played clip
+    const raw = execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(out, files.mp4), '-vf', `scale=${THUMB.w}:${THUMB.h},format=gray`, '-f', 'rawvideo', '-'], {maxBuffer: 1 << 28});
+    const size = THUMB.w * THUMB.h, frames = Math.floor(raw.length / size);
+    const stray = strayFrames({log, frames, thumb: j => raw.subarray(j * size, (j + 1) * size), speed: piece.speed || 1, fps: FPS});
+    if (stray.length) throw new Error(stray.map(s => `media: ${name}: a frame of another page at ${s.at} s, ${s.side} the cut to ${JSON.stringify(s.look)} (differs ${s.diff} > ${STRAY_MAX}): record again; if it repeats, the cut's timing is wrong (cuts.mjs)`).join('\n'));
+  }
   return videoEntry({name, piece, files, bytes, seconds: duration(path.join(out, files.mp4)), beats: beatTimes(log.events, piece.steps, piece.speed || 1)});
 }
 

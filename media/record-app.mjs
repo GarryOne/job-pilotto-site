@@ -9,7 +9,7 @@ import {clipTo} from './camera.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
-import {holdEvent, holdLeft} from './hold.mjs';
+import {holdEvent, holdLeft, nextCut} from './hold.mjs';
 
 const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
 const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.json'))('playwright-core');
@@ -50,21 +50,35 @@ export function unionBox(boxes) {
 }
 const lookBox = async (page, look) => unionBox(await Promise.all([look].flat().map(selector => page.locator(selector).first().boundingBox())));
 
-export {holdEvent, holdLeft};   // pure, in hold.mjs (tests import them without Playwright)
+export {holdEvent, holdLeft};
+
+// Waits `ms` (with rest=false: only until the look shows, at most ms); meanwhile logs 'ready' the moment the next cut look (log.next, hold.mjs nextCut)
+// is on screen: cuts.mjs drops the frames between the page change and it.
+const onScreen = async (page, look) => (await Promise.all([look].flat().map(selector => page.locator(selector).first().isVisible().catch(() => false)))).every(Boolean);
+async function watch(page, ms, log, rest = true) {
+  const end = Date.now() + ms;
+  while (log.next && !log.next.ready && Date.now() < end) {
+    // in the page is not yet painted (round 3: the calendar was in the page 19 ms after the click, its first frame came ~1 s later): two repaints first
+    if (await onScreen(page, log.next.look)) { await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))).catch(() => {}); log.add({type: 'ready'}); log.next.ready = true; break; }
+    await page.waitForTimeout(60);
+  }
+  if (rest && end > Date.now()) await page.waitForTimeout(end - Date.now());
+}   // pure, in hold.mjs (tests import them without Playwright)
 
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {
-  if (item.go) { await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); log.add({type: 'mark'}); await page.waitForTimeout(900); await settle(page); return; }
-  if (item.js) { await page.evaluate(item.js); log.add({type: 'mark'}); await page.waitForTimeout(900); return; }
+  // a page change is stamped BEFORE its action (round 3: stamped after, a frame of the new page could arrive first and show under the old framing)
+  if (item.go) { log.add({type: 'mark'}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
+  if (item.js) { log.add({type: 'mark'}); await page.evaluate(item.js); await watch(page, 900, log); return; }
   if (item.tap) {   // the cursor glides to a control and presses it, nothing is clicked (a demo-disabled control, or the clip's last gesture), then `then` runs
     const box = await page.locator(item.tap).first().boundingBox();
     if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
     log.add({type: 'click', selector: item.tap, box, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box});
-    if (item.then) { await page.evaluate(item.then); log.add({type: 'mark'}); }
-    await page.waitForTimeout(item.then ? 900 : 300);
+    if (item.then) { log.add({type: 'mark'}); await page.evaluate(item.then); }
+    await watch(page, item.then ? 900 : 300, log);
     return;
   }
-  if (item.press) { await page.keyboard.press(item.press); await page.waitForTimeout(400); return; }
+  if (item.press) { log.add({type: 'mark'}); await page.keyboard.press(item.press); await watch(page, 400, log); return; }   // a key changes the page too (Escape closes a dialog)
   if (item.click) {
     const target = page.locator(item.click).first();
     const box = await target.boundingBox();
@@ -74,6 +88,7 @@ async function step(page, item, log) {
     log.add({type: 'press', selector: item.click, box});
     await target.click();
     if (item.zoom) Object.assign(log.events.at(-2), {zoom: item.zoom, ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})});
+    await watch(page, 800, log, false);
     return;
   }
   if (item.hold) {
@@ -85,7 +100,7 @@ async function step(page, item, log) {
     const left = holdLeft(item.hold, started, Date.now());
     log.add(holdEvent(item, box, phoneBox, left));
     await log.paint();   // a frame now, still page or not (check.mjs captureGaps)
-    await page.waitForTimeout(Math.max(0, left * 1000 - 180));
+    await watch(page, Math.max(0, left * 1000 - 180), log);   // a page that changes by itself (the AI's proposal replacing "reading your CV") is cut when it shows
   }
 }
 
@@ -95,7 +110,7 @@ export async function recordAppVideo({persona, piece, dir}) {
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock, cast.paint);
-    for (const item of piece.steps) await step(page, item, log);
+    for (const [i, item] of piece.steps.entries()) { log.next = nextCut(piece.steps, i); await step(page, item, log); }
     await page.waitForTimeout(200);
     const frames = await cast.stop();
     const result = {viewport: await viewportOf(page), frames, events: log.events, text: await pageText(page)};

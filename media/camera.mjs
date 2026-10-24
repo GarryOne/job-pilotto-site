@@ -33,7 +33,7 @@ export const FIT_WARN = 0.85;
 // log: {viewport: {w, h}, events: [{t, type: 'click'|'press'|'hold'|'mark', box?, zoom?, cut?, phoneZoom?, phoneBox?}]} -> [{t, cx, cy, z}], time-ordered; a key is where
 // the camera has ARRIVED at t. Default: the whole screen shows only at the start (context); a click zooms onto its target while the cursor glides there; a hold
 // with a box zooms onto that box (its own zoom, else the box fitted). `steady` (the hero, owner 24 Oct 2026: "zoom toward the result, then hold"): the piece opens
-// already framed on its first look, a click moves nothing unless it carries a zoom, and a look marked `cut` switches at the page change (the last mark or
+// already framed on its first look, a click moves nothing unless it carries a zoom, and a look marked `cut` switches at the page change (the first mark or
 // press since the previous look) instead of gliding. `phone` ({aspect}): the phone copy's camera, each zoom PHONE_GAIN closer (or the step's phoneZoom),
 // up to PHONE_MAX and never so wide that the view leaves the page. `speed`: the clip is played faster, so moves are stretched in recorded time.
 // `steady` looks fit their box's width (fitWidth; the phone copy only for its own phoneLook, a tighter crop is its point); onFit(event, asked, used) hears each lowered zoom.
@@ -65,8 +65,9 @@ export function cameraKeys({viewport, events, speed = 1, steady = false, phone =
     if (steady && first) { keys[0] = {t: 0, ...target}; return; }
     const lastLook = earlier.filter(prev => prev.type === 'hold').at(-1);
     if (event.cut) {
-      const change = earlier.filter(prev => (prev.type === 'mark' || prev.type === 'press') && (!lastLook || prev.t > lastLook.t)).at(-1);
-      const at = change ? change.t : event.t;
+      const change = earlier.find(prev => (prev.type === 'mark' || prev.type === 'press') && (!lastLook || prev.t > lastLook.t));   // the first: the old page left then (cuts.mjs)
+      const shown = earlier.find(prev => prev.type === 'ready' && (!lastLook || prev.t > lastLook.t));   // no action: the page changed by itself, cut when it showed
+      const at = change ? change.t : shown ? shown.t : event.t;
       move(at - 0.001, {cx: keys.at(-1).cx, cy: keys.at(-1).cy, z: keys.at(-1).z});
       move(at, target);
       return;
