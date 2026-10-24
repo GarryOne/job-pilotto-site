@@ -11,9 +11,6 @@ const pages = readdirSync(dir).filter(name => name.endsWith('.html'));
 const read = name => readFileSync(new URL(name, dir), 'utf8');
 const text = name => read(name).replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
 
-// Session B fixes intelligence.html's "Free Mac app" (24 Oct 2026); drop this entry when its PR lands.
-const MAC_ONLY_PENDING = new Set(['intelligence.html']);
-
 const pro = OFFERS.find(offer => offer.id === 'pro');
 const amounts = new Set(['0', ...OFFERS.flatMap(offer => [offer.price, offer.list].filter(Boolean)), ...Object.values(CREDIT).map(micro => String(micro / 1_000_000))]);
 
@@ -58,7 +55,6 @@ test('no page claims that nothing is ever stored on our servers: local, hosted A
 
 test('no page says Jobadabra is Mac only: the app runs on Mac and Windows', () => {
   for (const name of pages) {
-    if (MAC_ONLY_PENDING.has(name)) continue;
     assert.doesNotMatch(text(name), /Free Mac app|needs a Mac(?! or Windows)|Mac app \+ Chrome/, `${name} says Mac only`);
   }
 });
