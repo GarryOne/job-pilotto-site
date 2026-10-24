@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {CREDIT, CREDIT_PER_COST, OFFERS, creditEur} from '../../shared/pro-packages.js';
+import {CREDIT, CREDIT_PER_COST, OFFERS, USD_PER_EUR, creditEur, rawToCredit} from '../../shared/pro-packages.js';
 import {createCheckout} from '../../api/payments/stripe.js';
 
 test('every offer: a credit rule, a Stripe price var in the Worker config, euros, and the credit flag matches the credit', async () => {
@@ -48,4 +48,17 @@ test('every public text that names an AI credit amount names a granted one (€1
 test('the offers carry the euro credit the app shows, equal to the grant; a top-up adds what it costs', () => {
   for (const offer of OFFERS) assert.equal(offer.creditEur, CREDIT[offer.id] / 1e6, offer.id);
   assert.deepEqual(OFFERS.filter(o => o.id.startsWith('topup')).map(o => [o.price, o.creditEur]), [['5', 5], ['10', 10], ['20', 20]]);
+});
+
+// The owner's rule (24 Oct 2026): for every €10 of credit the user sees, our real cost is €5, in euros. The meter converts our USD cost at USD_PER_EUR.
+test('€10 of credit costs us €5 of real AI cost: every grant is paid for by half its face value in euros', () => {
+  const eurCostOf = credit => credit / 1e6 / CREDIT_PER_COST;   // what a fully spent credit costs us, in euros
+  assert.equal(eurCostOf(CREDIT['pro-ai']), 5);
+  const rawMicroUsdForTenEuros = 5 * USD_PER_EUR * 1e6;   // €5 of real cost, billed in USD
+  assert.equal(rawToCredit(rawMicroUsdForTenEuros), 10_000_000, '€5 of raw cost (in USD) takes €10 of credit');
+  for (const kind of Object.keys(CREDIT).filter(k => CREDIT[k] > 0)) {
+    const spentUsd = CREDIT[kind] / CREDIT_PER_COST * USD_PER_EUR;   // micro-USD of raw cost that empties this grant
+    assert.ok(Math.abs(rawToCredit(spentUsd) - CREDIT[kind]) <= 1, `${kind}: spending its cost empties it`);
+    assert.ok(eurCostOf(CREDIT[kind]) <= creditEur(kind) / 2 + 1e-9, `${kind}: cost is at most half the credit shown`);
+  }
 });

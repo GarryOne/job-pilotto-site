@@ -1,14 +1,14 @@
 // Pro accounts and the AI credit ledger (spec docs/superpowers/specs/2026-10-16-pro-plan.md §1, §3): who is Pro, how much credit is left,
 // the devices (3 per account), GET /api/pro/status for the app. Money is micro-USD; the app only ever sees a percent and a warning step, never dollars.
 // Guards: test/shared/pro-credit.test.js. Payments (Stripe) are the next PR: they call addCredit/refund/link here. Switch: env.PRO_PLAN = off | test | live.
-import {CREDIT_PER_COST, OFFERS, packageOf} from './pro-packages.js';
+import {OFFERS, packageOf, rawToCredit} from './pro-packages.js';
 import {authorize, digestOf, flag} from './guard.js';
 
 // The key ai_calls.who has for an install (aicost.js digests the install's digest again, keeps 8 characters): join pro_devices.install to ai_calls through it.
 export const aiCallsKey = async install => (await digestOf(await digestOf(install))).slice(0, 8);
 
 export const DEVICES_PER_ACCOUNT = 3;
-export const OVERDRAFT_MICRO = 250_000 * CREDIT_PER_COST;   // $0.25 of our cost, in credit units: an application in progress finishes when the credit runs out (the app starts no new work at 0)
+export const OVERDRAFT_MICRO = rawToCredit(250_000);   // $0.25 of our cost, in credit units: an application in progress finishes when the credit runs out (the app starts no new work at 0)
 export const planOn = env => ['test', 'live'].includes(env.PRO_PLAN);
 const stamp = date => date.toISOString();
 const parseKey = key => { const [tag, install, token] = String(key || '').split('.'); return tag === 'JPF1' && install && token ? {install, token} : null; };   // as free-ai.js (not imported: it imports this lane)
@@ -54,9 +54,9 @@ export async function addCredit(env, account, micro, reason, ref, now = new Date
   await env.STATS.prepare('INSERT INTO pro_credit (account, delta_micro, reason, ref, at) VALUES (?, ?, ?, ?, ?)').bind(account, micro, reason, ref || null, stamp(now)).run();
 }
 
-// One AI call's raw cost (the micro-USD ai_calls records) at our price list: raw × CREDIT_PER_COST credit units. May dip below 0 within the overdraft.
+// One AI call's raw cost (the micro-USD ai_calls records) at our price list: raw cost in euros × CREDIT_PER_COST credit units. May dip below 0 within the overdraft.
 export async function spend(env, account, rawMicro, ref, now = new Date()) {
-  const micro = Math.round(rawMicro * CREDIT_PER_COST);
+  const micro = rawToCredit(rawMicro);
   if (!(micro > 0)) return;
   await env.STATS.prepare('UPDATE pro_accounts SET credit_micro = credit_micro - ? WHERE id = ?').bind(micro, account).run();
   await env.STATS.prepare('INSERT INTO pro_credit (account, delta_micro, reason, ref, at) VALUES (?, ?, ?, ?, ?)').bind(account, -micro, 'ai_call', ref || null, stamp(now)).run();
