@@ -7,7 +7,7 @@ description: Redo or improve the website's hero video (the landing page's four-s
 
 The hero (`web/public/index.html` `#hero-stage`) is **four short clips played as one continuous tour** on one fixed stage (owner, 24 Oct 2026):
 silent autoplay Set up → Find → Apply → Track, captions as HTML above the stage, clickable step labels with a progress line, a discreet pause,
-a tighter 4:3 copy for phones, and a cut (never a crossfade, never a blank) between clips. One made-up person (nurse persona) and **one job**
+a tighter 4:3 copy for phones, and a **transition at every screen change** (round 6, owner: "make a nice transition effect, not just an instant screen/image replacement"; never a blank frame, never two screens stuck on top of each other). One made-up person (nurse persona) and **one job**
 (Institut Cardio Rhône, Registered Nurse, Cardiac Care Unit) from setup to interview. Approved sketch: https://claude.ai/artifact/MD1RKmELpnh7rzkprJkKfg; round 2 storyboard (every beat): https://claude.ai/artifact/SLjpGZdm31SvGeBvuTiBNg
 
 ## The loop (one command per step)
@@ -87,6 +87,50 @@ Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web
 - Phase stories (round 2, owner 24 Oct 2026): **Set up** = CV dropped → a note typed → Build my strategy → the demo "reading your CV" → proposed goals
   → Save (confirm). **Find** = the Find jobs card searching → done → scroll to THE job → its Match tab. **Track** = the Gmail check card ("Interview
   scheduled" for THE job) → its interview recording → the review → insights/patterns → practise next → that interview first on the calendar.
+
+## Every owner rule, round by round (24 Oct 2026; read all before a redo, a newer round wins)
+**How we work on the hero**
+- Medium or large change: an Artifact sketch first (mockups on real frames, decisions with a recommendation), build after the yes.
+- Every set: the side-by-side preview (today | new, desktop + phone) and the owner's yes before shipping; then ship at once.
+- "Whatever fixes you do now for the hero video, document them, update the skill/command/script, so next time we don't repeat the same mistakes":
+  every fix lands as a tool rule + test + a trap line here; "check against yourself for other bugs" before showing anything.
+- "Did you fix the root causes permanently?": fix the tool's rule first, then the scene (section below).
+- App words or looks that are wrong in the clip are fixed in the app (a public PR, a hand-off session), never painted over in the scene.
+
+**Round 1-2: one readable tour**
+- Four clips, one tour, one person (nurse persona), one job from setup to interview. Focus is not a 5th clip.
+- Every step of the user's real sequence shown (~31 s then; ~56 s with round 5), one beat per step, readable at the website's size.
+- Track = a Gmail check that finds the interview invitation → the interview (preparation, recording, insights/patterns) → the calendar.
+
+**Round 3: "explain the journey better"**
+- A caption on every step; "it moves screens very fast, it's not clear how we get from a step to another": show the in-between (an e-mail
+  arriving in her Gmail, then our app triggering the Gmail check), never a jump.
+- Set up starts at step 1 (Connect your AI), no step skipped. "Make each journey more coherent."
+- Find from a fresh setup: Jobs with the big "Find jobs" card, the click on it highlighted, the card's searching state animated, then a
+  slower way into the job drawer ("not clear how we got there").
+- Apply starts on Jobs: the press on Apply → the Applying screen/card → the browser.
+- No hard-coded "Claude": "Free AI", or "AI is filling", or generic.
+- No glitch frame (the "Sonnet" flash): every cut checked frame by frame.
+
+**Round 4: "highlight each of the steps"**
+- Each clip says where it is: the tag chip + caption band (A + B), Set up shows the app's "Step n of 5".
+- The Find jobs card centred. After a press, wait half a second before the screen changes ("not natural so fast").
+- "We cropped too hard, let's leave a bit of space": a margin around every look.
+
+**Round 5: the app follows the fill**
+- The Applying card shows a real status when the form opens ("Complete the application in Chrome"), never "Checking…".
+- Show the session card in the app updating live while the extension fills the form: first one after another, then side by side.
+- The card framed close on its count (B), then one pan to the "Ready to submit" pill.
+- The video's colours are the app's colours (BT.709 + sRGB tag; judge in Chrome).
+- Track: "show the Action screen where we click on 'check gmail' card", never an empty panel waiting.
+- The app and extension are amber (public #1808): re-record after an app look change.
+
+**Round 6: transitions and the side by side**
+- A transition at every screen change: a cut look inside a clip, a join between parts (app ↔ Chrome), the switch between clips on the site
+  and the loop back to Set up. "Fading/moving or even some tiles/text", never an instant replacement.
+- Apply side by side (sketch https://claude.ai/artifact/GdQuKaFdKnQp3du6QDsuJX): split screen, Chrome | her card; the side that changes grows to
+  60% and zooms in (Chrome while fields fill, then the card's count), both zoom out at "Ready to submit". It replaces round 5's one after
+  another; on phones the two stack (Chrome on top, the card below).
 
 ## When something is wrong: fix the mechanism, then the scene (owner, 24 Oct 2026: "did you fix the root causes permanently?")
 A bad crop, a missing step or a wrong frame is first a question about the tool: which camera/recorder/tool rule let it through? Fix that rule, add a test
