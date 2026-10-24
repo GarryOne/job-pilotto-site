@@ -4,6 +4,7 @@ import {LATEST_FAMILY} from './engines.js';
 import {load as loadScouting} from './scouting.js';
 import {gather as gatherClosed} from './closed-sites.js';
 import {gather as gatherBotChecks} from './bot-checks.js';
+import {gather as gatherReads} from './readmethods.js';
 import {cellsOf, demandOf, topKind} from './scoutingvisual.js';
 
 export const day = (date, back = 0) => new Date(date.getTime() - back * 86400000).toISOString().slice(0, 10);
@@ -55,5 +56,6 @@ export async function gather(db, now = new Date(), family = '') {
   // Who searches where (last 30 days): kinds × countries of the installs that share, for the heat map's hover and the gaps (k >= 3 installs).
   const demand = demandOf(await all(db, `SELECT DISTINCT install, roles, countries FROM contributions WHERE day >= ? AND${F}`, day(now, 30), ...f));
   const served = await all(db, 'SELECT day, kind, n FROM pool_served_day WHERE day >= ? ORDER BY day DESC, kind', day(now, 30)).catch(() => []);   // before 0100: none
-  return {family, served, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central: await loadScouting(db), closed: await gatherClosed(db, family).catch(() => []), botChecks: await gatherBotChecks(db).catch(() => null)};
+  const central = await loadScouting(db);
+  return {family, served, families: await byFamily(db, now).catch(() => null), feeds, daily, demand, boards, advice, sharing7: await sharing(7), sharing30: await sharing(30), shared, routes, useful, dead, deadTotal, central, closed: await gatherClosed(db, family).catch(() => []), botChecks: await gatherBotChecks(db).catch(() => null), reads: await gatherReads(db, central?.runs || []).catch(() => null)};
 }

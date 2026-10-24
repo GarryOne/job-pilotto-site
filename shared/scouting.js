@@ -1,5 +1,6 @@
 // The central scout's own numbers (src/scout.py central_stats), sent with the index it publishes (PUT /api/index, owner's key) and shown on /intel.
 // No user data: feeds, queue, yield per kind of source, Common Crawl, recipes, AI reads, market coverage against jobs.ch. Checked to a fixed shape.
+import {cleanReads} from './readmethods.js';
 const int = (value, max = 10_000_000) => (Number.isFinite(Number(value)) ? Math.max(0, Math.min(max, Math.round(Number(value)))) : 0);
 const word = (value, max = 60) => String(value ?? '').replace(/[^\p{L}\p{N} ._:/()+-]/gu, '').slice(0, max);
 const cellOf = value => (/^[a-z_]{2,20}\|[a-z]{2}$/.test(value || '') ? value : '');   // '<kind>|<country>', src/scout_cells.py
@@ -14,7 +15,7 @@ export function cleanStats(stats) {
     // Which kind of source found the employers of each kind (src/scout_index.py source_kinds), and this run's record (run_record).
     source_kinds: Object.fromEntries(Object.entries(stats.source_kinds && typeof stats.source_kinds === 'object' ? stats.source_kinds : {}).slice(0, 30).map(([k, v]) => [word(k), counts(v, 15)])),
     run: stats.run && typeof stats.run === 'object' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(stats.run.at || '')
-      ? {at: stats.run.at, cell: cellOf(stats.run.cell), added: int(stats.run.added), checked: int(stats.run.checked), found: int(stats.run.found)} : null,
+      ? {at: stats.run.at, cell: cellOf(stats.run.cell), added: int(stats.run.added), checked: int(stats.run.checked), found: int(stats.run.found), ...(cleanReads(stats.run.reads) ? {reads: cleanReads(stats.run.reads)} : {})} : null,
     sources: (Array.isArray(stats.sources) ? stats.sources : []).slice(0, 25).map(s => ({origin: word(s?.origin), probed: int(s?.probed), found: int(s?.found)})),
     market: (Array.isArray(stats.market) ? stats.market : []).slice(0, 20).map(m => ({term: word(m?.term, 40), ours: int(m?.ours), jobsch: m?.jobsch == null ? null : int(m.jobsch)})),
   };
