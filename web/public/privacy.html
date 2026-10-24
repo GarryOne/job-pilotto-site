@@ -109,6 +109,15 @@
       trades it for your access token and hands that token to the Jobadabra app on your computer. The token is held for at most
       10 minutes, only until your app collects it, then deleted; it is never logged. Jobadabra only reads and writes the pages you
       chose. You can remove its access at any time in Notion (Settings → Connections).</p>
+    <h2>Google data: Gmail and Calendar</h2>
+    <p>If you connect Google, Jobadabra asks for <b>read-only</b> access to Gmail and Google Calendar (the <code>gmail.readonly</code> and <code>calendar.readonly</code> scopes). It reads job-related email and your calendar events to find replies, rejections and interviews and to keep your applications up to date. It never sends, changes or deletes anything.</p>
+    <ul>
+      <li><b>Where it is read:</b> on your own computer, and, if you turn on Always on, in your own private GitHub repository, where your Google sign-in is kept as one of that repository's secrets. We do not store your Gmail or Calendar content, or your Google sign-in, on our servers.</li>
+      <li><b>What is kept:</b> only the facts the app writes to your own Notion or your computer (for example "interview on 3 Nov", "rejection from an employer"), not whole mailboxes.</li>
+      <li><b>AI:</b> to understand an email, the text of that email is sent to the AI you chose in Settings (your Claude or OpenAI account, or the AI built into Jobadabra) for that one answer.</li>
+      <li><b>Never:</b> sold, shared for advertising, or used to train AI models, ours or anyone's.</li>
+      <li><b>Stop at any time:</b> Settings → Connections → Gmail &amp; Calendar → Disconnect, or remove Jobadabra at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Jobadabra's use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy#limited-use">Google API Services User Data Policy</a>, including its Limited Use requirements.</li>
+    </ul>
     <h2>Website</h2>
     <p>If you join the Pro early-access list, we keep the email address (and the role you typed) to write to you about it, and
       nothing else. Ask us to delete it any time.</p>
