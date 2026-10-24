@@ -8,7 +8,7 @@ export const holdLeft = (hold, startedMs, nowMs) => Math.max(0.3, hold - (nowMs 
 export const leftPart = (box, width) => (box && width ? {...box, width: Math.min(box.width, width)} : box);
 export const holdEvent = (item, box, phoneBox = null, s = item.hold) => ({type: 'hold', look: item.look || null, box: leftPart(box, item.lookWidth), s, ...(item.zoom ? {zoom: item.zoom} : {}),
   ...(item.cut ? {cut: true} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {}), ...(phoneBox ? {phoneBox: leftPart(phoneBox, item.phoneLookWidth)} : {}), ...(item.poster ? {poster: true} : {}), ...(item.say ? {say: item.say} : {}), ...(item.tag ? {tag: item.tag} : {}),
-  ...(item.into ? {into: item.into} : {}), ...(item.into === 'card' ? {card: {tag: item.tag || '', text: item.card || ''}} : {})});   // the transition into this look (transitions.mjs)
+  ...(item.into ? {into: item.into} : {}), ...(item.lead ? {lead: true} : {}), ...(item.into === 'card' ? {card: {tag: item.tag || '', text: item.card || ''}} : {})});   // the transition into this look (transitions.mjs)
 // How much of a look's box is outside the window. A look measured off screen is framed on whatever sits at the window's
 // edge (round 5: the Applying page kept the Jobs page's scroll, her job's header was at y -308 and the camera showed the needs list): the recorders stop. Pure.
 // The share of a look's box outside the window, 0..1: a form a few px taller than the window (its bottom padding) is fine, a header above it is not.
@@ -35,3 +35,9 @@ export const wordsCut = (box, width, lines) => {
 // The look the recorder watches for after step i (record-app.mjs logs 'ready' when it is on screen, cuts.mjs drops the frames before it): the next look
 // if it is marked `cut`, else null. Pure.
 export const nextCut = (steps, i) => { const look = steps.slice(i + 1).find(step => step.hold && step.look); return look?.cut ? {look: look.look} : null; };
+// Picture in picture (pip.mjs): a step marked `sync` logs where its recording meets the other one (the fill starts, the card starts following it);
+// a step marked `lead` that is not a hold logs that its recording becomes the main picture (a hold carries `lead` in its own entry). Before the step.
+export const stepMarks = (item, log) => {
+  if (item.sync && !item.fill) log.add({type: 'sync'});   // a fill syncs at its first filled field (record-extension.mjs)
+  if (item.lead && !item.hold) log.add({type: 'lead'});
+};

@@ -9,7 +9,7 @@ import {clipTo} from './camera.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
-import {holdEvent, holdLeft, nextCut, OFF_MAX, offScreen, PRESS_SHOW, wordsCut} from './hold.mjs';
+import {holdEvent, holdLeft, nextCut, OFF_MAX, offScreen, PRESS_SHOW, stepMarks, wordsCut} from './hold.mjs';
 import {liveStates} from './live-review.mjs';
 
 const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
@@ -92,6 +92,7 @@ async function watch(page, ms, log, rest = true) {
 async function step(page, item, log, app = null) {
   // a page change is stamped BEFORE its action (round 3: stamped after, a frame of the new page could arrive first and show under the old framing)
   const say = item.say && !item.hold ? {say: item.say, ...(item.tag ? {tag: item.tag} : {})} : {};   // a caption on an action shows from its moment (captions.mjs)
+  stepMarks(item, log);   // picture in picture (pip.mjs): where two recordings meet, and who leads
   if (item.go) { log.add({type: 'mark', ...say}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
   if (item.js) { log.add({type: 'mark', ...say}); await page.evaluate(item.js); await watch(page, 900, log); return; }
   if (item.review) {   // the form card updating live (round 5, owner): the extension's fill reports, sent over the app's own 'review' message; no page change
@@ -107,6 +108,7 @@ async function step(page, item, log, app = null) {
     const box = await page.locator(item.tap).first().boundingBox();
     if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
     log.add({type: 'click', selector: item.tap, box, ...say, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box, ...(item.then && pressShow(log) ? {held: true} : {})});
+    if (item.end) { await page.waitForTimeout(pressShow(log) || 400); log.add({type: 'end'}); return; }   // the part ends on this press (camera.mjs untilEnd)
     if (item.then) { await page.waitForTimeout(pressShow(log)); log.add({type: 'mark'}); await page.evaluate(item.then); }
     await watch(page, item.then ? 900 : 300, log);
     return;

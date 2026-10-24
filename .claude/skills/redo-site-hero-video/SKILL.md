@@ -30,7 +30,8 @@ a tighter 4:3 copy for phones, and a **transition at every screen change** (roun
    (`tools/hero.sh --preview` re-renders the side-by-side from what is placed).
 6. **Ship** from the worktree: `~/jobadabra/tools/ship.sh --background --body=<file>` (body per `~/jobadabra/tools/pr-body-template.md`, with
    one `| What changed | Before | After |` row per changed clip: `<piece>-before.gif` | `<piece>-after.gif`, each linked to `<piece>-compare.mp4`
-   (the body check refuses one combined image; all published under a tag, not on the branch:
+   (the body check refuses one combined image, and a header other than exactly `| What changed | Before | After |`: run
+   `python3 ~/jobadabra/tools/pr-screens.py < <body>` before ship; all published under a tag, not on the branch:
    `GITHUB_REPOSITORY=GarryOne/jobadabra-web node ~/jobadabra/tools/pr-assets.mjs pr-assets-<branch> <files>`; at most 5 rows); stills only for what is not a clip); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).
 After that, the daily `tools/media.sh` refresh re-records the hero pieces from origin/main with everything else; the hero needs this skill only to change.
 
@@ -43,6 +44,7 @@ After that, the daily `tools/media.sh` refresh re-records the hero pieces from o
 | Beat times in the manifest (sheets, preview) | `media/camera.mjs` `beatTimes`, `media/manifest.mjs` `beats` |
 | Camera (steady, cut, phone gain) | `media/camera.mjs` |
 | Transitions (fade, slide, tiles, card): kinds, cards' time, part joins | `media/transitions.mjs` (scenes: a look's `into`/`card`, a part's `into`, a clip's `stageInto`); drawn by `media/render.cjs`, on the site by `hero-stage.js` `comeIn` |
+| Picture in picture (two recordings of one moment, swapped on each `lead`, synced on `sync`) | `media/pip.mjs`; scenes: a piece's `pip: '<part>'`; `recordPip` in `media/media.mjs`; layers drawn by `media/render.cjs` |
 | App / extension recorders, look boxes | `media/record-app.mjs`, `media/record-extension.mjs`; a hold's entry and timing (pure) `media/hold.mjs` |
 | Stage markup, captions (`data-cap`, `data-sub`, `data-later`), phone posters | `web/public/index.html` `#hero-stage` |
 | Playback (order, cut on first frame, pause, steps) | `web/public/hero-stage.js` |
@@ -257,3 +259,18 @@ comes back at the next redo.
 - **Transitions and the stray-frame gate** (round 6): a transition's mixed frames are neither page, so `strayFrames` stops at a transition's start
   and checks again from its end (`windows`); never raise `STRAY_MAX` for a transition. A title card adds its time to the clip (`withCards`), so
   beats, captions and the gate read the log after it. Tests: `desktop/test/media-transitions.test.js` (every cut look, join and clip switch names one).
+- **Picture in picture** (round 6, Apply): the piece (Chrome) is recorded first; the other recording's `review` is paced on the piece's real fill
+  (its `sync` to its next mark), so the card ticks while the fields fill; both meet at their `sync` steps. A step marked `lead` makes its
+  recording the main picture; the caption is always the main picture's (so write each recording's says for the stage it leads). The inset sits
+  top right (34% wide, 46% on phones): keep the main look's words out of that corner. Tests: `desktop/test/media-pip.test.js`.
+- **A join never shows the same place on both sides** (round 6, take 4): the app part ended on the Applying card and the picture in picture opened on
+  the same card a few pixels apart; the fade doubled every line (a ghost). End the part on its press instead (`{tap, end: true}`: camera.mjs
+  `untilEnd` drops what follows) and join by a slide. Test: media-pip.test.js loops over every join by the looks' `tag`.
+- **A look on one small control in a wide row cuts the row's words** at the frame's edge (take 4: the pill alone, "…wers and legal boxes"): frame
+  the section the control belongs to (its count, bar and pill) unless the control is the only thing that changes.
+- **Two pictures of one moment must agree** (round 6, picture in picture): the first take ticked the card's 10 fields in 0.1 s (the fill was
+  timed to the panel's first paint) and the card said "of 10" while the panel beside it said "of 6". Now the fill syncs at its first filled field,
+  ends at the panel's own done state (`.ready`, `fillSeconds`), and the card ticks the stand-in form's required fields only. Read every frame of
+  a picture in picture for numbers, words or states that disagree between the two pictures before showing the owner.
+- **Check a recording's numbers, not just its look**: the recorder prints `the card paced on a N s fill`; a value under ~1 s means the sync or
+  the done state was missed.
