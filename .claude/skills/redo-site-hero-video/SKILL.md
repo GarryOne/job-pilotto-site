@@ -36,7 +36,7 @@ After that, the daily `tools/media.sh` refresh re-records the hero pieces from o
 | "2 weeks later" (Track): records changed for one clip | `media/personas/nurse-lyon/moments/later.json` (`applyEdits`: a key names a list, `"."` = the file is a list (runs.json), a map by id, or one record by its id; `null` drops a field, `_first`, `_drop`, `_add` creates) |
 | Beat times in the manifest (sheets, preview) | `media/camera.mjs` `beatTimes`, `media/manifest.mjs` `beats` |
 | Camera (steady, cut, phone gain) | `media/camera.mjs` |
-| App / extension recorders, look boxes | `media/record-app.mjs`, `media/record-extension.mjs` |
+| App / extension recorders, look boxes | `media/record-app.mjs`, `media/record-extension.mjs`; a hold's entry and timing (pure) `media/hold.mjs` |
 | Stage markup, captions (`data-cap`, `data-sub`, `data-later`), phone posters | `web/public/index.html` `#hero-stage` |
 | Playback (order, cut on first frame, pause, steps) | `web/public/hero-stage.js` |
 | Look (frame, amber glow, 4:3 on phones, steps line) | `web/public/home.css` `.hero-stage` |
@@ -123,3 +123,4 @@ comes back at the next redo.
   frame within 1 s is a stall (`check.mjs captureGaps`), recorded again up to twice (`media: <piece>: the capture stalled`), then the piece fails.
   Read the raw frames (`.work/<piece>/frames`, `log.json`) before naming a stall: run 3's "frozen Set up" was a look measured before its frame came.
 - **The phone copy's `phoneLook` is shown whole too**: give it the cells you mean (`[ROW .fit-cell, ROW .role]`) or its left part (`phoneLookWidth`), never a full-width row or banner.
+- **A test that imports `record-app.mjs` needs Playwright, which the site CI job lacks** (PR #47 went red): pure helpers live in `media/hold.mjs`; "Cannot find module 'playwright-core'" in a local run is this same failure, never "just my setup".

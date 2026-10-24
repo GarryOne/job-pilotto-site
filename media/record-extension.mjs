@@ -7,7 +7,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {startRealExtension} from '../desktop/e2e/lib/real-extension.mjs';
-import {holdEvent, holdLeft, unionBox} from './record-app.mjs';
+import {holdEvent, holdLeft} from './hold.mjs';
+import {unionBox} from './record-app.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {answerReply, formHost, formHtml} from './stand-in.mjs';
 

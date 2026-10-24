@@ -167,7 +167,7 @@ test('a hero clip starts at its first look: earlier frames and events go, times 
 });
 
 test('a look may keep its left part on purpose (lookWidth), never wider than the box itself', async () => {
-  const {holdEvent} = await import('../../media/record-app.mjs');
+  const {holdEvent} = await import('../../media/hold.mjs');
   const wide = {x: 256, y: 100, width: 1512, height: 180};
   assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 760}, wide).box.width, 760);
   assert.equal(holdEvent({hold: 1, look: 'x', lookWidth: 2000}, wide).box.width, 1512);
@@ -177,7 +177,7 @@ test('a look may keep its left part on purpose (lookWidth), never wider than the
 
 // Round 2: a hold's entry is stamped after its boxes are measured; its `s` is the time left on screen, so beat frames and posters fall inside the look.
 test('a hold logs the seconds it has left after measuring, and the recorder waits exactly that', async () => {
-  const {holdEvent, holdLeft} = await import('../../media/record-app.mjs');
+  const {holdEvent, holdLeft} = await import('../../media/hold.mjs');
   assert.ok(Math.abs(holdLeft(2.2, 1000, 1700) - 1.5) < 1e-9);
   assert.equal(holdLeft(1, 1000, 3000), 0.3, 'a slow measure still leaves a moment on screen');
   assert.equal(holdEvent({hold: 2.2, look: 'x'}, {x: 0, y: 0, width: 10, height: 10}, null, 1.5).s, 1.5);
