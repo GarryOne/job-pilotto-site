@@ -166,3 +166,10 @@ test('the Filed tile says how many were filed as issues and how many were judged
   assert.match(html, /89 as issues · 31 judged noise before filing · 8 not judged yet/);
   assert.doesNotMatch(periodsSection({periods: {all: {totals: {filed: 5, unjudged: 1}}}, history: []}), /judged noise/);
 });
+
+test('a paused AI budget is said on the page with its dates and how many findings wait', () => {
+  const live = {at: '2026-10-24T12:00:00Z', totals: {}, byDetector: [], budget: {paused: true, issue: 1654, since: '2026-10-21', until: '2026-11-01', waiting: 8}};
+  assert.match(liveSection(live), /The AI verdicts are paused<\/b> · the AI limit was reached on 2026-10-21; access returns on 2026-11-01\. 8 findings wait for a verdict until then \(issue #1654\)/);
+  assert.doesNotMatch(liveSection({...live, budget: {paused: false}}), /verdicts are paused/);
+  assert.doesNotMatch(liveSection({...live, budget: undefined}), /verdicts are paused/);
+});
