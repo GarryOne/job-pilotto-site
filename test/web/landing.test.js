@@ -118,7 +118,7 @@ test('the hero is one stage of four clips: the first loads, the rest wait; each 
     assert.match(clip, /\(made-up example\)"/, `clip ${i + 1} says it is an example`);
     assert.doesNotMatch(clip, /autoplay|loop/, `clip ${i + 1}: the script plays and advances it`);
   });
-  assert.ok(stage.includes(`<b class="stage-title">${CAPTIONS[0]}</b>`), 'the first caption is there without the script');
+  assert.ok(stage.includes(`<b class="stage-title"><span class="m-hide">${CAPTIONS[0]}</span>`), 'the first caption is there without the script');
   assert.match(clips[2], /data-sub="Review your answers, then submit\."/, 'Apply hands over to the person');
   assert.match(clips[3], /data-later="2 weeks later"/, 'Track is later in the same example');
   // Round 2 (owner, 24 Oct 2026: "label not on the text"): the "later" words are a tag in the caption line above the stage, never drawn over the video.
