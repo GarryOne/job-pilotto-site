@@ -95,7 +95,11 @@ section.block.tight { padding-block: 56px; }
 .site-foot b { display: block; color: var(--ink); font-size: .82rem; margin-bottom: 8px; }
 .site-foot a { display: block; text-decoration: none; padding-block: 3px; }
 .site-foot a:hover { color: var(--ink); }
-@media (max-width: 760px) { .site-foot { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.site-foot .maker { display: flex; align-items: center; gap: 12px; max-width: 100%; margin: 20px 0 0; padding: 12px 16px 12px 12px; border-left: 3px solid var(--signal); border-radius: 8px; background: var(--surface); line-height: 1.35; }
+.site-foot .maker .mk-ico { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 8px; background: var(--signal-soft); color: var(--signal); }
+.site-foot .maker b { margin: 0; font-size: .86rem; font-weight: 500; }
+.site-foot .maker small { display: block; font-size: .8rem; }
+@media (max-width: 760px) { .site-foot { grid-template-columns: repeat(2, minmax(0, 1fr)); } .site-foot > div:first-child { grid-column: 1 / -1; } }
 
 /* The ChatGPT-redesign borrowings (owner, 21 Oct 2026); the effects themselves live in effects.css. */
 .hero.split h1 { position: relative; }
