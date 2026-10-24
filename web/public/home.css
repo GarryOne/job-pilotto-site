@@ -6,34 +6,38 @@
 .hero.split .hero-copy { justify-items: start; gap: 18px; }
 .hero.split h1 { font-size: clamp(2.2rem, 3.6vw, 3.2rem); }
 .hero.split .eyebrow { justify-content: flex-start; }
-.hero.split .hero-visual { max-width: none; width: auto; margin-right: calc(-1 * min(9vw, max(0px, (100vw - 1160px) / 2))); }   /* the clips may run past the text's right edge into the page margin */
+.hero.split .hero-visual { max-width: none; width: auto; }   /* the stage ends where the page's content ends (owner, 24 Oct 2026: "goes out of the site content wrapper") */
 .hero.split .downloads { display: flex; flex-wrap: wrap; }   /* Mac and Windows side by side while they fit */
 .hero.split .downloads .btn { white-space: nowrap; padding-inline: 14px; font-size: .88rem; }
 
-/* The hero's coverflow: the clip in the middle is big, the one before and the one after sit smaller behind it, half cut off and fading at the
-   edges (hero-carousel.js sets each slide's place on the track). --sw is a slide's width, --step the distance between neighbours in slide widths. */
-.hero-clips { --sw: 72%; --step: 58; position: relative; aspect-ratio: 1.8; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%); }
-.hero-clips .slide { position: absolute; left: 50%; top: 46%; width: var(--sw); height: auto; aspect-ratio: 1600 / 1000; object-fit: cover; transform: translate(-50%, -50%);
-  border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .7s ease; }
-.hero-clips .slide.is-on { opacity: 1; }
-.hero-clips.is-moving .slide { will-change: transform, opacity; transition: none; }   /* the script places every slide on the track */
-.hero-clips.is-still { -webkit-mask-image: none; mask-image: none; }
-.hero-clips.is-still .slide:not(:first-of-type) { display: none; }
-/* The clip picker: four labelled steps on a dark strip under the centred clip (owner, 21 Oct 2026, from the ChatGPT redesign). */
-.hero-clips .dots { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; z-index: 20; border-radius: 10px;
-  background: rgb(13 19 26 / .82); border: 1px solid var(--line-strong); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-.hero-clips .dots button { display: inline-flex; gap: 6px; align-items: baseline; padding: 6px 11px; border: 0; border-radius: 7px; background: transparent; color: var(--muted);
-  font: 500 .74rem var(--sans); cursor: pointer; transition: background .2s, color .2s; white-space: nowrap; }
-.hero-clips .dots button span { font: 500 .66rem var(--mono); opacity: .7; }
-.hero-clips .dots button:hover { color: var(--ink); }
-.hero-clips .dots button[aria-current] { background: var(--signal-soft); color: var(--amber, #ffb224); }
-.hero-clips .dots button:focus-visible { outline: 2px solid var(--amber, #ffb224); outline-offset: 2px; }
-@media (max-width: 420px) { .hero-clips .dots button { padding: 5px 8px; font-size: .7rem; } .hero-clips .dots button span { display: none; } }
-.hero-clips.is-still .dots { display: none; }
-@media (prefers-reduced-motion: reduce) { .hero-clips .slide { transition: none; } }
-@media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 40px 40px; }
-  .hero-clips { --sw: 100%; --step: 0; --flow: fade; aspect-ratio: 1.7; -webkit-mask-image: none; mask-image: none; } }   /* a phone: the middle clip only */
+/* The hero's stage (owner, 24 Oct 2026): one clip at a time in an app-like frame with a restrained amber glow; the caption above it, the four steps below
+   with a thin line that fills as the clip plays, a small pause button. hero-stage.js plays them; phones show the 4:3 copies (tighter crops). */
+.hero-stage { position: relative; display: grid; gap: 14px; }
+.stage-cap { margin: 0; display: grid; gap: 2px; min-height: 3.2em; }
+.stage-cap b { font: 600 clamp(1.1rem, 1.55vw, 1.35rem)/1.25 var(--display); color: var(--ink); letter-spacing: -.01em; }
+.stage-cap span { font-size: .92rem; color: var(--muted); }
+.stage-screen { position: relative; aspect-ratio: 1600 / 1000; border-radius: 14px; overflow: hidden; border: 1px solid var(--line-strong); background: var(--surface);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 178 36 / .05), 0 24px 90px -28px rgb(255 178 36 / .28); }
+.stage-screen .slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }   /* a cut, never a crossfade: two screens never overlap (owner, 24 Oct 2026) */
+.stage-screen .slide.is-on { opacity: 1; }
+.stage-later { position: absolute; left: 12px; top: 12px; z-index: 2; padding: 4px 10px; border-radius: 999px; font: 500 .72rem/1 var(--mono); letter-spacing: .04em;
+  color: var(--signal-ink); background: var(--signal); box-shadow: 0 4px 16px rgb(0 0 0 / .35); opacity: 0; animation: stage-later 2.2s ease forwards; }
+@keyframes stage-later { 0%, 100% { opacity: 0; } 12%, 70% { opacity: 1; } }
+.stage-steps { display: flex; gap: 6px; align-items: stretch; }
+.stage-steps button { position: relative; flex: 1 1 0; min-width: 0; display: inline-flex; gap: 6px; align-items: baseline; padding: 8px 10px 11px; border: 1px solid var(--line);
+  border-radius: 9px; background: transparent; color: var(--muted); font: 500 .8rem var(--sans); cursor: pointer; overflow: hidden; white-space: nowrap; transition: color .2s, border-color .2s; }
+.stage-steps button span { font: 500 .66rem var(--mono); opacity: .7; }
+.stage-steps button i { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--signal); transform-origin: left;
+  transform: scaleX(max(var(--done, 0), var(--played, 0))); opacity: .85; }
+.stage-steps button:hover { color: var(--ink); }
+.stage-steps button[aria-current] { color: var(--ink); border-color: var(--line-strong); background: var(--signal-soft); }
+.stage-steps button[aria-current] span { color: var(--signal); opacity: 1; }
+.stage-steps .stage-pause { flex: 0 0 40px; justify-content: center; align-items: center; padding: 0; }
+.stage-steps button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .stage-later { animation: none; opacity: 1; } }
+@media (max-width: 900px) { .hero.split { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 40px 40px; } }
+@media (max-width: 720px) { .stage-screen { aspect-ratio: 4 / 3; } }   /* the phone copies: the same clips, cropped tighter */
+@media (max-width: 420px) { .stage-steps button { padding: 7px 6px 10px; font-size: .74rem; justify-content: center; } .stage-steps button span { display: none; } }
 
 /* Mac and Windows: two identical buttons, side by side; full width on phones. */
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 12px; }

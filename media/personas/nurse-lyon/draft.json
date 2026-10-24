@@ -17,6 +17,14 @@
    "How many weekends a month are acceptable?"
   ],
   "search": {
+   "target_roles": [
+    "Registered nurse",
+    "Cardiac nurse",
+    "Infirmier",
+    "Infirmière",
+    "Telemetry nurse",
+    "ICU nurse"
+   ],
    "role_keywords": [
     "infirmier",
     "infirmière",

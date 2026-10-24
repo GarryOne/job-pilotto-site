@@ -17,7 +17,7 @@ const LEFT_OUT = {
   '.consent-note': 'a notice to read, not a card to pick',
   '.mac-window': 'a screenshot frame: light over it would wash out the picture',
   '.car-frame': 'a screenshot frame: light over it would wash out the picture',
-  '.hero-clips .slide': 'a video of the coverflow',
+  '.stage-screen': 'the hero\'s video frame: light over it would wash out the picture',
   '.access-wrap': 'a wide table that scrolls sideways',
   '.compare-wrap': 'a wide table that scrolls sideways',
   '.alt-download': 'a button',

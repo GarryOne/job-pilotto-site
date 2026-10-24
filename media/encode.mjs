@@ -22,7 +22,7 @@ export function missingEncoders(list = execFileSync('ffmpeg', ['-hide_banner', '
 }
 
 // -> {mp4, webm, poster, phone?, gif?}: file names in outDir, plus the bytes of each.
-export function encodeVideo({master, name, piece, outDir, posterAt = 0}) {
+export function encodeVideo({master, phoneMaster = null, name, piece, outDir, posterAt = 0}) {
   const files = {mp4: `${name}.mp4`, webm: `${name}.webm`, poster: `${name}-poster.jpg`};
   const at = file => path.join(outDir, file);
   const fast = piece.speed > 1 ? `setpts=PTS/${piece.speed},fps=30,` : '';   // a sped-up clip: the whole flow in about 3 s
@@ -32,9 +32,15 @@ export function encodeVideo({master, name, piece, outDir, posterAt = 0}) {
   withinBudget(crf => ff('-i', master, '-vf', scale, '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', String(crf), '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-an', at(files.webm)),
     at(files.webm), piece.budget, crfLadder(34, 50));
   ff('-ss', String(posterAt), '-i', master, '-vf', scale, '-frames:v', '1', '-q:v', '3', at(files.poster));
-  if (piece.phone) {
-    files.phone = `${name}-${piece.phone}.mp4`;
-    ff('-i', master, '-vf', `${fast}scale=${piece.phone}:-2:flags=lanczos,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', '27', '-movflags', '+faststart', '-an', at(files.phone));
+  if (piece.phone) {   // a width (the desktop master made smaller), or {width, height, budget} with its own tighter master (the hero, owner 24 Oct 2026)
+    const width = typeof piece.phone === 'object' ? piece.phone.width : piece.phone;
+    files.phone = `${name}-${width}.mp4`;
+    withinBudget(crf => ff('-i', phoneMaster || master, '-vf', `${fast}scale=${width}:-2:flags=lanczos,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-movflags', '+faststart', '-an', at(files.phone)),
+      at(files.phone), piece.phone.budget, crfLadder(24, 34));
+    if (phoneMaster) {   // the phone's own first frame: the site shows it before the clip plays
+      files.phonePoster = `${name}-${width}-poster.jpg`;
+      ff('-ss', String(posterAt), '-i', phoneMaster, '-vf', `scale=${width}:-2`, '-frames:v', '1', '-q:v', '3', at(files.phonePoster));
+    }
   }
   if (piece.gif) {   // emails and READMEs: 10 fps, one palette for the whole clip, only changed areas redrawn
     files.gif = `${name}.gif`;

@@ -33,8 +33,8 @@ test('the demo folder is a persona; a folder with a real key or no profile is re
 });
 
 test('the director\'s plan sets a zoom per look and the manifest\'s words; no plan keeps the scene', () => {
-  assert.equal(withPlan(VIDEOS.hero, null), VIDEOS.hero);
-  const planned = withPlan(VIDEOS.hero, {zooms: {'section.card.is-lit': 1.3}, caption: 'Jobs that fit you'});
+  assert.equal(withPlan(VIDEOS['hero-track'], null), VIDEOS['hero-track']);
+  const planned = withPlan(VIDEOS['hero-track'], {zooms: {'section.card.is-lit': 1.3}, caption: 'Jobs that fit you'});
   assert.equal(planned.steps.find(step => step.look === 'section.card.is-lit').zoom, 1.3);
   assert.equal(planned.caption, 'Jobs that fit you');
   assert.equal(planOf('no-such-piece', os.tmpdir()), null);
@@ -61,5 +61,23 @@ test('the hero clips play at most 2x and every zoomed view stays on screen long 
       const seen = step.hold / (piece.speed || 1);
       assert.ok(seen >= 1.1, `${name}: ${step.look} is on screen ${seen.toFixed(1)} s`);
     }
+  }
+});
+
+// Owner, 24 Oct 2026 (sketch MD1RKmELpnh7rzkprJkKfg + review): "zoom toward the result, then hold"; one deliberate move per phase; key facts readable at the
+// hero's real size; a tighter phone crop. Every clip on the hero stage, so a fifth one follows the same rules.
+test('every hero clip is steady, makes at most one deliberate move, holds a zoomed result 2 s or more, and has its own 4:3 phone copy', () => {
+  const slides = Object.entries(VIDEOS).filter(([, piece]) => piece.slide);
+  assert.deepEqual(slides.map(([, piece]) => piece.slide).sort(), [1, 2, 3, 4]);
+  for (const [name, piece] of slides) {
+    assert.equal(piece.camera, 'steady', `${name}: no zoom on every click`);
+    const looks = piece.steps.filter(step => step.look);
+    const moves = looks.slice(1).filter(step => !step.cut).length + piece.steps.filter(step => (step.click || step.tap) && step.zoom).length;
+    assert.ok(moves <= 1, `${name}: ${moves} camera moves`);
+    const result = piece.steps.find(step => step.poster);
+    assert.ok(result && result.look && result.zoom >= 1.6, `${name}: a zoomed result marked poster`);
+    assert.ok(result.hold / piece.speed >= 2, `${name}: the result is on screen ${(result.hold / piece.speed).toFixed(1)} s`);
+    assert.equal(piece.phone.width / piece.phone.height, 4 / 3, `${name}: phone copy 4:3`);
+    assert.ok(piece.steps.filter(step => step.look).every(step => (step.phoneZoom || 0) > (step.zoom || 1)), `${name}: the phone crops tighter`);
   }
 });

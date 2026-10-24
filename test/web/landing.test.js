@@ -92,46 +92,46 @@ test('the landing stays short: one hero, the numbers, three cards, the whole jou
   }
 });
 
-test('the hero is a carousel of four clips: the first loads, the rest wait; each has a poster and a phone copy; reduced motion keeps a still', () => {
+// The hero's stage (owner, 24 Oct 2026, sketch MD1RKmELpnh7rzkprJkKfg + his review): one stage, four clips of one made-up person and one job, the owner's
+// captions above the clip, steps with a progress line and a pause button, tighter phone copies with their own posters, nothing autoplays under reduced motion.
+const CAPTIONS = ['Add your CV. Shape your search.', 'Find matching jobs. See why they fit.', 'Fill applications with your details.', 'Your interviews and next steps, together.'];
+test('the hero is one stage of four clips: the first loads, the rest wait; each has its caption, posters and a phone copy', () => {
   const html = read('index.html');
-  const carousel = html.match(/<div class="hero-clips"[\s\S]*?<div class="dots"[\s\S]*?<\/div>/)[0];
-  const clips = [...carousel.matchAll(/<video class="slide[^>]*>[\s\S]*?<\/video>/g)].map(match => match[0]);
+  const stage = html.match(/<div class="hero-stage"[\s\S]*?<div class="stage-steps"[\s\S]*?<\/div>/)[0];
+  const clips = [...stage.matchAll(/<video class="slide[^>]*>[\s\S]*?<\/video>/g)].map(match => match[0]);
   assert.equal(clips.length, 4);
   clips.forEach((clip, i) => {
     assert.match(clip, new RegExp(`preload="${i === 0 ? 'auto' : 'none'}"`), `clip ${i + 1} preload`);
     assert.match(clip, /poster="\/media\/[^"]+-poster\.jpg"/, `clip ${i + 1} poster`);
+    assert.match(clip, /data-phone-poster="\/media\/[^"]+-720-poster\.jpg"/, `clip ${i + 1} phone poster`);
     assert.match(clip, /-720\.mp4" type="video\/mp4" media="\(max-width: 720px\)"/, `clip ${i + 1} phone copy`);
+    assert.ok(clip.includes(`data-cap="${CAPTIONS[i]}"`), `clip ${i + 1} caption`);
+    assert.match(clip, /data-sub="[^"]{10,}"/, `clip ${i + 1} supporting line`);
+    assert.match(clip, /\(made-up example\)"/, `clip ${i + 1} says it is an example`);
     assert.doesNotMatch(clip, /autoplay|loop/, `clip ${i + 1}: the script plays and advances it`);
   });
-  assert.equal((carousel.match(/<button /g) || []).length, 4, 'one dot per clip');
-  assert.match(html, /<script type="module" src="hero-carousel\.js">/);
-  assert.match(read('hero-carousel.js'), /prefers-reduced-motion: reduce/);
+  assert.ok(stage.includes(`<b>${CAPTIONS[0]}</b>`), 'the first caption is there without the script');
+  assert.match(clips[2], /data-sub="Review your answers, then submit\."/, 'Apply hands over to the person');
+  assert.match(clips[3], /data-later="2 weeks later"/, 'Track is later in the same example');
+  assert.equal((stage.match(/<button type="button" aria-label="(Set up|Find|Apply|Track)"/g) || []).length, 4, 'one step per clip');
+  assert.match(stage, /class="stage-pause" aria-label="Pause"/);
+  assert.match(html, /<script type="module" src="hero-stage\.js">/);
 });
 
-test('the carousel track eases: fast as a slide comes in, slow while it is centred, fast as it leaves, one continuous motion', async () => {
-  const {PERIOD, offset, position, timeFor} = await import(new URL('hero-track.js', dir));
-  const at = u => position(u * PERIOD), speed = u => (at(u + 0.001) - at(u)) / 0.001;
-  for (let k = 0; k < 4; k++) assert.ok(Math.abs(at(k) - k) < 1e-9, `slide ${k} is centred at the start of its period`);
-  assert.ok(speed(0.5) > 6 * speed(0.02), 'the middle of a move is much faster than the centred rest');
-  assert.ok(speed(0.02) > 0 && speed(0.98) > 0, 'never stops dead: a centred slide still drifts');
-  for (let u = 0; u < 3; u += 0.01) assert.ok(at(u + 0.01) >= at(u), 'never moves backwards');
-  assert.equal(offset(0, 0, 4), 0);
-  assert.equal(offset(3, 0, 4), -1, 'the last slide waits on the left of the first');
-  assert.equal(offset(1, 3.6, 4), 1.4, 'wraps from the fourth slide to the first');
-  assert.ok(Math.abs(position(timeFor(2, 0, 4) + 0.4 * PERIOD) - 2) < 1e-9, 'a dot click glides to its slide and lands centred');
-  assert.match(read('hero-carousel.js'), /prefers-reduced-motion: reduce/);
+test('the stage script: plays in turn, steps jump, pause, phone posters, nothing plays by itself under reduced motion', () => {
+  const js = read('hero-stage.js');
+  for (const hook of [/addEventListener\('ended'/, /prefers-reduced-motion: reduce/, /max-width: 720px/, /dataset\.phonePoster/, /IntersectionObserver/, /visibilitychange/, /--played/])
+    assert.match(js, hook);
+  const css = read('home.css');
+  assert.match(css, /@media \(max-width: 720px\) \{ \.stage-screen \{ aspect-ratio: 4 \/ 3; \} \}/, 'phones show the 4:3 copies');
+  assert.match(css, /\.stage-screen \{[^}]*rgb\(255 178 36/, 'a restrained amber glow around the frame');
+  assert.match(css, /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, the stage right');
 });
 
-test('the coverflow: the centred clip is full size and opaque, neighbours smaller and dimmer, the ones beyond fade out', async () => {
-  const {place} = await import(new URL('hero-track.js', dir));
-  const centre = place(0), next = place(1), far = place(1.6), gone = place(2);
-  assert.deepEqual([centre.x, centre.scale, centre.opacity], [0, 1, 1]);
-  assert.ok(next.scale < 0.75 && next.opacity < 0.7 && next.x > 0, 'a neighbour is smaller, dimmer and to the side');
-  assert.equal(place(-1).x, -next.x, 'the previous one mirrors the next');
-  assert.ok(far.opacity < 0.01 && gone.opacity === 0, 'beyond the neighbours nothing shows');
-  const phone = place(0.5, 0, true);
-  assert.deepEqual([phone.x, phone.scale], [0, 1], 'a phone never shows two slides side by side');
-  assert.ok(place(0, 0, true).opacity === 1 && place(1, 0, true).opacity === 0 && phone.opacity > 0 && phone.opacity < 1, 'a phone crossfades');
-  assert.ok(centre.z > next.z && next.z > far.z, 'the centre is in front');
-  assert.match(read('home.css'), /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, clips right');
+test('the hero stage stays inside the page\'s content column (owner, 24 Oct 2026: "the video goes out of the site content wrapper")', () => {
+  const css = read('home.css');
+  const visual = (css.match(/\.hero\.split \.hero-visual \{[^}]*\}/) || [''])[0];
+  assert.ok(visual, 'the split hero styles its visual column');
+  assert.doesNotMatch(visual, /margin(-right|-inline)?\s*:[^;]*-/, 'no negative margin pulls the stage into the page margin');
+  assert.doesNotMatch(css, /\.hero-stage[^{]*\{[^}]*margin[^;]*:\s*(calc\()?-/, 'nor on the stage itself');
 });

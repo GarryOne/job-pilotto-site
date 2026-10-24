@@ -7,39 +7,44 @@
 // camera may zoom to `look`; {press: key}; {fill: true} (extension) marks the tab as the app's Apply does, and the extension fills it. A caption belongs to the piece (the site writes its own text beside the video).
 export const nav = view => `.nav[data-view=${view}]:not([data-settings])`;
 
-// The hero is a carousel of four clips (owner, 21 Oct 2026), ONE story in this order: set up (CV → strategy), today and the ranked jobs (one opened),
-// the extension filling a form, then the replies: applications, an interview review, the calendar. Each is ~5 s on screen (recorded with short holds, then
-// played `speed` times faster, encode.mjs). Camera (camera.mjs, owner 21 Oct 2026): the whole screen shows only for context at the start; every click zooms onto its
-// target, and each hold zooms onto what it shows (`look`, `zoom` up to 2.4): the jobs from close, the review, the calendar's next events, often in a corner.
-// The page's cards use extension-fill at normal speed. `slide` is the clip's place in the carousel.
-const SETUP = '.step[data-step=draft]';
+// The hero: four clips on one stage, ONE story and ONE job (owner, 24 Oct 2026, sketch https://claude.ai/artifact/MD1RKmELpnh7rzkprJkKfg): set up (the CV, the
+// strategy it proposes, confirmed), find (the list, the job opened, why it fits), apply (the extension fills that job's form), track ("2 weeks later", moment
+// 'later': its interview in Focus, then on the calendar). Camera 'steady' (camera.mjs): each clip opens framed, clicks never zoom unless a step says so, one
+// deliberate move toward the result, then a hold long enough to read; a page change cuts. Key facts must read at the hero's real size (~840 px wide on a
+// 1440 screen): the result looks zoom ~2.2. The phone copy ({width, height}: 4:3) has its own tighter camera (PHONE_GAIN, or a step's phoneZoom / phoneLook).
+// Recorded at real speed, played `speed` times faster (encode.mjs). `slide` is the clip's place on the stage. Captions here are the manifest's; the site
+// writes its own words above the clip (web/public/index.html).
+const PHONE = {width: 720, height: 540, budget: 2.6e5};
+const ROW = '.job-row:has-text("Cardiac Care Unit")';   // the job the whole hero follows (personas/<p>/media.json job)
 export const VIDEOS = {
-  'hero-onboarding': {kind: 'video', source: 'app', slide: 1, speed: 2, width: 1600, height: 1000, budget: 8e5, phone: 720,
-    settings: {setupDone: false, wizardStep: 'welcome'}, quiet: true,   // the first-run wizard; a still page: frames only when it changes
-    shows: 'The setup: welcome, your CV, then the search strategy it proposes from it',
-    caption: 'Set up in a few minutes', alt: 'The Jobadabra setup: a welcome step, your CV, then the search strategy proposed from it with target roles and places',
-    steps: [{hold: 1, poster: true}, {click: '.step[data-step=welcome] [data-next]'}, {hold: 2.4, look: '.step[data-step=cv] .card:visible >> nth=0', zoom: 1.4},
-      {js: `document.querySelector('#step-list li[data-step=draft]').classList.add('jump'); document.querySelector('#step-list li[data-step=draft]').click()`},
-      {hold: 3, look: `${SETUP} .card:visible >> nth=0`, zoom: 1.45}, {hold: 2.8, look: `${SETUP} .card:visible >> nth=1`, zoom: 1.8}]},
-  hero: {kind: 'video', source: 'app', slide: 2, speed: 2, width: 1600, height: 1000, budget: 1.2e6, phone: 720,
-    shows: 'The app: today\'s next steps, jobs ranked by fit, one job opened with why it fits',
-    caption: 'Your job search, run for you', alt: 'Jobadabra on a Mac: the Focus page, the ranked job list and one job opened',
+  'hero-onboarding': {kind: 'video', source: 'app', slide: 1, speed: 1.5, camera: 'steady', width: 1600, height: 1000, budget: 6e5, phone: PHONE,
+    settings: {setupDone: false, wizardStep: 'cv'}, quiet: true,   // the first-run wizard on its CV step; a still page: frames only when it changes
+    shows: 'The setup: your CV, the search strategy it proposes, and you confirming it',
+    caption: 'Add your CV. Shape your search.', alt: 'The Jobadabra setup: a CV added, then the proposed strategy with roles, level, work mode and an estimated salary, confirmed',
+    steps: [{hold: 1.7, look: '.step[data-step=cv] .card:visible >> nth=0', zoom: 2.1, phoneZoom: 3.4},
+      {js: `document.querySelector('#step-list li[data-step=draft]').classList.add('jump'); document.querySelector('#step-list li[data-step=draft]').click()`},   // demo mode keeps Continue disabled (no real CV)
+      {hold: 3, look: '#setup-strategy-slot #strategy-main-goals', zoom: 2, phoneZoom: 3.6, cut: true, poster: true},
+      {tap: '#draft-save', zoom: 2, phoneZoom: 2.4}, {hold: 0.9}]},
+  hero: {kind: 'video', source: 'app', slide: 2, speed: 1.5, camera: 'steady', width: 1600, height: 1000, budget: 6.5e5, phone: PHONE,
+    shows: 'Jobs ranked by fit; one opened, with why it fits',
+    caption: 'Jobs that fit, and why', alt: 'Jobadabra: nurse jobs in Lyon scored out of 100, one opened on its Match tab with why it fits',
     steps: [
-      {go: 'focus'}, {hold: 2.8, look: 'section.card.is-lit', zoom: 1.5, poster: true},
-      {click: nav('jobs')}, {js: "document.querySelector('.job-row')?.scrollIntoView({block: 'start', behavior: 'instant'})"}, {hold: 3, look: '.job-row >> nth=2', zoom: 1.5},
-      {click: '.job-row:has-text("Cardiac Care Unit")'}, {hold: 3.2, look: '#job-panel', zoom: 1.9},
+      {go: 'jobs'}, {js: "[...document.querySelectorAll('.job-row')].find(row => row.textContent.includes('Cardiac Care Unit'))?.scrollIntoView({block: 'center', behavior: 'instant'})"},
+      {hold: 1.7, look: ROW, zoom: 1.5, phoneZoom: 2.7},
+      {click: ROW}, {click: '#job-panel .jd-tabs button:has-text("Match")'},
+      {hold: 3, look: ['#job-panel h2', '#job-panel .fit-card.tone-good'], zoom: 2.2, phoneLook: '#job-panel .fit-card.tone-good', phoneZoom: 3.8, poster: true},
     ]},
-  'hero-fill': {kind: 'video', source: 'extension', slide: 3, speed: 1.6, width: 1600, height: 1000, budget: 8e5, phone: 720,
-    shows: 'The Jobadabra extension reading an application form and filling it in the browser',
-    caption: 'The extension fills the form', alt: 'An application form being filled by the Jobadabra extension, with its panel saying Ready to submit',
-    steps: [{hold: 0.5}, {fill: true}, {hold: 3, look: '#application', zoom: 1.7, poster: true}, {hold: 2.6, look: '#why', zoom: 2.2}, {hold: 2.4, look: 'panel', zoom: 2.2}]},
-  'hero-track': {kind: 'video', source: 'app', slide: 4, speed: 2, width: 1600, height: 1000, budget: 1e6, phone: 720,
-    shows: 'Applications in progress, an interview review and the calendar',
-    caption: 'Every reply and interview, tracked', alt: 'Jobadabra: applications in progress, an interview review, then the calendar',
-    steps: [{go: 'sessions'}, {hold: 2.6, look: '#ss-decision', zoom: 1.9, poster: true},
-      {click: nav('interviews')},
-      {click: '.lib-table button.iv-main'}, {hold: 3.2, look: '#review-body', zoom: 1.7}, {press: 'Escape'},
-      {click: nav('calendar')}, {hold: 2.6, look: '.cal-scroll', zoom: 1.7}, {hold: 2.2, look: '.cal-side', zoom: 2.2}]},
+  'hero-fill': {kind: 'video', source: 'extension', slide: 3, speed: 1.5, camera: 'steady', motion: 'reduce', width: 1600, height: 1000, budget: 6e5, phone: PHONE,
+    shows: 'The Jobadabra extension filling that job\'s application form; you review, then submit',
+    caption: 'Fill applications with your details.', alt: 'An application form filled by the Jobadabra extension, its panel saying Ready to submit: review, then submit',
+    steps: [{hold: 1.7, look: '#application', zoom: 1.3, phoneZoom: 2.2}, {fill: true}, {hold: 0.8},
+      {hold: 3, look: 'panel', zoom: 1.8, phoneZoom: 2.6, poster: true}]},
+  'hero-track': {kind: 'video', source: 'app', slide: 4, speed: 1.5, camera: 'steady', moment: 'later', width: 1600, height: 1000, budget: 6.5e5, phone: PHONE,
+    shows: 'Two weeks later: that job\'s interview leads Focus, then its place on the calendar',
+    caption: 'Your interviews and next steps, together.', alt: 'Jobadabra Focus: prepare for the Institut Cardio Rhône interview, then the interview in the calendar\'s Coming up',
+    steps: [{go: 'focus'}, {hold: 1.7, look: 'section.card.is-lit', zoom: 1.4, phoneZoom: 2.2},
+      {hold: 2.0, look: '#focus-list .focus-item:has-text("Prepare for Institut Cardio Rhône")', zoom: 2.2, phoneZoom: 3.6},
+      {go: 'calendar'}, {hold: 3, look: '#cal-upcoming > :first-child', zoom: 2.6, phoneZoom: 3.8, cut: true, poster: true}]},
   'extension-fill': {kind: 'video', source: 'extension', width: 1600, height: 1000, budget: 1e6, phone: 720, gif: 720,
     shows: 'The Jobadabra extension filling an application form in the browser',
     caption: 'The extension fills the form', alt: 'An application form being filled by the Jobadabra extension, with its panel on the right',
