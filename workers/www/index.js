@@ -124,7 +124,7 @@ export async function waitlist(request, env) {
   return json(200, {ok: true});
 }
 
-// Form-structure reports from every Job Pilotto app (desktop/lib/reports.js; worker/src/report.js checks them): a failure that
+// Form-structure reports from every Jobadabra app (desktop/lib/reports.js; worker/src/report.js checks them): a failure that
 // recurs is queued for the private repo's triage (api/triage.js). Secrets GITHUB_TOKEN (the product brain's dispatch) and
 // REPORT_TOKEN (the owner's app, trusted); GITHUB_REPO in wrangler.toml.
 export async function dispatch(env, inputs, workflow, fetcher = fetch) {

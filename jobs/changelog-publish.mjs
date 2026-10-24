@@ -39,7 +39,7 @@ export function plan(releases, have = {}, root = '') {
 
 // One version -> {entry} or {hidden: true} (nothing a user would notice) and its cost; throws when the AI's answer is unusable (nothing is published for it).
 // The 0.0.1 entry: the project start, dated at the first commit. Fixed words (checked by problems() like any entry), no AI call.
-export const startEntry = date => ({version: '0.0.1', date, channel: 'start', groups: [{kind: 'features', items: [{emoji: '🌱', lead: 'Job Pilotto begins', text: 'The very first version finds job openings in Switzerland and sends you a daily list.'}]}]});
+export const startEntry = date => ({version: '0.0.1', date, channel: 'start', groups: [{kind: 'features', items: [{emoji: '🌱', lead: 'Jobadabra begins', text: 'The very first version finds job openings in Switzerland and sends you a daily list.'}]}]});
 
 // An automatic run drafts only versions NEWER than the newest stored one (a missing older version is a backfill: explicit --backfill, owner 18 Oct 2026).
 export const newerThanStored = (draft, have) => {
