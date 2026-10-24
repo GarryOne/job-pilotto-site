@@ -68,8 +68,9 @@ const GMAIL_TASK = '.task-card:has([data-command=mail])';
 const MAIL_OPEN = "(() => { document.getElementById('activity-toggle')?.click(); const s = document.getElementById('hero-wait'); if (s) s.textContent = '#activity-log { display: none }'; })()";
 // No fade: the cut is the change (a fade read as another page to the stray-frame gate). The demo run has no log: its "No log available" row stays hidden.
 const MAIL_SHOW = "(() => { const s = document.getElementById('hero-wait'); if (s) s.textContent = '#activity-log { display: none }'; })()";
-// The stand-in form's fields (media/form.html), in the order the extension fills them: the live card (hero-fill-done) ticks them off.
-const HER_FORM = ['First name', 'Last name', 'Email', 'Phone', 'Location (city)', 'LinkedIn profile', 'Resume/CV', 'Are you legally authorised to work in this country?', 'What is your notice period?', 'Why do you want to work at Institut Cardio Rhône?'];
+// The stand-in form's REQUIRED fields (media/form.html), in its order: the live card (hero-fill-done) ticks them off and counts the same 6 the
+// extension's panel counts (round 6: side by side, the card said 10 while the panel said 6).
+const HER_FORM = ['First name', 'Last name', 'Email', 'Resume/CV', 'Are you legally authorised to work in this country?', 'I agree to the processing of my data for this application.'];
 // Round 6 (owner, 24 Oct 2026: "use most of them: fade, slide, tiles, title card... whenever it fits better"): every cut look names how its screen
 // comes in (`into`, transitions.mjs): slide = one screen to another, tiles = time passed, card (+ `card` words) = the flow needs explaining, fade =
 // the same screen changing. A part's `into` is its join (a card part opens on its card); a clip's `stageInto` is the site's switch into it.
@@ -105,26 +106,30 @@ export const VIDEOS = {
       {hold: 3, look: ['#job-panel h2', '#job-panel .fit-detail'], zoom: 2.2, phoneLook: '#job-panel .fit-card.tone-good', phoneZoom: 3.8, cut: true, into: 'fade', poster: true, say: 'Match: why this job fits her', beat: 'Her job opened on Match: why it fits'},
     ]},
   'hero-fill-app': {kind: 'video', source: 'app', part: true, speed: 1.5, camera: 'steady', moment: 'applying', quiet: true, width: 1600, height: 1000, phone: PHONE,
-    shows: 'Her job on Jobs, Apply pressed, the Applying page opening it in Chrome',
+    shows: 'Her job on Jobs, Apply pressed',
     steps: [{go: 'jobs'}, {js: scrollTo('Cardiac Care Unit')},
       {hold: 1.8, look: [`${ROW} .company`, `${ROW} button.row-main`], zoom: 2.2, phoneZoom: 3, tag: 'Jobs', say: 'Institut Cardio Rhône: she presses Apply', beat: 'Her job on Jobs: Apply'},
-      {tap: `${ROW} button.row-main`, then: `${OPEN_HERS}; setTimeout(() => document.getElementById('ss-job')?.scrollIntoView({block: 'start'}), 120)`},   // the Applying page keeps the Jobs page's scroll (round 5)   // the look holds the button: the press is seen without a camera move
-      {hold: 2.0, look: ['#ss-job', '#ss-decision'], lookWidth: 760, zoom: 2.2, phoneZoom: 3, cut: true, into: 'slide', tag: 'Applying', say: 'Applying: it opens the job in Chrome', beat: 'Applying: the job opens in Chrome'}]},
+      // round 6: the part ends on the press (`end`); the Applying card opens in the picture in picture by a slide (a fade over two framings of the
+      // same card made a ghost: take 4 at 3.5 s)
+      {tap: `${ROW} button.row-main`, end: true}]},
   // Both app parts are quiet (round 5): with the form open in Chrome the Applying card no longer spins "Checking Chrome…", so the page sends a frame only
   // when it changes; each hold's forced frame still catches a real stall (check.mjs captureGaps).
-  // Round 5 (owner, 24 Oct 2026: "show ... how the session card in the desktop app gets updated live, at the time the [extension] is filling it. Try first one
-  // after another"): back in the app, the Applying page's form card ticks off each field as the extension reports it (a `review` step), then Ready to submit.
-  'hero-fill-done': {kind: 'video', source: 'app', part: true, into: 'slide', speed: 1.5, camera: 'steady', moment: 'applying', quiet: true, width: 1600, height: 1000, phone: PHONE,
-    shows: 'Back in the app: the Applying card ticking off each field the extension fills, then Ready to submit',
+  // Round 5 (owner, 24 Oct 2026: "show ... how the session card in the desktop app gets updated live, at the time the [extension] is filling it"): the
+  // Applying page's form card ticks off each field as the extension reports it (a `review` step), then Ready to submit. Round 6 (owner: "I'd like picture
+  // in picture, but swapping them"): it plays together with the fill (pip.mjs): main first, the inset while Chrome fills (`lead` on the fill), main again
+  // at Ready to submit; synced on the fill's start (`sync`), its ticks paced on the fill's real time.
+  'hero-fill-done': {kind: 'video', source: 'app', part: true, speed: 1.5, camera: 'steady', moment: 'applying', quiet: true, width: 1600, height: 1000, phone: PHONE,
+    shows: 'The Applying card ticking off each field the extension fills, then Ready to submit',
     steps: [{go: 'sessions'}, {js: OPEN_HERS},   // the card's count, bar and pill change; its folded list of fields would shrink it to small text
-      {hold: 1.8, look: ['#ss-form-card .ss-form-head', '#ss-form-card .ss-form-progress'], lookWidth: 760, zoom: 2.0, phoneZoom: 2.8, cut: true, into: 'slide', tag: 'Jobadabra', say: 'Meanwhile in Jobadabra: the card follows', beat: 'The Applying card: 0 of 10 fields'},
-      {review: {id: 'd1', url: 'https://jobs.example/institut-cardio-rhone/cardiac-care', fields: HER_FORM, every: 300}},
+      {hold: 3.0, look: ['#ss-form-card .ss-form-head', '#ss-form-card .ss-form-progress'], lookWidth: 760, zoom: 2.0, phoneZoom: 2.8, cut: true, into: 'slide', lead: true, tag: 'Applying', say: 'Applying: her form opens in Chrome', beat: 'The Applying card: 0 of 6 fields, Chrome beside it'},
+      {review: {id: 'd1', url: 'https://jobs.example/institut-cardio-rhone/cardiac-care', fields: HER_FORM, every: 300}, sync: true},
       // then one move right to the pill (owner, 24 Oct 2026: "B, then pan to the pill"): close on the count while it ticks, the pill when it is ready
-      {hold: 2.6, look: '#ss-form-pill', zoom: 2.0, phoneZoom: 2.8, say: 'Every field ticked: Ready to submit', beat: 'The card: 10 of 10, Ready to submit'}]},
-  'hero-fill': {kind: 'video', source: 'extension', slide: 3, before: 'hero-fill-app', after: 'hero-fill-done', stageInto: 'slide', into: 'card', card: 'The form opens in her browser', speed: 1.5, camera: 'steady', motion: 'reduce', width: 1600, height: 1000, budget: 5e5, phone: {...PHONE, budget: 2.3e5},
+      // round 6: back to the main picture on the whole completion section (count, full bar, pill): the pill alone cut the row's words (take 4 at 8 s)
+      {hold: 2.6, look: ['#ss-form-card .ss-form-head', '#ss-form-card .ss-form-progress', '#ss-form-pill'], zoom: 2.0, phoneZoom: 2.8, lead: true, tag: 'Applying', say: 'Every field ticked: Ready to submit', beat: 'The card: 6 of 6, Ready to submit'}]},
+  'hero-fill': {kind: 'video', source: 'extension', slide: 3, before: 'hero-fill-app', pip: 'hero-fill-done', stageInto: 'slide', into: 'slide', speed: 1.5, camera: 'steady', motion: 'reduce', width: 1600, height: 1000, budget: 6e5, phone: {...PHONE, budget: 2.5e5},
     shows: 'Apply pressed on her job, then the Jobadabra extension filling its application form; you review, then submit',
     caption: 'Fill applications with your details.', alt: 'An application form filled by the Jobadabra extension, its panel saying Ready to submit: review, then submit',
-    steps: [{hold: 1.7, look: '#application', zoom: 1.3, phoneZoom: 2.2, tag: 'Chrome', say: 'In Chrome: the form, still empty', beat: "That job's application form, still empty"}, {fill: true}, {hold: 0.8},
+    steps: [{hold: 3.0, look: '#application', zoom: 1.3, phoneZoom: 2.2, tag: 'Chrome', say: 'In Chrome, the extension fills her form', beat: "That job's application form, still empty"}, {fill: true, sync: true, lead: true}, {hold: 0.8},
       {hold: 3, look: 'panel', zoom: 1.8, phoneZoom: 2.6, poster: true, say: 'Filled with her details: she reviews it', beat: 'Filled with her details: Ready to submit, she reviews'}]},
   'hero-track': {kind: 'video', source: 'app', slide: 4, stageInto: 'tiles', speed: 1.5, camera: 'steady', moment: 'later', width: 1600, height: 1000, budget: 7.5e5, phone: {...PHONE, budget: 3e5},
     shows: 'Two weeks later: the interview e-mail for that job, the call recorded and reviewed, what to practise, the next round on the calendar',

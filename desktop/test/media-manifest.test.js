@@ -28,7 +28,7 @@ test('every piece has the words the site needs; video captions are 6 words at mo
     assert.ok(piece.budget > 0 && piece.steps.length, name);
   }
   const slides = Object.values(VIDEOS).filter(piece => piece.slide);
-  assert.ok(slides.reduce((sum, piece) => sum + piece.budget, 0) <= 2.5e6, 'the four hero clips together fit 2.5 MB');
+  assert.ok(slides.reduce((sum, piece) => sum + piece.budget, 0) <= 2.6e6, 'the four hero clips together fit 2.6 MB (round 6: Apply\'s picture in picture moves two pictures at once, +0.1 MB)');
   assert.ok(slides.every(piece => piece.phone?.width === 720 && piece.phone.budget) && slides.reduce((sum, piece) => sum + piece.phone.budget, 0) <= 1.1e6, 'phone copies about 1 MB together');
   for (const [name, item] of [...Object.entries(STILLS), ...Object.entries(SNIPS)]) assert.ok(item.shows && item.steps.length, name);
 });

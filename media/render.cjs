@@ -2,7 +2,7 @@
 // Draws a product video from recorded frames (media): each output frame is a recorded frame moved and scaled through the camera
 // (a float transform, so pans are smooth), plus a cursor and a click ring. The app's pixels are never redrawn. Electron's canvas does the drawing in a
 // hidden window; raw pixels go to ffmpeg, which writes one high-quality master (encode.mjs makes the site's files from it).
-// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge, tag, from?, kind?, mix?, card?, cardAlpha?}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
+// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge, tag, from?, kind?, mix?, card?, cardAlpha?, layers?}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
 // a frame's `say` is drawn as a caption band at the bottom (captions.mjs), fading in over sayFade seconds of sayAge; a transition (transitions.mjs)
 // mixes `from` (the old screen) by `kind` and `mix` (fade, slide, tiles), or lays a title `card` over the frame at `cardAlpha`
 const {app, BrowserWindow} = require('electron');
@@ -26,12 +26,26 @@ async function draw(job) {
   const s = job.scale, unit = job.width / 1600;   // frame px per page CSS px; the cursor's size follows the output width
   // recorded frames as bitmaps, the last few kept (a transition draws the old screen and the new one for many frames)
   const bitmaps = new Map();
-  const load = async file => {
-    if (bitmaps.has(file)) { const kept = bitmaps.get(file); bitmaps.delete(file); bitmaps.set(file, kept); return kept; }
-    const made = await createImageBitmap(new Blob([fs.readFileSync(path.join(job.framesDir, file))], {type: 'image/jpeg'}));
-    bitmaps.set(file, made);
-    if (bitmaps.size > 4) { const [old, gone] = bitmaps.entries().next().value; gone.close(); bitmaps.delete(old); }
+  const load = async (file, dir = job.framesDir) => {
+    const key = path.join(dir, file);
+    if (bitmaps.has(key)) { const kept = bitmaps.get(key); bitmaps.delete(key); bitmaps.set(key, kept); return kept; }
+    const made = await createImageBitmap(new Blob([fs.readFileSync(key)], {type: 'image/jpeg'}));
+    bitmaps.set(key, made);
+    if (bitmaps.size > 6) { const [old, gone] = bitmaps.entries().next().value; gone.close(); bitmaps.delete(old); }
     return made;
+  };
+  // picture in picture (pip.mjs): each layer is a recording through its own camera, placed in its rect; an inset is rounded, edged and shadowed
+  const layers = async list => {
+    ctx.fillStyle = '#0b0f14'; ctx.fillRect(0, 0, job.width, job.height);
+    for (const one of list) {
+      const bitmap = await load(one.file, one.dir), k = one.scale, r = one.rect, round = one.framed ? job.width * 0.012 : 0;
+      ctx.save(); ctx.globalAlpha = one.alpha ?? 1;
+      if (one.framed) { ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = job.width * 0.02; ctx.shadowOffsetY = job.width * 0.004; ctx.fillStyle = '#0b0f14'; ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, round); ctx.fill(); ctx.shadowColor = 'transparent'; }
+      ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, round); ctx.clip();
+      ctx.drawImage(bitmap, one.x * k, one.y * k, one.w * k, one.h * k, r.x, r.y, r.w, r.h);
+      if (one.framed) { ctx.lineWidth = Math.max(2, job.width * 0.0025); ctx.strokeStyle = 'rgba(242, 169, 59, 0.85)'; ctx.stroke(); }
+      ctx.restore();
+    }
   };
   const view = (target, bitmap, v) => target.drawImage(bitmap, v.x * s, v.y * s, v.w * s, v.h * s, 0, 0, job.width, job.height);
   const layer = document.createElement('canvas'); layer.width = job.width; layer.height = job.height;
@@ -44,8 +58,9 @@ async function draw(job) {
     ctx.save(); ctx.globalAlpha = alpha; ctx.imageSmoothingEnabled = false; ctx.drawImage(tiny, 0, 0, job.width, job.height); ctx.restore();
   };
   for (const frame of job.frames) {
-    const bitmap = await load(frame.file);
-    if (frame.from) {   // a transition (transitions.mjs): the old screen under the new one, mixed by kind
+    const bitmap = frame.layers ? null : await load(frame.file);
+    if (frame.layers) await layers(frame.layers);
+    else if (frame.from) {   // a transition (transitions.mjs): the old screen under the new one, mixed by kind
       const old = await load(frame.from.file), m = frame.mix;
       if (frame.kind === 'tiles') {   // blocks grow to ~1/30 of the width, the screens swap at the middle, then the blocks shrink
         const size = Math.max(1, Math.round(job.width / 30 * Math.sin(Math.PI * m)));

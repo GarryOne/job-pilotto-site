@@ -125,6 +125,17 @@ export function fromFirstLook(log) {
   return {...log, frames, events};
 }
 
+// A part that ends on a press (a tap marked `end`, round 6: the Apply press hands over to the Applying card in picture in picture): the recording
+// keeps running after it, so every frame and event after the 'end' mark is dropped; the next part comes in by its join. A quiet page sends no frame
+// while the cursor glides (take 5: the part ended at 1.3 s, before its press), so the last frame is held up to the mark. No mark: unchanged. Pure.
+export function untilEnd(log) {
+  const end = log.events.find(event => event.type === 'end');
+  if (!end) return log;
+  const frames = log.frames.filter((frame, i) => frame.t <= end.t || i === 0), last = frames.at(-1);
+  if (last.t < end.t) frames.push({...last, t: end.t});
+  return {...log, frames, events: log.events.filter(event => event.t <= end.t && event !== end)};
+}
+
 // The poster's moment: the end of the hold marked poster (the filled form, ready to submit), else the first frame. Pure.
 export function posterTime(events = []) {
   const hold = events.find(event => event.type === 'hold' && event.poster);
