@@ -48,7 +48,8 @@ async function containerRunner(trip) {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   // What the container answered to POST /run is logged (status and the first 400 characters): "the container ran" failed for four nights (21-24 Oct 2026) with nothing in the log to say why.
-  return {fetch: async request => { const answer = await fetch('http://127.0.0.1:8080/run', {method: 'POST', body: request.body, duplex: 'half'}); if (!answer.ok) log(`the container answered ${answer.status}: ${(await answer.clone().text()).replace(/\s+/g, ' ').slice(0, 400)}`); return answer; }, stop: () => spawnSync('docker', ['logs', 'jp-hosted-e2e'], {stdio: 'inherit'}) && spawnSync('docker', ['stop', 'jp-hosted-e2e'])};
+  // The request body goes as a string, so Content-Length is sent: a streamed body goes chunked and src/hosted_run.py reads Content-Length 0 -> {} -> 400 (the cause of the 21-24 Oct failures).
+  return {fetch: async request => { const answer = await fetch('http://127.0.0.1:8080/run', {method: 'POST', body: await request.text()}); if (!answer.ok) log(`the container answered ${answer.status}: ${(await answer.clone().text()).replace(/\s+/g, ' ').slice(0, 400)}`); return answer; }, stop: () => spawnSync('docker', ['logs', 'jp-hosted-e2e'], {stdio: 'inherit'}) && spawnSync('docker', ['stop', 'jp-hosted-e2e'])};
 }
 function pythonRunner(trip) {
   return {fetch: async request => {
