@@ -165,6 +165,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.publish
         env:
           GH_TOKEN: ${{ steps.records_app.outputs.token || secrets.NET_RECORDS_WRITE_TOKEN }}
+        shell: bash   # -eo pipefail: a failing job behind `| tee` fails the step (default bash -e returns tee's status)
         run: node tools/persona-search/tape-store.mjs publish "$CANDIDATE" "$RUNNER_TEMP/new" 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Replay it now, so the Lab page shows the healed row
         if: github.event_name != 'workflow_dispatch' || inputs.publish
@@ -174,4 +175,5 @@ jobs:
         continue-on-error: true   # a tape that was never recorded has nothing to keep
         env:
           GH_TOKEN: ${{ steps.records_app.outputs.token || secrets.NET_RECORDS_WRITE_TOKEN }}
+        shell: bash   # -eo pipefail: a failing job behind `| tee` fails the step (default bash -e returns tee's status)
         run: node tools/persona-search/tape-store.mjs publish-debug "$CANDIDATE" "$RUNNER_TEMP/new" 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"

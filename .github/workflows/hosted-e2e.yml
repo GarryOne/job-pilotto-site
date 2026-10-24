@@ -51,6 +51,7 @@ jobs:
       - name: Run the scenario against the real hosted image
         env:
           HOSTED_E2E_RUNNER: docker
+        shell: bash   # -eo pipefail: a failing job behind `| tee` fails the step (default bash -e returns tee's status)
         run: node jobs/hosted-e2e/run.mjs 2>&1 | tee hosted-e2e.log
       - name: The scenario's steps
         if: always()
