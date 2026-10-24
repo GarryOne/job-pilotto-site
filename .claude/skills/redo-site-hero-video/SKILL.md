@@ -88,6 +88,7 @@ comes back at the next redo.
 - Each sheet: the story holds (same job everywhere), nothing important cut at an edge, no empty frame, the move happens once.
 - Preview: every caption matches its clip; the result text readable at desktop AND phone; Apply's whole panel in frame; Track's interview is the
   first thing in Focus and in Coming up.
+- Every cut, frame by frame at 10 fps: no frame of another page (the gate checks it too).
 - Sizes from `tools/hero.sh --place` within budget; site tests green.
 
 ## Traps already hit
@@ -124,3 +125,11 @@ comes back at the next redo.
   Read the raw frames (`.work/<piece>/frames`, `log.json`) before naming a stall: run 3's "frozen Set up" was a look measured before its frame came.
 - **The phone copy's `phoneLook` is shown whole too**: give it the cells you mean (`[ROW .fit-cell, ROW .role]`) or its left part (`phoneLookWidth`), never a full-width row or banner.
 - **A test that imports `record-app.mjs` needs Playwright, which the site CI job lacks** (PR #47 went red): pure helpers live in `media/hold.mjs`; "Cannot find module 'playwright-core'" in a local run is this same failure, never "just my setup".
+- **A stray frame at a cut** (round 3, owner: "a small glitch in the first clip (showing something about Sonnet)"; four more like it in Track and Find):
+  the frames between a page change and the next look being painted showed the old framing over the new page, or the new framing over the old one.
+  Now: the recorder logs `ready` when the next `cut` look is in the page AND painted (two repaints), stamps every change BEFORE its action, and
+  `cuts.mjs dropChanges` cuts those frames out (the cut lands on the first frame after `ready`). The gate `cuts.mjs strayFrames` reads the played clip
+  and fails a piece with "a frame of another page at <s>, before/after the cut to <look>" (clean cuts ≤ 0.7, glitches 5.6–16.9). Look at every cut
+  frame by frame (`ffmpeg ... fps=10,tile`) before showing the owner; the sheets show one frame per beat and miss these.
+- **A cut hides how she got there**: a cut look is a jump. Where the owner wants the way in seen (Find: the click on a job, the drawer opening),
+  use a click zoom and a short hold on the in-between screen, not `cut`.
