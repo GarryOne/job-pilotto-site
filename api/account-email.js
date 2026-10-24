@@ -1,4 +1,4 @@
-// The address a person gives Job Pilotto (onboarding, Settings → Notifications) and the mail the app or a run sends to it. The install proves itself with its AI key
+// The address a person gives Jobadabra (onboarding, Settings → Notifications) and the mail the app or a run sends to it. The install proves itself with its AI key
 // (x-api-key: JPF1.<install>.<token>). PUT/GET /api/account/email makes or reads the trial account; POST /api/notify/email mails a Telegram-style message to it;
 // /confirm confirms the address. An address another account already holds is refused here (joining it takes a code sent to that address, the device sign-in). Guard: test/api/account-email.test.js.
 import {authorize, digestOf, equal, tokenFor} from '../shared/guard.js';

@@ -1,4 +1,4 @@
-// POST /api/feedback: feedback from the Job Pilotto app ("Send feedback…"), kept in D1 (migrations/0003_feedback.sql) and sent at once to the owner.
+// POST /api/feedback: feedback from the Jobadabra app ("Send feedback…"), kept in D1 (migrations/0003_feedback.sql) and sent at once to the owner.
 // At most 10 a day per install. The owner's list is admin/feedback.js; shared/feedback.js reads what is kept. Guarded by test/shared/feedback.test.js.
 import {escTags} from '../shared/html.js';
 

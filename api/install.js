@@ -14,7 +14,7 @@ export function cleanSource(value) {
 export function script(origin, source = '') {
   const channel = cleanSource(source);  // a validated slug: safe to put in the script
   return `#!/bin/bash
-# Job Pilotto for Mac: installs (or updates) the app in Applications and opens it.
+# Jobadabra for Mac: installs (or updates) the app in Applications and opens it.
 #   curl -fsSL ${origin}/install | bash
 #   curl -fsSL ${origin}/install | bash -s JP1.…   (with a founder key from an invite)
 set -euo pipefail

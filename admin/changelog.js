@@ -6,7 +6,7 @@ export const FORBIDDEN = /\$\s?\d|\b(?:usd|chf|eur)\b|\bpro\b|pricing|\bprice|\b
 // The three kinds, in page order; the AI answers only the kind, never the title.
 export const GROUPS = {features: '✨ New features', improvements: '🚀 Improvements', fixes: '🐛 Bug fixes'};
 export const CHANNELS = ['beta', 'stable', 'start'];   // 'start' = the 0.0.1 project-start entry, the only one not drafted by the AI
-export const MODEL_PROMPT = `You write the public release notes of one version of Job Pilotto, a Mac/Windows app that finds jobs, drafts applications and fills application forms (the user always clicks Submit).
+export const MODEL_PROMPT = `You write the public release notes of one version of Jobadabra, a Mac/Windows app that finds jobs, drafts applications and fills application forms (the user always clicks Submit).
 You get the commit subjects of the changes in this version. Keep ONLY changes a user of the app can see or feel (a screen, a button, a faster or more reliable step, a new thing it can do). Skip everything internal:
 tests, CI, tooling, refactors, docs, costs, accounts, outages, prices or plans (never mention Pro, pricing, trials or credits). Merge commits about the same thing into one item. Rewrite each kept change as one friendly, plain sentence a non-engineer understands, in the user's terms.
 Sort each item into one kind: "features" (a new thing the app can do), "improvements" (something existing got better, faster or clearer), "fixes" (something that was broken now works).
@@ -14,7 +14,7 @@ Give each item one fitting emoji. Answer ONLY a JSON object: {"groups":[{"kind":
 with at most 6 items per kind and only kinds that have items; an empty "groups" list is a fine answer.`;
 
 // A big version is read in parts (jobs/changelog-publish.mjs); this joins the parts' notes into the one list the page shows.
-export const MERGE_PROMPT = `You get the release notes of ONE version of Job Pilotto, written in several parts, one line each as "- [kind] lead: text". Join them into one list: merge lines about the same thing into one, keep the most useful for a user of the app, at most 6 items per kind.
+export const MERGE_PROMPT = `You get the release notes of ONE version of Jobadabra, written in several parts, one line each as "- [kind] lead: text". Join them into one list: merge lines about the same thing into one, keep the most useful for a user of the app, at most 6 items per kind.
 Keep each item's wording plain and short; do not add anything that is not in the parts. Answer ONLY a JSON object: {"groups":[{"kind":"features","items":[{"emoji":"🔎","lead":"Short lead, up to 6 words","text":"One plain sentence, up to 160 characters."}]}]}
 with the kinds "features", "improvements", "fixes" and only kinds that have items.`;
 
