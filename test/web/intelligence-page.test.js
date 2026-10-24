@@ -15,23 +15,23 @@ test('the journey strip links to all six sections, and each section exists (the 
 });
 
 test('every step is a card: a title, a promise line, and its long text folded under "How it works"', () => {
-  const cards = [...page.matchAll(/<article class="ai-step">([\s\S]*?)<\/article>/g)].map(m => m[1]);
+  const cards = [...page.matchAll(/<article class="ai-step"[^>]*>([\s\S]*?)<\/article>/g)].map(m => m[1]);
   assert.ok(cards.length >= 47, `${cards.length} cards`);
   for (const card of cards) {
     assert.match(card, /<h3>[^<]{3,}<\/h3><p class="promise-line">[^<]{10,}<\/p>/);
-    assert.match(card, /<details><summary>How it works<\/summary><p>[^<]{20,}/s, 'the long text is kept, folded');
+    assert.match(card, /<details><summary>.*How it works.*<\/summary><p>[^<]{20,}/s, 'the long text is kept, folded');
   }
 });
 
 test('every step stays on the page, none hidden behind a fold (owner, 24 Oct 2026: "I want to show them all")', () => {
   assert.doesNotMatch(page, /class="ai-all"/);
-  assert.ok([...page.matchAll(/<article class="ai-step">/g)].length >= 47);
+  assert.ok([...page.matchAll(/<article class="ai-step"[^>]*>/g)].length >= 47);
 });
 
 test('the privacy lines stay visible: a card that says what the AI never sees shows it in its Data used line, outside the fold', () => {
-  const cards = [...page.matchAll(/<article class="ai-step">([\s\S]*?)<\/article>/g)].map(m => m[1]);
+  const cards = [...page.matchAll(/<article class="ai-step"[^>]*>([\s\S]*?)<\/article>/g)].map(m => m[1]);
   for (const card of cards) {
-    const folded = card.match(/<details>[\s\S]*<\/details>/)[0];
+    const folded = card.match(/<\/summary><p>[\s\S]*<\/details>/)[0];
     const visible = card.replace(folded, '');
     if (/(?:Claude|your AI) sees [^.]*never/i.test(folded)) assert.match(visible, /class="never"/, `a card that says what the AI never sees shows it: ${card.match(/<h3>(.*?)<\/h3>/)[1]}`);
   }
@@ -56,7 +56,7 @@ test('the end-of-page card has room above it on every page that uses it', () => 
 });
 
 test('the title and og:title give the real step count (the page is the one source), and the end card names both platforms', () => {
-  const count = [...page.matchAll(/<article class="ai-step">/g)].length;
+  const count = [...page.matchAll(/<article class="ai-step"[^>]*>/g)].length;
   assert.match(page, new RegExp(`<title>[^<]*\\b${count} steps`));
   assert.match(page, new RegExp(`og:title" content="[^"]*\\b${count} steps`));
   assert.match(page, /Free app for Mac and Windows/);
