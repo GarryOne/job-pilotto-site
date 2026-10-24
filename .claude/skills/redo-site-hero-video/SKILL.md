@@ -166,3 +166,12 @@ comes back at the next redo.
 - **The video looked bluer than the app** (owner, 24 Oct 2026: "a different background than it is actually on the real app"): the files were
   BT.601 and untagged; Chrome decoded them as BT.709 (card 16,25,33 played as 16,27,39). `encode.mjs` now writes BT.709 with the sRGB transfer
   tag (`videoFilter`, `COLOR_TAGS`; a BT.709 transfer tag crushed the darks). Judge colours in Chrome playing the file, never from an ffmpeg frame.
+- **A look measured off screen framed the wrong thing** (round 5: the Applying page kept the Jobs page's scroll; her job header was at y -308 and the
+  camera showed the needs list): both recorders now stop when more than 10% of a look is outside the window (`offScreen`, `OFF_MAX`, hold.mjs).
+  Scroll it into view in the step that opens the page.
+- **A still app page read as a stalled capture** (round 5: "Checking Chrome…" used to spin): mark an app part whose page is still `quiet: true`; each
+  hold's forced frame still catches a real stall.
+- **Live app state comes over the app's own messages** (round 5, the Applying card ticking): a `review` step sends the extension's form states
+  through Electron (`live-review.mjs`); an `after:` part plays behind its piece. A hold without a look keeps its beat.
+- **Show where the user acts** (round 5, owner: "show the Action screen where we click on 'check gmail' card"): an empty panel waiting for a press
+  reads as nothing; frame the screen and control the person really uses.

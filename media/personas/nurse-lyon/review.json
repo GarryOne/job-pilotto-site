@@ -1,0 +1,37 @@
+[
+ {
+  "id": "d1",
+  "url": "https://jobs.example/institut-cardio-rhone/cardiac-care",
+  "left": 10,
+  "total": 10,
+  "ready": false,
+  "states": {},
+  "missing": [
+   "First name",
+   "Last name",
+   "Email",
+   "Phone",
+   "Location (city)",
+   "LinkedIn profile",
+   "Resume/CV",
+   "Are you legally authorised to work in this country?",
+   "What is your notice period?",
+   "Why do you want to work at Institut Cardio Rhône?"
+  ],
+  "pending": [
+   "First name",
+   "Last name",
+   "Email",
+   "Phone",
+   "Location (city)",
+   "LinkedIn profile",
+   "Resume/CV",
+   "Are you legally authorised to work in this country?",
+   "What is your notice period?",
+   "Why do you want to work at Institut Cardio Rhône?"
+  ],
+  "filled": [],
+  "proposals": [],
+  "optional": []
+ }
+]

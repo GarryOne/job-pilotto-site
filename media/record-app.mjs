@@ -9,7 +9,8 @@ import {clipTo} from './camera.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
-import {holdEvent, holdLeft, nextCut, PRESS_SHOW, wordsCut} from './hold.mjs';
+import {holdEvent, holdLeft, nextCut, OFF_MAX, offScreen, PRESS_SHOW, wordsCut} from './hold.mjs';
+import {liveStates} from './live-review.mjs';
 
 const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
 const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.json'))('playwright-core');
@@ -88,11 +89,20 @@ async function watch(page, ms, log, rest = true) {
 }   // pure, in hold.mjs (tests import them without Playwright)
 
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
-async function step(page, item, log) {
+async function step(page, item, log, app = null) {
   // a page change is stamped BEFORE its action (round 3: stamped after, a frame of the new page could arrive first and show under the old framing)
   const say = item.say && !item.hold ? {say: item.say, ...(item.tag ? {tag: item.tag} : {})} : {};   // a caption on an action shows from its moment (captions.mjs)
   if (item.go) { log.add({type: 'mark', ...say}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
   if (item.js) { log.add({type: 'mark', ...say}); await page.evaluate(item.js); await watch(page, 900, log); return; }
+  if (item.review) {   // the form card updating live (round 5, owner): the extension's fill reports, sent over the app's own 'review' message; no page change
+    if (!app) throw new Error('media: a review step needs the app (recordAppVideo)');
+    for (const state of liveStates({start: Date.now(), ...item.review})) {   // real times: the card's list times each field from the first
+      await app.evaluate(({BrowserWindow}, sent) => BrowserWindow.getAllWindows()[0].webContents.send('review', sent), state);
+      await page.waitForTimeout(item.review.every || 300);
+    }
+    await watch(page, 300, log);
+    return;
+  }
   if (item.tap) {   // the cursor glides to a control and presses it, nothing is clicked (a demo-disabled control, or the clip's last gesture), then `then` runs
     const box = await page.locator(item.tap).first().boundingBox();
     if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
@@ -123,6 +133,8 @@ async function step(page, item, log) {
     const box = item.look ? await lookBox(page, item.look) : null;
     if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
     const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
+    const view = await viewportOf(page), out = Math.max(offScreen(box, view), offScreen(phoneBox, view));
+    if (out > OFF_MAX) throw new Error(`media: look "${[item.phoneLook && offScreen(phoneBox, view) > OFF_MAX ? item.phoneLook : item.look].flat().join(', ')}" is ${Math.round(out * 100)}% off screen: scroll it into view first (scenes.mjs)`);
     await checkWords(page, item.look, box, item.lookWidth, 'look');
     await checkWords(page, item.phoneLook, phoneBox, item.phoneLookWidth, 'phoneLook');
     const left = holdLeft(item.hold, started, Date.now());
@@ -134,14 +146,14 @@ async function step(page, item, log) {
 
 // A video piece: frames + log.json in `dir`. -> the log.
 export async function recordAppVideo({persona, piece, dir}) {
-  const {page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment, env: piece.env});
+  const {app, page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment, env: piece.env});
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock, cast.paint);
     log.speed = piece.speed || 1;   // a press's on-screen time (pressShow) is in output seconds
     for (const [i, item] of piece.steps.entries()) {
       log.self = item.hold && item.cut && !(log.next?.ready && log.next.look === item.look) ? {look: item.look} : null;
-      log.next = nextCut(piece.steps, i); await step(page, item, log);
+      log.next = nextCut(piece.steps, i); await step(page, item, log, app);
     }
     await page.waitForTimeout(200);
     const frames = await cast.stop();
