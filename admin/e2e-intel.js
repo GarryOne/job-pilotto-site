@@ -11,17 +11,17 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {status,
 const num = value => (Number.isFinite(Number(value)) ? Math.max(0, Math.round(Number(value) * 10) / 10) : 0);
 const word = (value, max = 40) => String(value ?? '').replace(/[^\w .+-]/g, '').slice(0, max);
 
-const cleanRun = run => Number.isInteger(run?.runId) && run.runId > 0 && /^\d{4}-\d{2}-\d{2}T/.test(run.createdAt || '') && ['success', 'failure'].includes(run.conclusion);
+const cleanRun = run => Number.isInteger(run?.runId) && run.runId > 0 && /^\d{4}-\d{2}-\d{2}T/.test(run.createdAt || '') && ['success', 'failure', 'cancelled'].includes(run.conclusion);
 const cleanFail = fail => Number.isInteger(fail?.runId) && fail.runId > 0 && word(fail.suite) && ['mac', 'windows'].includes(fail.platform) && CAUSE_IDS.includes(fail.cause) && /^\d{4}-\d{2}-\d{2}$/.test(fail.day || '');
 
 // The last 30 days: per day the runs, reds, greens and the minutes red runs took; per day, suite, platform and cause the red suites. Read once per write, never per page load.
 export async function buildSnapshot(db, now = new Date()) {
   const from = dayOf(new Date(now.getTime() - (KEEP_DAYS - 1) * DAY));
   const [{results: days = []}, {results: fails = []}, {results: latest = []}] = await Promise.all([
-    db.prepare(`SELECT day, COUNT(*) AS runs, SUM(conclusion = 'failure') AS reds, SUM(conclusion = 'success') AS greens, SUM(CASE WHEN conclusion = 'failure' THEN minutes ELSE 0 END) AS redMin, kind FROM e2e_runs WHERE day >= ? GROUP BY day ORDER BY day`).bind(from).all(),
+    db.prepare(`SELECT day, SUM(conclusion IN ('success', 'failure')) AS runs, SUM(conclusion = 'cancelled') AS cancelled, SUM(conclusion = 'failure') AS reds, SUM(conclusion = 'success') AS greens, SUM(CASE WHEN conclusion = 'failure' THEN minutes ELSE 0 END) AS redMin, kind FROM e2e_runs WHERE day >= ? GROUP BY day ORDER BY day`).bind(from).all(),
     db.prepare('SELECT day, suite, platform, cause, COUNT(*) AS n, SUM(minutes) AS min FROM e2e_fails WHERE day >= ? GROUP BY day, suite, platform, cause').bind(from).all(),
     db.prepare('SELECT run_id AS runId, day, kind, conclusion, minutes FROM e2e_runs ORDER BY run_id DESC LIMIT ?').bind(LATEST).all()]);
-  return {schema: 1, rules: RULES_VERSION, at: now.toISOString(), days: days.map(row => ({day: row.day, runs: row.runs, reds: row.reds, greens: row.greens, redMin: row.redMin})), fails: fails.map(row => ({...row})), latest: latest.map(row => ({...row}))};
+  return {schema: 1, rules: RULES_VERSION, at: now.toISOString(), days: days.map(row => ({day: row.day, runs: row.runs, cancelled: row.cancelled, reds: row.reds, greens: row.greens, redMin: row.redMin})), fails: fails.map(row => ({...row})), latest: latest.map(row => ({...row}))};
 }
 
 // PUT {rules, runs: [{runId, createdAt, kind, conclusion, minutes}], fails: [{runId, suite, platform, day, cause, minutes}]}.

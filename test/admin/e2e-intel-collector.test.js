@@ -39,6 +39,13 @@ test('a suite that has not passed since is "open"; a flake never reads the log o
   assert.deepEqual(rows.fails.map(fail => [fail.suite, fail.cause]), [['apply', 'flake'], ['quality', 'open']]);
 });
 
+test('a cancelled run is a stored try with no reds: its cancelled jobs are not red suites', () => {
+  const cancelled = job('E2E · Mac + Linux · apply', 'cancelled', [], 10);
+  const rows = rowsOf([run(1, '2026-10-17T20:01:00Z', 'aaa', [cancelled], 'cancelled')]);
+  assert.deepEqual(rows.runs.map(row => [row.runId, row.conclusion]), [[1, 'cancelled']]);
+  assert.deepEqual(rows.fails, []);
+});
+
 test('new runs are read before pending ones, so unresolved old reds cannot starve them', () => {
   const listed = [1, 2, 3, 4].map(databaseId => ({databaseId}));
   assert.deepEqual(runsToRead(listed, new Set([1, 2]), new Set([1, 2])).map(r => r.databaseId), [3, 4]);

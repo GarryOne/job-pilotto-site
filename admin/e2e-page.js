@@ -24,12 +24,13 @@ export function windowOf(snapshot, range, now = new Date()) {
   const days = (snapshot?.days || []).filter(row => keys.has(row.day)), fails = (snapshot?.fails || []).filter(row => keys.has(row.day));
   const sum = (rows, field) => rows.reduce((total, row) => total + (Number(row[field]) || 0), 0);
   const reds = sum(fails, 'n'), byCause = Object.fromEntries(CAUSE_IDS.map(id => [id, sum(fails.filter(row => row.cause === id), 'n')]));
-  return {keys: [...keys], days, fails, runs: sum(days, 'runs'), redRuns: sum(days, 'reds'), greenRuns: sum(days, 'greens'), redMin: sum(days, 'redMin'), reds, byCause, failMin: sum(fails, 'min')};
+  return {keys: [...keys], days, fails, runs: sum(days, 'runs'), cancelled: sum(days, 'cancelled'), redRuns: sum(days, 'reds'), greenRuns: sum(days, 'greens'), redMin: sum(days, 'redMin'), reds, byCause, failMin: sum(fails, 'min')};
 }
 
 function tiles(w) {
   const top = CAUSES.filter(cause => w.byCause[cause.id]).sort((a, b) => w.byCause[b.id] - w.byCause[a.id])[0];
   return `<div class="tiles"><section class="card tile"><span class="muted">Red runs</span><b>${pct(w.redRuns, w.runs)}</b><span class="muted">${num(w.redRuns)} of ${num(w.runs)} finished runs ended red</span></section>
+<section class="card tile"><span class="muted">Tries per green</span><b>${w.greenRuns ? ((w.runs + w.cancelled) / w.greenRuns).toLocaleString('en-US', {maximumFractionDigits: 1}) : '–'}</b><span class="muted">${num(w.runs + w.cancelled)} betas started (${num(w.cancelled)} cancelled) for ${num(w.greenRuns)} green</span></section>
 <section class="card tile"><span class="muted">Time in red runs</span><b>${hours(w.redMin)}</b><span class="muted">wall time of the runs that ended red</span></section>
 <section class="card tile"><span class="muted">Flakes</span><b>${pct(w.byCause.flake, w.reds)}</b><span class="muted">${num(w.byCause.flake)} of ${num(w.reds)} red suites passed on the second try</span></section>
 <section class="card tile"><span class="muted">Top cause</span><b>${top ? esc(top.label) : '–'}</b><span class="muted">${top ? `${num(w.byCause[top.id])} red suites` : 'no red suites in this range'}</span></section></div>`;
@@ -67,7 +68,7 @@ export function page(snapshot, {range = '7d', repo = 'GarryOne/jobadabra', now =
 <section class="card"><h2>Which suites cost the most · ${esc(name)}</h2>${suiteTable(w)}</section>
 <section class="card"><h2>What each cause means</h2><table>${CAUSES.map(cause => `<tr><td class="nowrap">${swatch(cause.id)}${esc(cause.label)}</td><td class="muted">${esc(cause.hint)}</td></tr>`).join('')}</table></section>
 <section class="card"><h2>Latest ${(snapshot.latest || []).length} runs</h2><div class="scroll"><table><tr><th>Run</th><th>Day</th><th>Kind</th><th>Result</th><th class="num">Minutes</th></tr>${(snapshot.latest || []).map(run =>
-  `<tr><td><a href="https://github.com/${esc(repo)}/actions/runs/${Number(run.runId)}">#${Number(run.runId)}</a></td><td>${esc(run.day)}</td><td>${esc(run.kind)}</td><td>${run.conclusion === 'failure' ? '🔴 red' : '🟢 green'}</td><td class="num">${num(run.minutes)}</td></tr>`).join('')
+  `<tr><td><a href="https://github.com/${esc(repo)}/actions/runs/${Number(run.runId)}">#${Number(run.runId)}</a></td><td>${esc(run.day)}</td><td>${esc(run.kind)}</td><td>${run.conclusion === 'failure' ? '🔴 red' : run.conclusion === 'cancelled' ? '⚪ cancelled' : '🟢 green'}</td><td class="num">${num(run.minutes)}</td></tr>`).join('')
   || '<tr><td colspan="5" class="muted">No runs yet.</td></tr>'}</table></div></section>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>E2E · Operations · Admin</title>
 <link rel="icon" href="/favicon-32.png"><style>.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}.tile b{display:block;font-size:28px;margin:4px 0}
