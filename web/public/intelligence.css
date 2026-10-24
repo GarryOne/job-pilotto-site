@@ -53,10 +53,9 @@
 @media (max-width: 900px) { .ai-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) {
   .ai-cards { grid-template-columns: 1fr; }
-  /* On a phone the journey is a row of dots that scrolls sideways; the words sit under each dot. */
-  .ai-journey { grid-template-columns: repeat(6, 92px); overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
-  .ai-journey li { scroll-snap-align: start; }
-  .ai-journey::before { left: 46px; right: 46px; }
+  /* On a phone the journey is two rows of three; the line between the dots is dropped. */
+  .ai-journey { --node: 46px; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
+  .ai-journey::before { display: none; }
   .ai-journey small { display: none; }
   .ai-step { padding: 20px; }
 }
