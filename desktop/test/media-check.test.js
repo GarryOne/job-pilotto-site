@@ -51,12 +51,12 @@ test('the fictional form and its recorder are dark', async () => {
   assert.match(read('record-extension.mjs'), /emulateMedia\(\{colorScheme: 'dark'/);
 });
 
-// Round 2: Set up's capture sent no frame for 5 s after a click; the clip froze on the loading card. A still page may send no frames, an action may not.
-test('a frame gap holding a click, a press or a page change is a stall; a still page between actions is not', () => {
+// Round 2: a still page sends no frames (a gap-after-a-click check failed a good Set up); each look forces a repaint, so a look with no frame after it is a stall.
+test('a look with no frame right after its forced repaint is a stall; a still page between looks is not', () => {
   const frames = [0, 0.5, 1, 6, 6.5].map(t => ({t}));
-  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'click'}]}), [{from: 1, to: 6}]);
-  assert.deepEqual(captureGaps({frames, events: [{t: 0.7, type: 'mark'}]}), [{from: 1, to: 6}], 'a change just before the gap counts');
-  assert.deepEqual(captureGaps({frames, events: [{t: 2, type: 'hold'}]}), [], 'a hold on a still page sends no frames, that is fine');
-  const problems = pieceProblems({name: 'hero', source: 'app', log: {frames, events: [{t: 3, type: 'press'}], text: ''}, posterBrightness: 0.1, quiet: true});
+  assert.deepEqual(captureGaps({frames, events: [{t: 0.45, type: 'hold', look: 'a'}, {t: 3, type: 'click'}, {t: 5.9, type: 'hold', look: 'b'}]}), [], 'frames at each look; the still page between is fine');
+  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'hold', look: 'b'}]}), [{look: 'b', t: 3}]);
+  assert.deepEqual(captureGaps({frames, events: [{t: 3, type: 'hold'}]}), [], 'a hold with no look shows nothing new');
+  const problems = pieceProblems({name: 'hero', source: 'app', log: {frames, events: [{t: 3, type: 'hold', look: 'b'}], text: ''}, posterBrightness: 0.1, quiet: true});
   assert.ok(problems.some(line => /capture stalled/.test(line)), problems.join(' / '));
 });

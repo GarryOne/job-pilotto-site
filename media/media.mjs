@@ -36,7 +36,7 @@ async function makeVideo(name, persona, work, out) {
     recorded = await record({persona, piece, dir});
     const gaps = captureGaps(recorded);
     if (!gaps.length || attempt === 3) break;
-    console.log(`media: ${name}: the capture stalled (no frame ${gaps.map(gap => `${gap.from.toFixed(1)}-${gap.to.toFixed(1)} s`).join(', ')}): recording again (${attempt + 1} of 3)`);
+    console.log(`media: ${name}: the capture stalled (no frame at ${gaps.map(gap => `${gap.t.toFixed(1)} s`).join(', ')}): recording again (${attempt + 1} of 3)`);
   }
   const log = piece.camera === 'steady' ? fromFirstLook(recorded) : recorded;   // the hero starts at its first look (camera.mjs)
   console.log(`media: ${name}: recorded ${log.frames.length} frames, ${log.frames.at(-1).t.toFixed(1)} s`);

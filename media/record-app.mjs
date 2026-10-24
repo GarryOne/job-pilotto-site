@@ -90,7 +90,8 @@ async function step(page, item, log) {
     const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
     const left = holdLeft(item.hold, started, Date.now());
     log.add(holdEvent(item, box, phoneBox, left));
-    await page.waitForTimeout(left * 1000);
+    await log.paint();   // a frame now, still page or not (check.mjs captureGaps)
+    await page.waitForTimeout(Math.max(0, left * 1000 - 180));
   }
 }
 
@@ -99,7 +100,7 @@ export async function recordAppVideo({persona, piece, dir}) {
   const {page, close} = await launchApp({persona, settings: piece.settings, moment: piece.moment, env: piece.env});
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
-    const log = stepLog(cast.clock);
+    const log = stepLog(cast.clock, cast.paint);
     for (const item of piece.steps) await step(page, item, log);
     await page.waitForTimeout(200);
     const frames = await cast.stop();

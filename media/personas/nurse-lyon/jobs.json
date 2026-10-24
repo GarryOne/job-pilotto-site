@@ -16,7 +16,12 @@
    "reason": "Cardiology ward with telemetry and day shifts: a close match to your last six years.",
    "url": "https://example.com/jobs/1",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Cardiology",
+    "Patient education",
+    "Day shifts"
+   ]
   },
   {
    "id": 10,
@@ -31,7 +36,12 @@
    "status": "unreviewed",
    "fit": 88,
    "rank": 98.5,
-   "reason": "Telemetry ward, the monitoring you do today; day shifts, permanent contract."
+   "reason": "Telemetry ward, the monitoring you do today; day shifts, permanent contract.",
+   "skills": [
+    "Telemetry",
+    "Monitoring",
+    "Day shifts"
+   ]
   },
   {
    "id": 2,
@@ -59,7 +69,12 @@
    },
    "url": "https://example.com/jobs/2",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Intensive care",
+    "Ventilation",
+    "Night shifts"
+   ]
   },
   {
    "id": 11,
@@ -74,7 +89,11 @@
    "status": "unreviewed",
    "fit": 84,
    "rank": 97.5,
-   "reason": "Rehab after cardiac surgery: patient education is the core of the role."
+   "reason": "Rehab after cardiac surgery: patient education is the core of the role.",
+   "skills": [
+    "Cardiac rehabilitation",
+    "Patient education"
+   ]
   },
   {
    "id": 3,
@@ -90,7 +109,11 @@
    "reason": "Weekday day shifts only, no nights: what you asked for.",
    "url": "https://example.com/jobs/3",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Day surgery",
+    "Pre-op care"
+   ]
   },
   {
    "id": 12,
@@ -105,7 +128,12 @@
    "status": "unreviewed",
    "fit": 83,
    "rank": 96.5,
-   "reason": "Day hospital, no nights or weekends; echo and stress-test support."
+   "reason": "Day hospital, no nights or weekends; echo and stress-test support.",
+   "skills": [
+    "Cardiology",
+    "Echo prep",
+    "Stress tests"
+   ]
   },
   {
    "id": 4,
@@ -120,7 +148,12 @@
    "reason": "Cardiac care unit with telemetry, your daily work; permanent contract, days with one weekend a month.",
    "url": "https://example.com/jobs/4",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Cardiac care",
+    "Telemetry",
+    "Medication"
+   ]
   },
   {
    "id": 13,
@@ -138,7 +171,11 @@
    "reason": "ICU with 1:2 staffing; a step up from your cardiology experience.",
    "stage": "Interview scheduled",
    "next_interview": "2026-10-20T14:00:00+02:00",
-   "notion_url": "https://www.notion.so/0000000000000000000000000000a013"
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a013",
+   "skills": [
+    "Intensive care",
+    "Critical care"
+   ]
   },
   {
    "id": 5,
@@ -153,7 +190,12 @@
    "reason": "Independent rounds and patient education; needs a driving licence, which you have.",
    "url": "https://example.com/jobs/5",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Home care",
+    "Wound care",
+    "Driving licence"
+   ]
   },
   {
    "id": 14,
@@ -171,7 +213,11 @@
    "reason": "Neuro-vascular unit with telemetry; training provided for the stroke scale.",
    "stage": "Screening",
    "next_interview": "2026-10-15T09:30:00+02:00",
-   "notion_url": "https://www.notion.so/0000000000000000000000000000a014"
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a014",
+   "skills": [
+    "Stroke care",
+    "Neurology"
+   ]
   },
   {
    "id": 6,
@@ -186,7 +232,11 @@
    "reason": "A first coordinator role; older patients rather than acute care.",
    "url": "https://example.com/jobs/6",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Coordination",
+    "Elderly care"
+   ]
   },
   {
    "id": 15,
@@ -201,7 +251,11 @@
    "status": "unreviewed",
    "fit": 74,
    "rank": 93.5,
-   "reason": "Fixed morning shifts, small team; new to you but close to your skills."
+   "reason": "Fixed morning shifts, small team; new to you but close to your skills.",
+   "skills": [
+    "Dialysis",
+    "Haemodialysis"
+   ]
   },
   {
    "id": 7,
@@ -216,7 +270,11 @@
    "reason": "Nights only; you asked for day shifts.",
    "url": "https://example.com/jobs/7",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Emergency care",
+    "Night shifts"
+   ]
   },
   {
    "id": 16,
@@ -234,7 +292,11 @@
    "reason": "Emergency triage and resuscitation bay; rotating shifts.",
    "stage": "Interview scheduled",
    "next_interview": "2026-10-22T11:00:00+02:00",
-   "notion_url": "https://www.notion.so/0000000000000000000000000000a016"
+   "notion_url": "https://www.notion.so/0000000000000000000000000000a016",
+   "skills": [
+    "Emergency care",
+    "Triage"
+   ]
   },
   {
    "id": 8,
@@ -249,7 +311,11 @@
    "reason": "",
    "url": "https://example.com/jobs/8",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Operating room",
+    "Sterile technique"
+   ]
   },
   {
    "id": 17,
@@ -264,7 +330,11 @@
    "status": "unreviewed",
    "fit": 70,
    "rank": 91.5,
-   "reason": "Eight-bed unit, calm pace, strong team; emotionally demanding."
+   "reason": "Eight-bed unit, calm pace, strong team; emotionally demanding.",
+   "skills": [
+    "Palliative care",
+    "Pain management"
+   ]
   },
   {
    "id": 18,
@@ -279,7 +349,11 @@
    "status": "unreviewed",
    "fit": 82,
    "rank": 90.5,
-   "reason": "Teach patients and juniors; two days a week from home."
+   "reason": "Teach patients and juniors; two days a week from home.",
+   "skills": [
+    "Teaching",
+    "Cardiology"
+   ]
   },
   {
    "id": 9,
@@ -294,7 +368,11 @@
    "reason": "Monday to Friday, days only; less clinical than the roles you want.",
    "url": "https://example.com/jobs/9",
    "posted_at": "2026-10-01",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Occupational health",
+    "Prevention"
+   ]
   },
   {
    "id": 19,
@@ -309,7 +387,11 @@
    "status": "unreviewed",
    "fit": 66,
    "rank": 89.5,
-   "reason": "Term-time only; very different from hospital work."
+   "reason": "Term-time only; very different from hospital work.",
+   "skills": [
+    "School health",
+    "Children"
+   ]
   },
   {
    "id": null,
@@ -331,7 +413,11 @@
    "applied_on": "",
    "via": "Example Santé Recrutement",
    "next_step": "Reply to the recruiter",
-   "first_seen_at": "2026-10-01"
+   "first_seen_at": "2026-10-01",
+   "skills": [
+    "Paediatrics",
+    "Children"
+   ]
   }
  ],
  "total": 196,

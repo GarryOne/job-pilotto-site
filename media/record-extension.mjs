@@ -47,7 +47,7 @@ export async function recordExtensionVideo({persona, piece, dir}) {
     await page.goto(`https://${host}/jobs/apply`);
     await ext.assertIsolated();
     const cast = await startScreencast(page, path.join(dir, 'frames'));
-    const log = stepLog(cast.clock);
+    const log = stepLog(cast.clock, cast.paint);
     for (const item of piece.steps) {
       if (item.fill) {   // what the app's Apply does: the tab, marked for the extension, which then reads and fills the form by itself
         await page.evaluate(() => { location.hash = 'jobpilotto-fill'; });
@@ -63,7 +63,8 @@ export async function recordExtensionVideo({persona, piece, dir}) {
         if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
         const phoneBox = await boxOf(item.phoneLook), left = holdLeft(item.hold, started, Date.now());
         log.add(holdEvent(item, box, phoneBox, left));
-        await page.waitForTimeout(left * 1000);
+        await log.paint();   // a frame now, still page or not (check.mjs captureGaps)
+        await page.waitForTimeout(Math.max(0, left * 1000 - 180));
       }
     }
     const frames = await cast.stop();
