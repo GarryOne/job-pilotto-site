@@ -1,7 +1,7 @@
 // jobs/e2e-intel.mjs: from the jobs of release runs to the red suites and their causes (the shapes of runs 909/910, 17 Oct 2026), with no network.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {passedFirst, redJobs, rowsOf} from '../../jobs/e2e-intel.mjs';
+import {passedFirst, redJobs, rowsOf, runsToRead} from '../../jobs/e2e-intel.mjs';
 
 const step = (name, conclusion) => ({name, conclusion});
 const job = (name, conclusion, steps = [], id = 1) => ({id, name, conclusion, steps, started_at: '2026-10-17T20:00:00Z', completed_at: '2026-10-17T20:12:00Z'});
@@ -37,4 +37,10 @@ test('a suite that has not passed since is "open"; a flake never reads the log o
   const flaky = job('E2E · Mac + Linux · apply', 'success', [once('success')], 10), stuck = job('E2E · Mac + Linux · quality', 'failure', [], 11);
   const rows = rowsOf([run(1, '2026-10-17T20:01:00Z', 'aaa', [flaky, stuck])], {logOf: id => { if (id === 10) throw new Error('flake read the log'); return ''; }, filesBetween: () => { throw new Error('read the files of a suite that has no fix'); }});
   assert.deepEqual(rows.fails.map(fail => [fail.suite, fail.cause]), [['apply', 'flake'], ['quality', 'open']]);
+});
+
+test('new runs are read before pending ones, so unresolved old reds cannot starve them', () => {
+  const listed = [1, 2, 3, 4].map(databaseId => ({databaseId}));
+  assert.deepEqual(runsToRead(listed, new Set([1, 2]), new Set([1, 2])).map(r => r.databaseId), [3, 4]);
+  assert.deepEqual(runsToRead(listed, new Set([1, 2, 3, 4]), new Set([2])).map(r => r.databaseId), [2], 'with nothing new, the pending ones are read again');
 });

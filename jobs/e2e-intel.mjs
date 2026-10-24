@@ -62,6 +62,12 @@ async function readLogs(runs) {
 }
 const filesBetween = (from, to) => { if (from === to) return []; try { return gh('api', `repos/${repo}/compare/${from}...${to}`).files.map(file => file.filename); } catch { return null; } };
 
+// New runs first: the "unknown" reds never resolve (their fix cannot be read), and re-reading the oldest 60 pending runs every hour starved every newer run (the page stopped at 17 Oct, 24 Oct 2026).
+export function runsToRead(listed, settled, waiting) {
+  const fresh = listed.filter(run => !settled.has(run.databaseId) && !waiting.has(run.databaseId));
+  return fresh.length ? fresh : listed.filter(run => waiting.has(run.databaseId));
+}
+
 async function main() {
   const key = process.env.SELFHEAL_PUBLISH_KEY, dry = process.argv.includes('--dry');
   if (!key && !dry) { console.log('::warning::SELFHEAL_PUBLISH_KEY is not set: nothing published.'); return; }
@@ -71,7 +77,7 @@ async function main() {
   let have = [], pending = [];
   if (key) ({have, pending} = await (await fetch(`${base}?v=${RULES_VERSION}`, {headers: {Authorization: `Bearer ${key}`}})).json());
   const settled = new Set(have), waiting = new Set(pending);
-  const todo = listed.filter(run => !settled.has(run.databaseId) || waiting.has(run.databaseId));
+  const todo = runsToRead(listed, settled, waiting);
   console.log(`${listed.length} finished runs in 30 days, ${settled.size} stored, ${todo.length} to read`);
   if (!todo.length) return;
   // A fix is looked for in the runs after the oldest one to read: read their jobs too (at most 60 runs a time).
