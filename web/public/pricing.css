@@ -1,0 +1,68 @@
+/* Pricing page: two paper tickets (perforation + barcode stub), a callout and three accordions. Only pricing.html loads it. */
+.passes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.pass { --surface: #f7f3ea; --raised: #eee7da; --ink: #1b2430; --muted: #5f6b78; --line: #e0d7c8; --line-strong: #cdbfaa; --notch: 14px;
+  color: var(--ink); display: grid; grid-template-columns: minmax(0, 1fr) 84px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+.pass-main { display: grid; gap: 14px; align-content: start; padding: 28px 30px; }
+.pass-name { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.pass h3 { font: 600 2rem/1.1 var(--display); letter-spacing: -.02em; }
+.tag { font: 500 .66rem var(--mono); letter-spacing: .12em; text-transform: uppercase; background: #dff1e3; color: #17663a; border: 1px solid #a9d6b4; padding: 4px 10px; border-radius: 999px; }
+.tag.soon { background: #fdf0d5; color: #7a4f00; border-color: #efc774; }
+.pass-price { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.pass-price b { font: 700 3.6rem/1 var(--display); letter-spacing: -.03em; }
+.pass-price span { font: 600 1.05rem var(--sans); color: var(--muted); }
+.pass-promise { font-size: 1.05rem; }
+.pass-promise b { font-weight: 700; }
+.pass-rule { border: 0; border-top: 1px solid var(--line); margin: 2px 0; width: 100%; }
+.pass ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: .98rem; }
+.pass li { display: flex; gap: 12px; align-items: center; }
+.pass li::before { content: "✓"; flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #ffb224; color: #14110c; font: 700 .72rem/1 var(--sans); }
+.pass .btn { justify-content: center; width: 100%; }
+.pass .btn-primary { background: #132439; color: #f7f3ea; box-shadow: 0 8px 22px rgb(19 36 57 / .25); }
+.pass.soon .btn-primary { background: #ffb224; color: #14110c; }
+.pass-fine { font-size: .84rem; color: var(--muted); text-align: center; }
+.pass-fine a { color: inherit; text-underline-offset: 3px; }
+.pass-stub { position: relative; display: grid; align-content: space-between; justify-items: center; padding: 28px 0 24px; background: var(--raised); border-left: 2px dashed var(--line-strong); }
+/* The notches show the section behind the ticket, whichever band it sits on. */
+.pass-stub::before, .pass-stub::after { content: ""; position: absolute; left: calc(-1 * var(--notch) - 1px); width: calc(var(--notch) * 2); height: calc(var(--notch) * 2); border-radius: 50%; background: var(--section-bg, var(--paper)); }
+.pass-stub::before { top: calc(-1 * var(--notch)); }
+.pass-stub::after { bottom: calc(-1 * var(--notch)); }
+.pass-word { writing-mode: vertical-rl; font: 500 .72rem var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+.barcode { display: block; width: 36px; height: 150px; border-radius: 3px; opacity: .8;
+  background: repeating-linear-gradient(0deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 12px); }
+.callout { display: flex; gap: 16px; align-items: flex-start; margin-top: 24px; padding: 18px 22px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); }
+.callout .mark { flex: none; color: var(--signal); font-size: 1.6rem; line-height: 1; }
+.callout b { display: block; }
+.callout p { color: var(--muted); margin-top: 2px; }
+.more { display: grid; gap: 10px; margin-top: 14px; }
+.more .more-body { color: var(--muted); display: grid; gap: 10px; padding-bottom: 20px; max-width: 78ch; }
+.more .more-body ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.more a { color: var(--signal); }
+@media (max-width: 980px) { .passes { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) {
+  .pass { grid-template-columns: minmax(0, 1fr); }
+  .pass-main { padding: 24px 20px; }
+  .pass-price b { font-size: 3rem; }
+  .pass-stub { grid-template-columns: 1fr auto; align-content: center; padding: 14px 20px; border-left: 0; border-top: 2px dashed var(--line-strong); }
+  .pass-word { writing-mode: horizontal-tb; letter-spacing: .24em; justify-self: start; }
+  .barcode { width: 120px; height: 30px; background-image: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px, var(--ink) 8px 11px, transparent 11px 12px); }
+  .pass-stub::before, .pass-stub::after { top: calc(-1 * var(--notch)); bottom: auto; }
+  .pass-stub::before { left: calc(-1 * var(--notch)); } .pass-stub::after { left: auto; right: calc(-1 * var(--notch)); }
+}
+.faq.more { max-width: none; }
+body[data-page="pricing"] .page-head h1 { font-weight: 700; }
+.pass .downloads { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* Mac and Windows equally visible (owner, 20 Oct 2026) */
+.pass .downloads .btn { white-space: nowrap; padding-inline: 12px; }
+@media (max-width: 520px) { .pass .downloads { grid-template-columns: minmax(0, 1fr); } }
+/* Three tickets: the stub narrows; the headline's "once" is the brand yellow; a struck-through old price sits before the new one. */
+.passes.three { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.passes.three .pass { grid-template-columns: minmax(0, 1fr) 56px; }
+.passes.three .pass-main { padding: 26px 22px; }
+.passes.three .pass-price b { font-size: 3.1rem; }
+.pass-price s { font: 600 1.4rem var(--display); color: var(--muted); }
+.pass-chip { justify-self: start; font-size: .88rem; padding: 3px 12px; border-radius: 8px; background: #fdf0d5; color: #7a4f00; border: 1px solid #efc774; }
+body[data-page="pricing"] .page-head h1 em { font-style: normal; color: var(--amber); }
+@media (max-width: 1180px) { .passes.three { grid-template-columns: minmax(0, 1fr); max-width: 640px; } .passes.three .pass { grid-template-columns: minmax(0, 1fr) 84px; } }
+@media (max-width: 520px) { .passes.three .pass { grid-template-columns: minmax(0, 1fr); } .passes.three .pass-main { padding: 24px 20px; } }
+.passes.three .downloads { grid-template-columns: minmax(0, 1fr); }
+.passes.three .pass-price span { flex-basis: 100%; }
+.passes.three .pass-price { gap: 4px 12px; }
