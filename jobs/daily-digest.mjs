@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {MODEL, countOf, daysToRun, makeDigest, plan, zurichDay, zurichHour} from '../admin/build-digest.js';
 import {post} from '../admin/build-digest-telegram.js';
+import {AiRefused, isRefusal, reportRefusal} from '../admin/ai-refusal.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
 const repo = process.env.REPO || process.env.GITHUB_REPOSITORY || 'GarryOne/jobadabra';
@@ -48,11 +49,17 @@ async function runDay({day, late, key, publishKey, now}) {
 
 async function main() {
   const key = process.env.DIGEST_ANTHROPIC_KEY, now = new Date(), results = [];
-  if (!key) { console.error('::error::DIGEST_ANTHROPIC_KEY is not set (the Self-heal workspace key): no digest written.'); process.exit(1); }
+  if (!key) { await reportRefusal(new AiRefused(401, 'DIGEST_ANTHROPIC_KEY is not set in this run'), {job: 'Daily build digest', effect: 'No digest written.', workflow: 'daily-digest.yml', zurichHour: zurichHour(now), run: (cmd, ...args) => execFileSync(cmd, args, {encoding: 'utf8'})}); process.exit(1); }
   const publishKey = process.env.SELFHEAL_PUBLISH_KEY;
   // Yesterday too, until a run has closed it (daysToRun): a missed night no longer leaves a day open.
   const days = daysToRun(now, arg('day'));
-  for (const item of days) { const result = await runDay({...item, key, publishKey, now}); if (result) results.push(result); }
+  // A refusal by the AI (limit, bad key, overload) is named, told on Telegram once per outage, and fails the run: the digest of that day is retried at the next run (owner, 24 Oct 2026: 7 of 8 runs failed unseen).
+  try { for (const item of days) { const result = await runDay({...item, key, publishKey, now}); if (result) results.push(result); } }
+  catch (error) {
+    if (!isRefusal(error)) throw error;
+    await reportRefusal(error, {job: 'Daily build digest', effect: 'Nothing was written for today; the next run tries again.', workflow: 'daily-digest.yml', zurichHour: zurichHour(now), run: (cmd, ...args) => execFileSync(cmd, args, {encoding: 'utf8'})});
+    process.exit(1);
+  }
   if (arg('out')) writeFileSync(arg('out'), JSON.stringify(results));
   if (arg('cost')) writeFileSync(arg('cost'), JSON.stringify({usd: results.reduce((sum, item) => sum + item.usd, 0), calls: results.length}));
   if (!arg('out') && !publishKey) for (const item of results) console.log(item.markdown);

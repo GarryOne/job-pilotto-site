@@ -1,8 +1,8 @@
 name: CI · Changelog publish
 # The What's new page publishes itself (owner, 18 Oct 2026): every stable release and every build the beta gate approved gets an entry, drafted by Haiku in plain words (new features / improvements / bug fixes),
-# checked by admin/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. A failed draft is not published and is retried at the next run.
+# checked by admin/changelog.js and published to https://www.jobpilotto.top/changelog (PUT /changelog/data, SELFHEAL_PUBLISH_KEY). No commit, no PR. When the AI cannot draft (limit, bad key, outage) the version goes out as a PLAIN entry built without it, the run is red with the refusal named + a Telegram message, and the next run that can reach the AI writes it again (admin/changelog-plain.js).
 # This run drafts only versions NEWER than the newest on the page; the one-time backfill of older versions (+ the 0.0.1 start entry) was run once from the owner's Mac, `node jobs/changelog-publish.mjs --plan|--backfill`, never from here.
-# Runs hourly at :23 (the public repo cannot start a workflow here), or by hand: `gh workflow run changelog-publish.yml`.
+# Runs hourly at :23 (the fallback; the release workflow starts it on each release), or by hand: `gh workflow run changelog-publish.yml`.
 on:
   schedule:
     - cron: '23 * * * *'
@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: read   # the alert tells only when the run before was not already red (admin/ai-refusal.js)
 
 concurrency:
   group: changelog-publish
@@ -24,6 +25,10 @@ jobs:
       REPO: GarryOne/jobadabra   # the public repo's PRs, runs and tags (read with this repo's token: public data)
       DIGEST_ANTHROPIC_KEY: ${{ secrets.DIGEST_ANTHROPIC_KEY }}
       SELFHEAL_PUBLISH_KEY: ${{ secrets.SELFHEAL_PUBLISH_KEY }}
+      BUILDLOG_TELEGRAM_TOKEN: ${{ secrets.BUILDLOG_TELEGRAM_TOKEN }}   # the alert when the AI refuses (CI alerts bot first, else this one)
+      BUILDLOG_TELEGRAM_CHAT: ${{ secrets.BUILDLOG_TELEGRAM_CHAT }}
+      CI_ALERTS_TELEGRAM_BOT_TOKEN: ${{ secrets.CI_ALERTS_TELEGRAM_BOT_TOKEN }}
+      CI_ALERTS_TELEGRAM_CHAT_ID: ${{ secrets.CI_ALERTS_TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v5
         with:

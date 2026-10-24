@@ -18,6 +18,7 @@ Nothing here may be needed by a public file, test or workflow. Never copy a priv
 - **A public file the site bundles changed** (`extension/…`, `desktop/lib/…`, `worker/src/report.js`, `config/…`): `public-watch.yml` (every 6 hours) redeploys; start it by hand when it matters.
 - **Shared tables live in the public repo** (`desktop/e2e/lib/platform.mjs`, `applying-status.mjs`, `desktop/lib/free-ai-models.js`, `free-ai-translate.js`, `desktop/test/fixtures/host-cases.json`); the `shared/*.js` files re-export them. Edit them in the public repo.
 - A test that needs a site file lives in the public repo behind `tests/site_private.py` / `desktop/test/site-private.js` (skipped there, run here) or in this repo's `tests/` and `desktop/test/`.
+- **A job that calls the AI must never fail silently** (owner, 24 Oct 2026: the key's workspace hit its monthly limit; the changelog stayed green for a day, the digest failed 7 of 8 runs unseen): catch `AiRefused` (`admin/ai-refusal.js`, thrown by `ask`), name the cause, `reportRefusal` (Telegram once per outage), fail the run red, and keep a fallback that needs no AI where the output matters (`admin/changelog-plain.js`). New AI call = same handling + a test on fake 400-limit / 429 answers.
 
 ## Safety (same as the public repo)
 - Secrets only in the macOS Keychain (`job-pilotto.*`), GitHub secrets and Worker secrets. Never in code, docs, logs or PR text. The owner sets this repo's secrets; never print or copy a value.

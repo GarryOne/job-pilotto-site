@@ -5,7 +5,9 @@
 //   node jobs/changelog-publish.mjs [--plan] [--backfill] [--dry [--tag desktop-v0.7.28]] [--cost cost.json]   --plan: $0 table of what a run would read and cost; --backfill: also drafts versions older than the newest stored one and the 0.0.1 entry (an automatic run does neither);    --cost: {usd, calls} for desktop/e2e/ai-cost-report.mjs --job changelog-publish; --dry drafts and prints, publishes nothing. Guard: test/admin/changelog-publish.test.js (fake model, fake site).
 import {execFileSync} from 'node:child_process';
 import {writeFileSync} from 'node:fs';
-import {MODEL, ask} from '../admin/build-digest.js';
+import {MODEL, ask, zurichHour} from '../admin/build-digest.js';
+import {AiRefused, describe, isRefusal, reportRefusal, staysDown} from '../admin/ai-refusal.js';
+import {plainEntry} from '../admin/changelog-plain.js';
 import {MERGE_PROMPT, MODEL_PROMPT, cleanGroups, problems, versionOf} from '../admin/changelog.js';
 import {usageCost} from '../desktop/e2e/lib/vision.mjs';
 
@@ -98,6 +100,15 @@ export async function draftEntry({tag, prev, first, version, date, channel}, {su
   return {entry, cost, dropped};
 }
 
+// One version -> its entry, whatever the AI does (owner, 24 Oct 2026: a refused AI must never leave the page without the release). `ai` = {down: error|null} is shared by the run: after a refusal that will not clear
+// (limit, bad key, rate, overload) no more calls are made. -> {entry, cost, dropped, hidden?, plain?, error?}: `plain` = built without the AI (marked for a redraft), `error` = what to make the run red with.
+export async function draftOrPlain(work, {subjects, ai = {down: null}, ...rest}) {
+  const fallback = error => { const entry = plainEntry(work, subjects); return entry ? {entry, plain: true, cost: 0, dropped: [], error} : {hidden: true, cost: 0, dropped: [], error}; };
+  if (ai.down) return fallback(ai.down);
+  try { return await draftEntry(work, {subjects, ...rest}); }
+  catch (error) { if (staysDown(error)) ai.down = error; return fallback(error); }
+}
+
 const rootOf = () => { const sha = out('git', 'rev-list', '--max-parents=0', 'HEAD').split('\n').pop(); return {sha, date: out('git', 'log', '-1', '--format=%as', sha)}; };
 const subjectsOf = ({tag, prev}, paths = PATHSPEC) => out('git', 'log', '--no-merges', '--format=%s', `${prev}..${tag}`, '--', ...paths).split('\n').filter(Boolean);
 const siteCall = async (method, body, key) => {
@@ -120,37 +131,41 @@ function printPlan(draft, root) {
 
 async function main() {
   const dry = process.argv.includes('--dry'), backfill = process.argv.includes('--backfill'), planOnly = process.argv.includes('--plan'), aiKey = process.env.DIGEST_ANTHROPIC_KEY, siteKey = process.env.SELFHEAL_PUBLISH_KEY;
-  if (!aiKey && !planOnly) { console.error('::error::DIGEST_ANTHROPIC_KEY is not set: nothing drafted.'); process.exit(1); }
   if (!dry && !planOnly && !siteKey) { console.error('::error::SELFHEAL_PUBLISH_KEY is not set: nothing published.'); process.exit(1); }
   const releases = JSON.parse(out('gh', 'release', 'list', '-R', repo, '-L', '200', '--json', 'tagName,isPrerelease,isDraft,publishedAt'));
   for (const item of releases.filter(release => release.isPrerelease)) item.body = JSON.parse(out('gh', 'release', 'view', item.tagName, '-R', repo, '--json', 'body')).body;
-  const have = planOnly && !siteKey ? {'0.7.16': 'stable'} : dry ? {} :   // --plan without the site key: 0.7.16 is the one version stored today
-     (await siteCall('GET', null, siteKey)).have;
+  const site = planOnly && !siteKey ? {have: {'0.7.16': 'stable'}} : dry ? {have: {}} :   // --plan without the site key: 0.7.16 is the one version stored today
+     await siteCall('GET', null, siteKey), have = site.have, plainVersions = site.plain || [];
   const root = rootOf();
   let {draft, promote} = plan(releases, have, root.sha);
   if (arg('tag')) draft = plan(releases, {}, root.sha).draft.filter(item => item.tag === arg('tag'));
   else if (!backfill) draft = newerThanStored(draft, have);
   if (process.argv.includes('--plan')) return printPlan(draft, root);
-  const entries = [], hidden = [], failures = [];
+  const entries = [], hidden = [], redraft = [], failures = [], ai = {down: !aiKey && !planOnly ? new AiRefused(401, 'DIGEST_ANTHROPIC_KEY is not set in this run') : null};
   if (backfill && !arg('tag') && !('0.0.1' in have)) entries.push(startEntry(root.date));
   const spend = {total: 0, cap: CAP};
+  // Versions stored WITHOUT the AI wait for words: they are drafted again like new ones (a stored plain body is replaced once, never an AI one).
+  const again = dry ? [] : plan(releases, {}, root.sha).draft.filter(item => plainVersions.includes(item.version) && !draft.some(next => next.version === item.version)).map(item => ({...item, redraft: true}));
   let spent = 0, calls = 0;
-  for (const work of draft) {
-    if (spend.total >= spend.cap) { console.log(`::error::the spend cap of $${CAP} is reached: stopping, ${work.version} and the versions after it are not drafted`); failures.push('spend cap'); break; }
-    try {
-      const done = await draftEntry(work, {subjects: subjectsOf(work), key: aiKey, spend});
-      spent += done.cost; calls += done.cost > 0 ? 1 : 0;
-      console.log(`${work.tag}: ${done.entry ? `${done.entry.groups.map(group => `${group.kind} ${group.items.length}`).join(', ')}` : 'nothing a user would notice (hidden)'}, ${done.dropped.length} dropped by the word floor, $${done.cost.toFixed(4)}`);
-      for (const line of done.dropped) console.log(`  dropped: ${line}`);
-      if (done.entry) entries.push(done.entry); else hidden.push({version: work.version, date: work.date, channel: work.channel});
-      if (dry) console.log(JSON.stringify(done.entry || {hidden: true}, null, 2));
-    } catch (error) { failures.push(error.message); console.log(`::error::${error.message} (not published; retried at the next run)`); }
+  for (const work of [...draft, ...again]) {
+    if (spend.total >= spend.cap && !ai.down) ai.down = new Error(`the spend cap of $${CAP} is reached`);
+    const done = await draftOrPlain(work, {subjects: subjectsOf(work), ai, key: aiKey, spend});
+    spent += done.cost; calls += done.cost > 0 ? 1 : 0;
+    const why = done.error && (isRefusal(done.error) ? describe(done.error) : done.error.message);
+    if (done.error) { failures.push(`${work.version}: ${why}`); console.log(`::error::${work.version}: ${why}${done.plain ? ' (published as a plain entry, written again at the next run that can reach the AI)' : work.redraft ? ' (stays plain)' : ' (not published; retried at the next run)'}`); }
+    console.log(`${work.tag}: ${done.entry ? `${done.entry.groups.map(group => `${group.kind} ${group.items.length}`).join(', ')}${done.plain ? ' [plain, no AI]' : ''}` : 'nothing a user would notice (hidden)'}, ${done.dropped.length} dropped by the word floor, $${done.cost.toFixed(4)}`);
+    for (const line of done.dropped) console.log(`  dropped: ${line}`);
+    if (work.redraft) { if (done.entry && !done.plain) redraft.push(done.entry); }
+    else if (done.entry) entries.push(done.entry);
+    else if (!done.error) hidden.push({version: work.version, date: work.date, channel: work.channel});
+    if (dry) console.log(JSON.stringify(done.entry || {hidden: true}, null, 2));
   }
-  if (!dry && (entries.length || hidden.length || promote.length)) {
-    const result = await siteCall('PUT', {entries, hidden, channels: Object.fromEntries(promote.map(item => [item.version, item.channel]))}, siteKey);
-    console.log(`published: ${result.stored} entries, ${result.hidden} hidden, ${promote.length} promoted to stable; AI cost $${spent.toFixed(4)}`);
+  if (!dry && (entries.length || hidden.length || promote.length || redraft.length)) {
+    const result = await siteCall('PUT', {entries, hidden, redraft, channels: Object.fromEntries(promote.map(item => [item.version, item.channel]))}, siteKey);
+    console.log(`published: ${result.stored} entries (${entries.filter(entry => entry.plain).length} plain), ${redraft.length} written again, ${result.hidden} hidden, ${promote.length} promoted to stable; AI cost $${spent.toFixed(4)}`);
   } else console.log(`nothing to publish${dry ? ' (dry run)' : ''}; AI cost $${spent.toFixed(4)}`);
   if (arg('cost')) writeFileSync(arg('cost'), JSON.stringify({usd: spent, calls}));
+  if (ai.down && isRefusal(ai.down)) await reportRefusal(ai.down, {job: 'Changelog publish', effect: `${entries.filter(entry => entry.plain).length} plain What's new entries went out without the AI; the next run that can reach it writes them again.`, workflow: 'changelog-publish.yml', zurichHour: zurichHour(new Date()), run: out});
   if (failures.length) process.exit(1);
 }
 

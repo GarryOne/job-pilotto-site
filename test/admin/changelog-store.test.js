@@ -58,3 +58,16 @@ test('the 0.0.1 project-start entry is stored and listed last, under every real 
   await put(e, {entries: [entry('0.0.1', {channel: 'start', date: '2026-09-24'}), entry('0.4.0', {channel: 'stable'}), entry('0.7.2')]});
   assert.deepEqual((await (await call(e, {}, '/changelog.json')).json()).map(item => item.version), ['0.7.2', '0.4.0', '0.0.1']);
 });
+
+test('a plain entry is stored marked; GET lists it; a redraft replaces a plain body once and never an AI one', async () => {
+  const e = env();
+  await put(e, {entries: [entry('0.8.20', {plain: true}), entry('0.8.21')]});
+  assert.deepEqual((await (await call(e, {method: 'GET', headers: {Authorization: 'Bearer pub'}})).json()).plain, ['0.8.20']);
+  const words = [{kind: 'fixes', items: [{emoji: '🐛', lead: 'Redrafted', text: 'Written by the AI.'}]}];
+  assert.equal((await put(e, {redraft: [entry('0.8.20', {groups: words}), entry('0.8.21', {groups: words})]})).status, 200);
+  const body = version => JSON.parse(e.STATS.db.prepare('SELECT body FROM changelog_entries WHERE version = ?').get(version).body)[0].kind;
+  assert.equal(body('0.8.20'), 'fixes');
+  assert.equal(body('0.8.21'), 'features', 'an AI entry is never replaced');
+  assert.deepEqual((await (await call(e, {method: 'GET', headers: {Authorization: 'Bearer pub'}})).json()).plain, []);
+  assert.equal((await put(e, {redraft: [entry('0.8.20', {groups: [{kind: 'fixes', items: [{lead: 'Pro', text: 'Pro costs $29.'}]}]})]})).status, 422);
+});
