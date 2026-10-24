@@ -163,3 +163,6 @@ comes back at the next redo.
   (hold ≥ 3.6 at speed 1.5): the viewer is still arriving.
 - **A cut hides how she got there**: a cut look is a jump. Where the owner wants the way in seen (Find: the click on a job, the drawer opening),
   use a click zoom and a short hold on the in-between screen, not `cut`.
+- **The video looked bluer than the app** (owner, 24 Oct 2026: "a different background than it is actually on the real app"): the files were
+  BT.601 and untagged; Chrome decoded them as BT.709 (card 16,25,33 played as 16,27,39). `encode.mjs` now writes BT.709 with the sRGB transfer
+  tag (`videoFilter`, `COLOR_TAGS`; a BT.709 transfer tag crushed the darks). Judge colours in Chrome playing the file, never from an ffmpeg frame.
