@@ -114,7 +114,7 @@ test('the landing page reads the pool size from the public summary of this route
   const {readFileSync} = await import('node:fs');
   const pub = name => readFileSync(new URL(`../../web/public/${name}`, import.meta.url), 'utf8');
   const page = pub('index.html');
-  assert.match(pub('site.js'), /fetch\('\/api\/index\?summary=1'\)/);
+  assert.match(pub('site.js'), /fetch\('\/api\/coverage'\)/);   // the same snapshot as /coverage (24 Oct 2026)
   assert.match(page, /<b data-count="employers">[^<]+<\/b>/);
   assert.match(page, /<b data-count="jobs">[^<]+<\/b>/);
   assert.match(page, /<script src="\/?site\.js"/);
