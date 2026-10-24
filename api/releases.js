@@ -2,7 +2,7 @@
 // calls an hour per IP, and an office network shares one (9 Oct 2026: a friend's Windows app got "GitHub answered 403").
 // Two fixed reads only, made with the site's GITHUB_TOKEN and kept 5 minutes at the edge for every install; the answer is the
 // GitHub shape, trimmed to the fields the updater reads. Guard: test/api/releases.test.js.
-const REPO = 'GarryOne/job-pilotto';
+const REPO = 'GarryOne/jobadabra';
 const PATHS = {'/api/releases/latest': `repos/${REPO}/releases/latest`, '/api/releases': `repos/${REPO}/releases?per_page=30`};
 export const CACHE_SECONDS = 300;
 
@@ -18,7 +18,7 @@ export async function releases(request, env, ctx, {fetcher = globalThis.fetch, c
   const key = new Request(new URL(pathname, request.url).toString());   // no query: one cached answer per path
   const kept = cache && await cache.match(key);
   if (kept) return kept;
-  const response = await fetcher(`https://api.github.com/${PATHS[pathname]}`, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site',
+  const response = await fetcher(`https://api.github.com/${PATHS[pathname]}`, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'jobadabra-web',
     'X-GitHub-Api-Version': '2022-11-28', ...(env.GITHUB_TOKEN ? {Authorization: `Bearer ${env.GITHUB_TOKEN}`} : {})}});
   if (!response.ok) {
     console.log(`releases: GitHub answered ${response.status} for ${pathname}`);

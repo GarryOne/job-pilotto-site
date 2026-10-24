@@ -118,7 +118,7 @@ export function bars(snapshot, range = '7d', now = new Date()) {
   return `${legend(CATEGORIES)}${barRows(CATEGORIES, list, summary)}`;
 }
 
-export function page(snapshot, {range = '7d', repo = 'GarryOne/job-pilotto', now = new Date(), lead = ''} = {}) {
+export function page(snapshot, {range = '7d', repo = 'GarryOne/jobadabra', now = new Date(), lead = ''} = {}) {
   range = rangeOf(range);
   const filters = filterLinks(Object.entries(RANGES).map(([value, {name}]) => [value, name, `?range=${value}`]), range), name = RANGES[range].name;
   const body = !snapshot ? `<section class="card"><h2>No data yet</h2><p class="muted">The workflow <code>ops-overview.yml</code> publishes the merged PRs on every push to main and hourly; the first run fills this page.</p></section>`

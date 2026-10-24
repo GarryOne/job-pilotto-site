@@ -52,7 +52,7 @@ const files = [
   {name: 'manual.yml', text: 'name: Manual\non:\n  workflow_dispatch:\njobs:\n  a:\n    runs-on: ubuntu-24.04\n', runs: []},
   {name: 'old.yml', state: 'disabled_manually', text: "name: Old\non:\n  schedule:\n    - cron: '0 5 * * *'\njobs:\n  a:\n    runs-on: ubuntu-24.04\n", runs: []}];
 const SCHEDULER = `  if (cron === '40 */3 * * *') return [{workflow: 'ops-overview.yml', inputs: {}}];\n`;
-const gh = fakeGh({'GarryOne/job-pilotto': {private: false, files: [files[0]], code: {'worker/src/scheduler.js': SCHEDULER}}, 'GarryOne/job-pilotto-site': {private: true, files}});
+const gh = fakeGh({'GarryOne/jobadabra': {private: false, files: [files[0]], code: {'worker/src/scheduler.js': SCHEDULER}}, 'GarryOne/jobadabra-web': {private: true, files}});
 gh.raw = true;
 const realGh = (path, raw) => (path.endsWith('worker/src/scheduler.js') ? SCHEDULER : gh(path, raw));
 
@@ -95,16 +95,16 @@ test('areas, state and missed runs', () => {
 });
 
 test('the collector reads each repo, merges the Worker cron, weighs minutes, and survives a repo it cannot read', async () => {
-  const snapshot = await collect({gh: realGh, repos: ['GarryOne/job-pilotto', 'GarryOne/job-pilotto-site', 'GarryOne/gone'], now});
-  assert.deepEqual(snapshot.repos.map(repo => [repo.name, repo.ok, repo.private]), [['GarryOne/job-pilotto', true, false], ['GarryOne/job-pilotto-site', true, true], ['GarryOne/gone', false, true]]);
-  const pub = snapshot.jobs.find(job => job.repo === 'GarryOne/job-pilotto'), site = snapshot.jobs.find(job => job.repo === 'GarryOne/job-pilotto-site' && job.file === 'ops-overview.yml');
+  const snapshot = await collect({gh: realGh, repos: ['GarryOne/jobadabra', 'GarryOne/jobadabra-web', 'GarryOne/gone'], now});
+  assert.deepEqual(snapshot.repos.map(repo => [repo.name, repo.ok, repo.private]), [['GarryOne/jobadabra', true, false], ['GarryOne/jobadabra-web', true, true], ['GarryOne/gone', false, true]]);
+  const pub = snapshot.jobs.find(job => job.repo === 'GarryOne/jobadabra'), site = snapshot.jobs.find(job => job.repo === 'GarryOne/jobadabra-web' && job.file === 'ops-overview.yml');
   assert.deepEqual([pub.source, pub.crons, pub.billedMin, pub.weeklyMin], ['both', ['17 * * * *', '40 */3 * * *'], 0, 60], 'a public repo is free');
   assert.deepEqual([site.source, site.billedMin, site.recent.length, site.recent[0].conclusion, site.ai], ['github', 600, 14, 'failure', true], 'macOS in a private repo counts x10');
   assert.equal(snapshot.jobs.find(job => job.file === 'old.yml').disabled, true);
 });
 
 test('the ingest needs the key, cuts unknown fields and keeps one row; the page needs the owner login', async () => {
-  const e = env(), snapshot = await collect({gh: realGh, repos: ['GarryOne/job-pilotto-site'], now});
+  const e = env(), snapshot = await collect({gh: realGh, repos: ['GarryOne/jobadabra-web'], now});
   const put = (body, key = 'pub') => call(e, '/ops/data?kind=schedules', {method: 'PUT', headers: {Authorization: `Bearer ${key}`}, body: JSON.stringify(body)});
   assert.equal((await put(snapshot, 'wrong')).status, 404);
   assert.equal((await put({jobs: 'x'})).status, 400);
@@ -123,7 +123,7 @@ test('the ingest needs the key, cuts unknown fields and keeps one row; the page 
 
 test('the page in each state: no data, grouped by area with counts, escaped text', async () => {
   assert.match(page(null, {now}), /No data yet/);
-  const snapshot = await collect({gh: realGh, repos: ['GarryOne/job-pilotto-site'], now});
+  const snapshot = await collect({gh: realGh, repos: ['GarryOne/jobadabra-web'], now});
   snapshot.jobs[0].about = '<img src=x onerror=1>';
   const html = page(snapshot, {now});
   assert.ok(!html.includes('<img src=x'), 'job text is escaped');

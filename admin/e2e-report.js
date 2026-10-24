@@ -7,7 +7,7 @@ import {same, sign, viewer} from '../shared/auth.js';
 const REPORT = 'e2e-report';   // the run's merged Playwright HTML report (the workflows' report job)
 
 const github = (env, path, fetcher, extra = {}) => fetcher(`https://api.github.com/repos/${env.GITHUB_REPO}${path}`, {...extra, headers: {
-  Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site', 'X-GitHub-Api-Version': '2022-11-28'}});
+  Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'jobadabra-web', 'X-GitHub-Api-Version': '2022-11-28'}});
 async function json(env, path, fetcher) {
   const response = await github(env, path, fetcher);
   if (!response.ok) throw new Error(`GitHub ${path.split('?')[0]}: ${response.status}`);

@@ -4,7 +4,7 @@
 import {esc} from '../shared/html.js';
 import {reasons} from './search-lab-judge.js';
 
-const REPO = 'https://github.com/GarryOne/job-pilotto';
+const REPO = 'https://github.com/GarryOne/jobadabra';
 const KIND = {failed: ['FAILED', 'bad', 3], worse: ['Worse', 'bad', 2], stale: ['Tape stale', 'wait', 1]};
 const short = build => (build || '–').slice(0, 7);
 const when = iso => (iso ? `${iso.slice(5, 10)} ${iso.slice(11, 16)} UTC` : '–');

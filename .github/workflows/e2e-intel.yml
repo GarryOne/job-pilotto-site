@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 45
     env:
       GH_TOKEN: ${{ github.token }}
-      REPO: GarryOne/job-pilotto   # the public repo's PRs, runs and tags (read with this repo's token: public data)
+      REPO: GarryOne/jobadabra   # the public repo's PRs, runs and tags (read with this repo's token: public data)
       SELFHEAL_PUBLISH_KEY: ${{ secrets.SELFHEAL_PUBLISH_KEY }}
     steps:
       - uses: actions/checkout@v5

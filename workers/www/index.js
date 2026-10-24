@@ -132,7 +132,7 @@ export async function dispatch(env, inputs, workflow, fetcher = fetch) {
   if (triageQueue.queued(workflow)) return triageQueue.queue(env, inputs, workflow);
   const response = await fetcher(`https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {
     method: 'POST', body: JSON.stringify({ref: 'main', inputs}),
-    headers: {Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'job-pilotto-site',
+    headers: {Authorization: `Bearer ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'User-Agent': 'jobadabra-web',
       'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json'}});
   if (response.status !== 204) throw new Error(`GitHub dispatch failed: ${response.status}`);
 }

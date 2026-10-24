@@ -22,7 +22,7 @@ a tighter 4:3 copy for phones, and a cut (never a crossfade, never a blank) betw
    desktop 1440 and phone 390; one strip per phase; the file name starts with your session's short name). Open it for him, ask AskUserQuestion (ship / change what) with a recommendation. Never ship clips he hasn't seen.
 5. **Place**: `tools/hero.sh --place <set dir>`, then the site tests `tools/site-run.sh node --test "test/**/*.test.js"`
    (`tools/hero.sh --preview` re-renders the side-by-side from what is placed).
-6. **Ship** from the worktree: `~/job-pilotto/tools/ship.sh --background --body=<file>` (body per `~/job-pilotto/tools/pr-body-template.md`, with the
+6. **Ship** from the worktree: `~/jobadabra/tools/ship.sh --background --body=<file>` (body per `~/jobadabra/tools/pr-body-template.md`, with the
    After = `tools/hero-preview.mjs --only desktop|phone --out docs/pr-shots/<topic>/<x>.jpg`, Before = an image too (the body check refuses a text cell:
    tile main's four `hero*-poster.jpg` / `-720-poster.jpg`), committed under `docs/pr-shots/<topic>/`, linked as
    `https://github.com/GarryOne/jobadabra-web/raw/<branch>/docs/pr-shots/<topic>/<x>.jpg`: the check wants a link ending in .jpg/.png, never `?raw=1`); Monitor `^ship: (DONE|FAILED|REVIEW|MERGED|CLOSED|RED|GREEN|CONFLICT)`. The owner merges; merge = production (www.jobadabra.top).

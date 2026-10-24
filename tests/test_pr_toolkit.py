@@ -1,4 +1,4 @@
-"""A PR here is described and watched like a public one (20 Oct 2026: job-pilotto-site#2 opened with a bare body): CI checks the description with the public tools/pr-body-check.py,
+"""A PR here is described and watched like a public one (20 Oct 2026: jobadabra-web#2 opened with a bare body): CI checks the description with the public tools/pr-body-check.py,
 and the red/conflict hook of the public repo runs in a session started here. Fails when either is taken out."""
 import json
 import pathlib

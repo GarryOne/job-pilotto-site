@@ -1,5 +1,5 @@
 -- Problems that recur (several installs, or many times) wait here to be taken by the private repo's daily triage, which files the
--- issues there (GarryOne/job-pilotto-internal). A pull, not a push: the website needs no token for a private repository.
+-- issues there (GarryOne/jobadabra-lab). A pull, not a push: the website needs no token for a private repository.
 -- kind: report (a form-structure failure, from /report/fill-failure) or problems (the daily telemetry top list).
 CREATE TABLE triage_queue (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

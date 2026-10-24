@@ -58,7 +58,7 @@ export function bars(w) {
   return `${legend(CAUSES)}${barRows(CAUSES, list, summary)}`;
 }
 
-export function page(snapshot, {range = '7d', repo = 'GarryOne/job-pilotto', now = new Date()} = {}) {
+export function page(snapshot, {range = '7d', repo = 'GarryOne/jobadabra', now = new Date()} = {}) {
   range = rangeOf(range);
   const filters = filterLinks(Object.entries(RANGES).map(([value, {name}]) => [value, name, `?range=${value}`]), range), w = windowOf(snapshot, range, now), name = RANGES[range].name;
   const body = !snapshot ? `<section class="card"><h2>No data yet</h2><p class="muted">The workflow <code>e2e-intel.yml</code> publishes every finished release run when it ends and hourly; the first run fills this page.</p></section>`

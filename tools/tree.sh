@@ -8,7 +8,7 @@ while [ $# -gt 0 ]; do case "$1" in --full) depth="--tags";; --ref) ref="${2:-ma
 [ -n "$ref" ] || ref="main"
 cd "${GITHUB_WORKSPACE:-.}"
 git init -q .
-git remote add origin "${PUBLIC_REPO_URL:-https://github.com/GarryOne/job-pilotto.git}"
+git remote add origin "${PUBLIC_REPO_URL:-https://github.com/GarryOne/jobadabra.git}"
 # shellcheck disable=SC2086
 git fetch -q $depth origin "$ref"
 git checkout -q -f FETCH_HEAD
@@ -23,4 +23,4 @@ rsync -a --exclude '.git' --exclude '.private/' --exclude 'README.md' --exclude 
 (cd "." && git ls-files -o --exclude-standard -z | xargs -0 -n 500 git add -N --)
 sha="$(git rev-parse HEAD)"
 echo "PUBLIC_SHA=$sha" >> "${GITHUB_ENV:-/dev/null}"
-echo "tree: job-pilotto@${sha:0:9} ($ref) + $(git -C .private rev-parse --short HEAD) of job-pilotto-site"
+echo "tree: job-pilotto@${sha:0:9} ($ref) + $(git -C .private rev-parse --short HEAD) of jobadabra-web"

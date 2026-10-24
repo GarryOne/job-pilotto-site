@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
-      REPO: GarryOne/job-pilotto   # the public repo's PRs, runs and tags (read with this repo's token: public data)
+      REPO: GarryOne/jobadabra   # the public repo's PRs, runs and tags (read with this repo's token: public data)
       DIGEST_ANTHROPIC_KEY: ${{ secrets.DIGEST_ANTHROPIC_KEY }}
       SELFHEAL_PUBLISH_KEY: ${{ secrets.SELFHEAL_PUBLISH_KEY }}
       BUILDLOG_TELEGRAM_TOKEN: ${{ secrets.BUILDLOG_TELEGRAM_TOKEN }}   # the Build Log bot (its own bot and chat); missing: the digest is stored, the post is skipped with a line

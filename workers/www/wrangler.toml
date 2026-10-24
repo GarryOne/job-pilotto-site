@@ -44,7 +44,7 @@ id = "a871d4644b614266b5bfa7f1b5e811c1"
 LEARNING_CANARY = "off"
 # /admin/ai-cost counts from this day (admin/jobcost.js): every product key was replaced on 8 Oct 2026 (~13:15 UTC), measuring starts that day.
 AI_COST_SINCE = "2026-10-08"
-GITHUB_REPO = "GarryOne/job-pilotto"
+GITHUB_REPO = "GarryOne/jobadabra"
 # Sentry errors to the separate "Job Pilotto Sentry" Telegram bot (admin/sentry-alert.js); needs the secrets SENTRY_TELEGRAM_TOKEN and SENTRY_TELEGRAM_CHAT. "off" = kill switch.
 SENTRY_TELEGRAM = "on"
 # Free AI (shared/free-ai.js): Workers AI for every install; limits in code, the daily lines here. FREE_AI = "off" is the kill switch.
@@ -94,7 +94,7 @@ LINKEDIN_CLIENT_ID = "77cda0c4oymws4"
 # INDEX_GATE: removed on 2 Oct 2026, so the token is enforced. During the rollout, INDEX_GATE = "soft" let installs without an index token keep
 # downloading (counted as index-open on /telemetry); set it back to "soft" only to re-open the list temporarily.
 # The central employer index (api/employers.js): GET /api/index for every app, PUT from the private central scout
-# (GarryOne/job-pilotto-internal) with the Worker secret INDEX_PUBLISH_KEY (Keychain job-pilotto.site.index_publish_key). Stored in WAITLIST as "index:employers".
+# (GarryOne/jobadabra-lab) with the Worker secret INDEX_PUBLISH_KEY (Keychain job-pilotto.site.index_publish_key). Stored in WAITLIST as "index:employers".
 
 # Website stats (api/downloads.js): page views, Download clicks, the private /stats page. Tables: db/migrations/ (apply: npx wrangler@4 d1 migrations apply www-stats --remote).
 # Secrets: STATS_KEY (opens /stats; Keychain job-pilotto.site.stats_key) and STATS_SALT (hashes visitors).
