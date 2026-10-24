@@ -1,63 +1,87 @@
-/* The AI page (/intelligence): a journey strip of the six sections, then every step a card: icon, short title, one-line promise,
-   the data used, one quiet line, and the long text folded under "How it works". Built from the site's own parts (effects.css glow and
-   tile-icon, home.css journey nodes); only what they lack is here. Guarded by test/web/intelligence-page.test.js. */
+/* The AI page (/intelligence), laid out like the owner's mockup 1473 (24 Oct 2026): a centred header, stage tabs with icons, then a grid of cards
+   per stage. A card is an amber outline icon, a title, a two-line promise, a divider, and one foot row: "Data used" and its value at the left,
+   "How it works ›" at the right (the long text opens under it). Every step is shown; none is folded away. Built from the site's own tokens
+   (styles.css, effects.css); only what they lack is here. Guarded by test/web/intelligence-page.test.js. */
 
-/* The six sections as a journey: each node is a link to its section. */
-.ai-journey { --node: 52px; list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: relative; }
-.ai-journey::before { content: ""; position: absolute; top: calc(var(--node) / 2); left: 8%; right: 8%; height: 1px; opacity: .5;
-  background: linear-gradient(90deg, var(--teal), var(--teal) 60%, var(--signal)); }
-.ai-journey a { position: relative; display: grid; justify-items: center; gap: 6px; padding: 0 4px 6px; color: var(--ink); text-decoration: none; text-align: center; }
-.ai-journey .node { display: grid; place-items: center; width: var(--node); height: var(--node); border-radius: 50%; margin-bottom: 6px; color: var(--teal);
-  border: 1px solid color-mix(in srgb, var(--teal) 55%, var(--line)); background: color-mix(in srgb, var(--teal) 10%, var(--paper)); box-shadow: 0 0 0 7px var(--paper);
-  transition: transform .25s ease, background .25s ease; }
+/* Header, centred. */
+.ai-hero { display: grid; justify-items: center; text-align: center; gap: 10px; padding-block: 40px 8px; }
+.ai-kicker { font: 600 .8rem var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--signal); }
+.ai-hero h1 { margin: 0; font-size: clamp(2rem, 4.6vw, 3.3rem); text-wrap: balance; }
+.ai-hero .lede { margin: 0; max-width: 72ch; }
+.ai-which { margin: 0; max-width: 62ch; color: var(--muted); font-size: .88rem; }
+
+/* The six stages as tabs: icon and name, the one in view underlined. */
+.ai-tabs { margin-top: 26px; border-bottom: 1px solid var(--line-strong); }
+.ai-journey { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.ai-journey a { display: flex; align-items: center; gap: 10px; padding: 14px 20px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; }
+.ai-journey .node { display: grid; place-items: center; width: 24px; height: 24px; }
 .ai-journey .node svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.ai-journey .you .node { color: var(--signal); border-color: color-mix(in srgb, var(--signal) 55%, var(--line)); background: color-mix(in srgb, var(--signal) 10%, var(--paper)); }
-.ai-journey b { font-weight: 600; font-size: .92rem; }
-.ai-journey small { color: var(--muted); font-size: .8rem; line-height: 1.3; }
-.ai-journey a:hover .node { transform: scale(1.08); }
-.ai-journey a:focus-visible { outline: none; }
-.ai-journey a:focus-visible .node { outline: 2px solid var(--signal); outline-offset: 4px; }
-.ai-key { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 0; color: var(--muted); font-size: .88rem; }
+.ai-journey a:hover { color: var(--ink); }
+.ai-journey a[aria-current] { color: var(--signal); border-bottom-color: var(--signal); }
+.ai-journey a:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; border-radius: 6px; }
 
-/* A section: its title, one promise line, then the cards. */
-.ai-section .section-head { margin-bottom: 36px; }
-.ai-section .section-head h2 { margin: 0; }
-.ai-section .section-head .lede { font-size: 1.05rem; }
-.ai-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
-
-/* One AI step. */
-.ai-step { display: grid; gap: 10px; padding: 24px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
-.ai-step .tile-icon { width: 48px; height: 48px; border-radius: 14px; margin-bottom: 8px; }
-.ai-step .tile-icon svg { width: 22px; height: 22px; }
-.ai-step h3 { margin: 0; font: 600 1.12rem/1.25 var(--display); letter-spacing: -.01em; }
-.ai-step .promise-line { margin: 0; color: var(--muted); font-size: .96rem; line-height: 1.5; }
-.ai-step .rules { font: 500 .62rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--teal); }
-
-/* The data a step uses: one quiet line, "never" in the accent colour so it still reads. */
-.data-used { margin: 2px 0 0; font-size: .82rem; line-height: 1.45; color: var(--muted); }
-.data-used b { font: 500 .62rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin-right: 4px; }
-.data-used .never { color: var(--ink); }
-.data-used .never::first-letter { color: var(--signal); font-weight: 600; }
-
+/* A stage: its title (the last word in italics), one promise line, then the cards. */
+.ai-section { scroll-margin-top: 24px; }
+.ai-head { margin-bottom: 22px; }
+.ai-head h2 { margin: 0; font-size: clamp(1.8rem, 3.4vw, 2.5rem); letter-spacing: -.02em; }
+.ai-head h2 em { font-style: italic; }
+.ai-head .lede { margin: 4px 0 0; font-size: 1.1rem; }
+.ai-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
 .ai-cards:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-/* The long text, folded. */
-.ai-step details { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
-.ai-step summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; color: var(--signal); font-weight: 600; font-size: .9rem; }
-.ai-step summary::-webkit-details-marker { display: none; }
-.ai-step summary::after { content: "+"; margin-left: auto; font: 500 1.1rem var(--mono); transition: transform .2s ease; }
-.ai-step details[open] summary::after { transform: rotate(45deg); }
-.ai-step summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; border-radius: 6px; }
-.ai-step details p { margin: 10px 0 0; color: var(--muted); font-size: .92rem; line-height: 1.6; }
+/* One AI step. */
+.ai-step { display: flex; flex-direction: column; gap: 8px; padding: 24px 24px 18px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.ico { display: block; width: 40px; height: 40px; margin-bottom: 10px; }
+.ico svg { width: 36px; height: 36px; fill: none; stroke: var(--signal); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ai-step h3 { margin: 0; font: 600 1.18rem/1.25 var(--display); letter-spacing: -.01em; }
+.ai-step .promise-line { margin: 0 0 8px; color: var(--muted); font-size: 1rem; line-height: 1.5; }
 
-@media (max-width: 900px) { .ai-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* The foot: a divider, the data used at the left, "How it works" at the right; the long text opens below. */
+.ai-step details { margin-top: auto; border-top: 1px solid var(--line); padding-top: 12px; }
+.ai-step summary { cursor: pointer; list-style: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.ai-step summary::-webkit-details-marker { display: none; }
+.data-used { display: grid; gap: 2px; min-width: 0; font-size: .92rem; line-height: 1.35; color: var(--ink); }
+.data-used small { font-size: .82rem; color: var(--muted); }
+.data-used .never { color: var(--muted); font-size: .85rem; }
+.how { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex: none; font-size: .92rem; color: var(--ink); }
+.chev { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
+.ai-step details[open] .chev { transform: rotate(90deg); }
+.ai-step summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; border-radius: 6px; }
+.ai-step details p { margin: 12px 0 0; color: var(--muted); font-size: .92rem; line-height: 1.6; }
+
+/* One line about the data, under the first stage. */
+.ai-data-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 18px 0 0; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: .95rem; }
+.ai-data-line svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--teal); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ai-data-line a { margin-left: auto; color: var(--teal); text-decoration: none; font-size: .9rem; }
+.ai-data-line a:hover { text-decoration: underline; }
+
+/* Prepare: the CV and cover letter, drawn, with what each gives you. */
+.ai-feature { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0 28px; align-items: start; margin-bottom: 18px; padding: 22px 26px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.ai-ill { grid-row: 1 / 3; width: 100%; max-width: 330px; height: auto; align-self: center; }
+.ai-feature .f { display: flex; gap: 14px; }
+.ai-feature .f .ico { flex: none; width: 34px; height: 34px; margin: 0; }
+.ai-feature .f .ico svg { width: 30px; height: 30px; }
+.ai-feature b { font-size: 1.02rem; }
+.ai-feature .f p { margin: 4px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.ai-feature .line { grid-column: 2; margin: 18px 0 0; color: var(--muted); font-size: .9rem; align-self: end; }
+.ai-feature .how { grid-column: 3; justify-self: end; align-self: end; margin: 18px 0 0; text-decoration: none; }
+
+@media (max-width: 900px) {
+  .ai-cards, .ai-cards:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ai-feature { grid-template-columns: 1fr 1fr; gap: 18px; }
+  .ai-ill { grid-column: 1 / -1; grid-row: auto; justify-self: center; }
+  .ai-feature .line { grid-column: 1; }
+  .ai-feature .how { grid-column: 2; }
+}
 @media (max-width: 640px) {
   .ai-cards, .ai-cards:has(> :nth-child(4):last-child) { grid-template-columns: 1fr; }
-  /* On a phone the journey is two rows of three; the line between the dots is dropped. */
-  .ai-journey { --node: 46px; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
-  .ai-journey::before { display: none; }
-  .ai-journey small { display: none; }
-  .ai-step { padding: 20px; }
+  /* On a phone the tabs sit in six equal columns, the icon over the name. */
+  .ai-journey { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; }
+  .ai-journey a { flex-direction: column; gap: 4px; padding: 10px 2px; font-size: .74rem; text-align: center; }
+  .ai-step { padding: 20px 20px 16px; }
+  .ai-feature { grid-template-columns: 1fr; }
+  .ai-feature .line, .ai-feature .how { grid-column: 1; justify-self: start; }
+  .ai-data-line a { margin-left: 0; }
 }
-@media (prefers-reduced-motion: reduce) { .ai-journey .node, .ai-step summary::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
 .promise .icon svg { width: 22px; height: 22px; fill: none; stroke: var(--teal); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
