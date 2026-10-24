@@ -11,6 +11,9 @@ a tighter 4:3 copy for phones, and a **transition at every screen change** (roun
 (Institut Cardio Rhône, Registered Nurse, Cardiac Care Unit) from setup to interview. Approved sketch: https://claude.ai/artifact/MD1RKmELpnh7rzkprJkKfg; round 2 storyboard (every beat): https://claude.ai/artifact/SLjpGZdm31SvGeBvuTiBNg
 
 ## The loop (one command per step)
+0. **Self-improve as you go** (owner, 24 Oct 2026: "this should be a rule, that we always and constantly self-improve"): every bug, wrong frame,
+   wrong number or owner remark becomes, in the same change, a test or gate (it fails on the old code) plus a trap line below; every rule the
+   owner states goes into "Every owner rule" at once. Never batch lessons for the end; say in each report where each one landed.
 1. **Change** what the owner asked (the map below says where), then `tools/site-run.sh node --test "desktop/test/media-*.test.js"`.
 2. **Record**: `tools/hero.sh [pieces]` from your site worktree, in the background (`2>&1 | tee <log>` + Monitor `^(hero|media|hero-preview):|FAILED`).
    Pieces: `hero-onboarding` (Set up), `hero` (Find), `hero-fill` (Apply), `hero-track` (Track); none = all four, ~6 min. Records your local edits
