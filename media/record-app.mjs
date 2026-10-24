@@ -9,7 +9,7 @@ import {clipTo} from './camera.mjs';
 import {startScreencast, stepLog} from './screencast.mjs';
 import {nav} from './scenes.mjs';
 import {personaCopy} from './persona-copy.mjs';
-import {holdEvent, holdLeft, nextCut} from './hold.mjs';
+import {holdEvent, holdLeft, nextCut, PRESS_SHOW, wordsCut} from './hold.mjs';
 
 const desktop = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'desktop');
 const {_electron: electron} = createRequire(path.join(desktop, 'e2e', 'package.json'))('playwright-core');
@@ -49,6 +49,28 @@ export function unionBox(boxes) {
   return {x, y, width: Math.max(...found.map(b => b.x + b.width)) - x, height: Math.max(...found.map(b => b.y + b.height)) - y};
 }
 const lookBox = async (page, look) => unionBox(await Promise.all([look].flat().map(selector => page.locator(selector).first().boundingBox())));
+// A look's text, one box per laid-out line (text nodes' client rects), for the lookWidth check (hold.mjs wordsCut).
+const linesOf = async (page, look) => (await Promise.all([look].flat().map(selector => page.locator(selector).first().evaluate(root => {
+  const range = document.createRange(), walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), lines = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent.trim() || !node.parentElement?.checkVisibility?.()) continue;
+    range.selectNodeContents(node);
+    for (const r of range.getClientRects()) if (r.width && r.height) lines.push({x: r.x, y: r.y, width: r.width, height: r.height, text: node.textContent.trim().slice(0, 30)});
+  }
+  return lines;
+}).catch(() => [])))).flat();
+// A look whose lookWidth edge cuts through a line of its words stops the recording (round 4: the centred Find jobs card's description crossed it).
+async function checkWords(page, look, box, width, which) {
+  if (!width || !box) return;
+  const lines = await linesOf(page, look), edge = box.x + Math.min(box.width, width);
+  const cut = wordsCut(box, width, lines);
+  if (cut > 4) {
+    const crossing = [...new Set(lines.filter(line => line.x < edge - 1 && line.x + line.width > edge + 4).map(line => JSON.stringify(line.text)))].slice(0, 4).join(', ');
+    throw new Error(`media: ${which} "${[look].flat().join(', ')}" keeps its left ${width} px but that edge cuts ${cut} px off a line of words (${crossing}): end it in a gap between columns, or name the part that holds the words (scenes.mjs)`);
+  }
+}
+// A press stays on screen PRESS_SHOW output seconds before what it does (hold.mjs); stills (no speed) don't wait.
+const pressShow = log => (log.speed ? PRESS_SHOW * log.speed * 1000 : 0);
 
 export {holdEvent, holdLeft};
 
@@ -68,14 +90,14 @@ async function watch(page, ms, log, rest = true) {
 // One step on the app's page; `log` gets what the renderer needs (click targets, holds and their boxes, page changes as marks).
 async function step(page, item, log) {
   // a page change is stamped BEFORE its action (round 3: stamped after, a frame of the new page could arrive first and show under the old framing)
-  const say = item.say && !item.hold ? {say: item.say} : {};   // a caption on an action shows from its moment (captions.mjs)
+  const say = item.say && !item.hold ? {say: item.say, ...(item.tag ? {tag: item.tag} : {})} : {};   // a caption on an action shows from its moment (captions.mjs)
   if (item.go) { log.add({type: 'mark', ...say}); await page.evaluate(selector => document.querySelector(selector)?.click(), nav(item.go)); await watch(page, 900, log); await settle(page); return; }
   if (item.js) { log.add({type: 'mark', ...say}); await page.evaluate(item.js); await watch(page, 900, log); return; }
   if (item.tap) {   // the cursor glides to a control and presses it, nothing is clicked (a demo-disabled control, or the clip's last gesture), then `then` runs
     const box = await page.locator(item.tap).first().boundingBox();
     if (!box) throw new Error(`media: nothing to tap at ${item.tap} (update scenes.mjs)`);
-    log.add({type: 'click', selector: item.tap, box, ...say, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box});
-    if (item.then) { log.add({type: 'mark'}); await page.evaluate(item.then); }
+    log.add({type: 'click', selector: item.tap, box, ...say, ...(item.zoom ? {zoom: item.zoom} : {}), ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})}); await page.waitForTimeout(700); log.add({type: 'press', selector: item.tap, box, ...(item.then && pressShow(log) ? {held: true} : {})});
+    if (item.then) { await page.waitForTimeout(pressShow(log)); log.add({type: 'mark'}); await page.evaluate(item.then); }
     await watch(page, item.then ? 900 : 300, log);
     return;
   }
@@ -86,9 +108,11 @@ async function step(page, item, log) {
     if (!box) throw new Error(`media: nothing to click at ${item.click} (has the screen changed? update scenes.mjs)`);
     log.add({type: 'click', selector: item.click, box, ...say});
     await page.waitForTimeout(700);   // the cursor's glide, drawn by the renderer
-    log.add({type: 'press', selector: item.click, box});
+    const wait = pressShow(log);
+    log.add({type: 'press', selector: item.click, box, ...(wait ? {held: true} : {})});
+    if (wait) { await page.waitForTimeout(wait); log.add({type: 'mark'}); }
     await target.click();
-    if (item.zoom) Object.assign(log.events.at(-2), {zoom: item.zoom, ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})});
+    if (item.zoom) Object.assign(log.events.findLast(event => event.type === 'click'), {zoom: item.zoom, ...(item.phoneZoom ? {phoneZoom: item.phoneZoom} : {})});
     await watch(page, 800, log, false);
     return;
   }
@@ -99,6 +123,8 @@ async function step(page, item, log) {
     const box = item.look ? await lookBox(page, item.look) : null;
     if (item.look && !box) throw new Error(`media: nothing to look at at ${item.look} (update scenes.mjs)`);
     const phoneBox = item.phoneLook ? await lookBox(page, item.phoneLook) : null;
+    await checkWords(page, item.look, box, item.lookWidth, 'look');
+    await checkWords(page, item.phoneLook, phoneBox, item.phoneLookWidth, 'phoneLook');
     const left = holdLeft(item.hold, started, Date.now());
     log.add(holdEvent(item, box, phoneBox, left));
     await log.paint();   // a frame now, still page or not (check.mjs captureGaps)
@@ -112,6 +138,7 @@ export async function recordAppVideo({persona, piece, dir}) {
   try {
     const cast = await startScreencast(page, path.join(dir, 'frames'));
     const log = stepLog(cast.clock, cast.paint);
+    log.speed = piece.speed || 1;   // a press's on-screen time (pressShow) is in output seconds
     for (const [i, item] of piece.steps.entries()) {
       log.self = item.hold && item.cut && !(log.next?.ready && log.next.look === item.look) ? {look: item.look} : null;
       log.next = nextCut(piece.steps, i); await step(page, item, log);

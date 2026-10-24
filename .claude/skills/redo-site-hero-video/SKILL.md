@@ -52,6 +52,9 @@ Tests: `desktop/test/media-{camera,persona,options,manifest}.test.js`, `test/web
   `{fill: true}` (extension), `{hold: s, look: sel | [sels] | 'panel', zoom, phoneZoom, phoneLook, cut, poster}`.
 - **Every step that names a beat `say`s a caption** (round 3, owner: "we need to explain the journey better"; ≤ 44 characters, test: media-captions):
   drawn under the clip from the step's moment, a cut look's from its cut, until the next one. Write the says with the beats: the viewer reads them.
+- **Every clip says where it is** (round 4, owner: "we kind of need to highlight each of the steps"): a step's `tag` (≤ 12 characters: `Set up 1/5`,
+  `Jobs`, `Chrome`, `Gmail`) leads the caption band as an amber chip and stays until a step names another; each clip's first caption has one (test:
+  media-captions). Set up's looks include the app's own "Step n of 5" heading, and its says never start with "Step n" (the tag counts).
 - **A clip in two places** (round 3, Apply: "start on the Jobs screen... then moving to the browser"): `before: '<part>'` records a `part: true` piece first
   (its own `moment`, app state and steps) and plays it ahead; both parts share `speed`, `camera` and the one-move budget; each opens on its own look.
 - **Demo mode refuses a real action** (Use Free AI, Check Gmail now, Apply): `{tap: sel, then: js}` shows the press, then the page script moves the
@@ -148,5 +151,15 @@ comes back at the next redo.
   a press right before a page change gets no zoom; frame the button inside the look before it instead.
 - **The demo shows another person's data where a persona lacks a file** (round 3: the nurse had no `ready.json`, so the DevOps list marked her job "Review & submit"):
   when a screen shows something odd, check which demo file feeds it and give the persona its own.
+- **lookWidth on a centred card cut its words** (round 4: the empty Find jobs card is full width with its words centred; lookWidth 1040 kept its
+  left part, so its centred description ran across the edge). The recorder now stops when a lookWidth edge cuts through a line of the look's words,
+  naming them; columns wholly right of the edge are left out on purpose. End it in a gap, or name the part that holds the words.
+- **Too tight a crop** (round 4, owner: "we cropped too hard, let's leave a bit of space"): the camera keeps `LOOK_MARGIN` (40 CSS px) around every
+  look, its top too; a look at the page's very top still touches the page edge, so frame from a block that has room above.
+- **The screen changed the instant she pressed** (round 4, owner: "when clicking Apply, the screen changes too fast, let's wait half a second"):
+  every press in a video stays on screen `PRESS_SHOW` (0.5 s played) before its action; the press is `held` and the mark logged when the action runs
+  is the page change the camera and the cut use. Clips get ~0.5 s longer per press.
+- **The first step flashed by** (round 4, Set up step 1 was 1.4 s, its "STEP 1 OF 5" cut at the top): a clip's first look holds ≥ 2.4 s played
+  (hold ≥ 3.6 at speed 1.5): the viewer is still arriving.
 - **A cut hides how she got there**: a cut look is a jump. Where the owner wants the way in seen (Find: the click on a job, the drawer opening),
   use a click zoom and a short hold on the in-between screen, not `cut`.

@@ -11,6 +11,8 @@ export const ZOOM_IN = 0.55;       // output seconds a camera move takes (a sped
 export const SETTLE = 0.25;        // output seconds the camera stays on a click's target after the press, so the click is seen
 export const RING = 0.6;           // seconds a click ring grows and fades
 
+import {pageChange} from './hold.mjs';
+
 export const ease = x => { const u = Math.max(0, Math.min(1, x)); return u * u * (3 - 2 * u); };
 
 export const PHONE_GAIN = 1.8;    // the phone copy zooms this much closer than the desktop one (owner, 24 Oct 2026: "a tighter mobile crop")
@@ -18,15 +20,17 @@ export const PHONE_MAX = 4;       // ... up to here: the frames are captured at 
 
 // The camera state that frames `box` at zoom z: centred on it, so a box in a corner puts the camera in that corner (cameraAt keeps the view on the page).
 // A box wider than the zoomed view is read from its left edge (names and scores first), not cropped on both sides. `aspect`: the output's (16:10, or the phone's).
-const frame = (box, z, viewport, aspect) => {
-  const w = viewport.w / z, h = w / aspect;
+// Round 4 (owner, 24 Oct 2026: "we cropped too hard, let's leave a bit of space"): the box keeps LOOK_MARGIN on every side, the top of a tall one too.
+const frame = (look, z, viewport, aspect) => {
+  const box = padded(look), w = viewport.w / z, h = w / aspect;
   return {cx: box.width > w ? box.x + w / 2 : box.x + box.width / 2, cy: box.y + Math.min(box.height, h) / 2, z};
 };
 
 // The hero shows a look's WHOLE width (round 2, owner 24 Oct 2026: "wrong cropping": a card wider than its zoomed view lost its right side, its button
 // with it): the zoom asked for is lowered until the box fits with a small margin, never below the whole page. -> the zoom used. Pure.
-export const FIT_MARGIN = 12;   // CSS px kept on each side of a look
-export const fitWidth = (box, z, viewport) => Math.min(z, Math.max(1, viewport.w / (box.width + 2 * FIT_MARGIN)));
+export const LOOK_MARGIN = 40;   // CSS px kept on each side of a look (round 4: 12 px read as cropped)
+export const padded = box => ({x: box.x - LOOK_MARGIN, y: box.y - LOOK_MARGIN, width: box.width + 2 * LOOK_MARGIN, height: box.height + 2 * LOOK_MARGIN});
+export const fitWidth = (box, z, viewport) => Math.min(z, Math.max(1, viewport.w / padded(box).width));
 // A hero look whose zoom fitWidth had to lower by more than this share reads small: the recording names it (`onFit`) so a narrower look is picked.
 export const FIT_WARN = 0.85;
 
@@ -65,7 +69,7 @@ export function cameraKeys({viewport, events, speed = 1, steady = false, phone =
     if (steady && first) { keys[0] = {t: 0, ...target}; return; }
     const lastLook = earlier.filter(prev => prev.type === 'hold').at(-1);
     if (event.cut) {
-      const change = earlier.find(prev => (prev.type === 'mark' || prev.type === 'press') && (!lastLook || prev.t > lastLook.t));   // the first: the old page left then (cuts.mjs)
+      const change = earlier.find(prev => pageChange(prev) && (!lastLook || prev.t > lastLook.t));   // the first: the old page left then (cuts.mjs)
       const shown = earlier.find(prev => prev.type === 'ready' && (!lastLook || prev.t > lastLook.t));   // no action: the page changed by itself, cut when it showed
       const at = change ? change.t : shown ? shown.t : event.t;
       move(at - 0.001, {cx: keys.at(-1).cx, cy: keys.at(-1).cy, z: keys.at(-1).z});

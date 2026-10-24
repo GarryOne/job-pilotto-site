@@ -2,7 +2,7 @@
 // Draws a product video from recorded frames (media): each output frame is a recorded frame moved and scaled through the camera
 // (a float transform, so pans are smooth), plus a cursor and a click ring. The app's pixels are never redrawn. Electron's canvas does the drawing in a
 // hidden window; raw pixels go to ffmpeg, which writes one high-quality master (encode.mjs makes the site's files from it).
-// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
+// Run by media.mjs: electron render.cjs <job.json>. job: {framesDir, frames: [{file, x, y, w, h, cx, cy, press, say, sayAge, tag}], scale, width, height, fps, captionSize, sayFade, out, ffmpeg};
 // a frame's `say` is drawn as a caption band at the bottom (captions.mjs), fading in over sayFade seconds of sayAge
 const {app, BrowserWindow} = require('electron');
 const fs = require('node:fs');
@@ -41,11 +41,22 @@ async function draw(job) {
       let size = job.captionSize;
       const font = px => `600 ${px}px -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif`;
       ctx.save(); ctx.font = font(size);
-      while (ctx.measureText(frame.say).width > job.width * 0.86 && size > 10) { size -= 1; ctx.font = font(size); }
-      const w = ctx.measureText(frame.say).width, padX = size * 0.75, h = size * 1.9, x = (job.width - w) / 2 - padX, y = job.height - h - size * 0.8;
+      // the tag (where the frame is): an amber chip leading the line, in a monospace face (captions.mjs)
+      const tagFont = px => `700 ${Math.round(px * 0.78)}px "SF Mono", Menlo, Consolas, monospace`, tag = frame.tag ? frame.tag.toUpperCase() : '';
+      const widths = () => { ctx.font = tagFont(size); const t = tag ? ctx.measureText(tag).width + size * 0.9 : 0; ctx.font = font(size); return {t, s: ctx.measureText(frame.say).width}; };
+      let m = widths();
+      while (m.t + m.s + size * 0.6 > job.width * 0.86 && size > 10) { size -= 1; m = widths(); }
+      const gap = tag ? size * 0.6 : 0, w = m.t + gap + m.s, padX = size * 0.75, h = size * 1.9, x = (job.width - w) / 2 - padX, y = job.height - h - size * 0.8;
       ctx.globalAlpha = Math.min(1, (frame.sayAge || 0) / (job.sayFade || 0.25));
       ctx.fillStyle = 'rgba(10, 12, 16, 0.86)'; ctx.beginPath(); ctx.roundRect(x, y, w + 2 * padX, h, size * 0.5); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'middle'; ctx.fillText(frame.say, x + padX, y + h / 2 + size * 0.04);
+      ctx.textBaseline = 'middle';
+      if (tag) {
+        const ch = size * 1.25;
+        ctx.fillStyle = '#f2a93b'; ctx.beginPath(); ctx.roundRect(x + padX, y + (h - ch) / 2, m.t, ch, size * 0.3); ctx.fill();
+        ctx.font = tagFont(size); ctx.fillStyle = '#1b1306'; ctx.fillText(tag, x + padX + size * 0.45, y + h / 2 + size * 0.04);
+        ctx.font = font(size);
+      }
+      ctx.fillStyle = '#ffffff'; ctx.fillText(frame.say, x + padX + m.t + gap, y + h / 2 + size * 0.04);
       ctx.restore();
     }
     if (frame.cursor !== false) {

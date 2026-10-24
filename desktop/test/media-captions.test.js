@@ -2,7 +2,7 @@
 // cut, and a caption stays until the next one.
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {captionAt, captionSize, captionTimes, SAY_MAX} from '../../media/captions.mjs';
+import {captionAt, captionSize, captionTimes, SAY_MAX, TAG_MAX} from '../../media/captions.mjs';
 import {VIDEOS} from '../../media/scenes.mjs';
 
 const hero = Object.entries(VIDEOS).filter(([, piece]) => piece.slide || piece.part);
@@ -44,4 +44,28 @@ test('a cut look\'s caption starts at its cut, an action\'s at its moment, and s
 test('captions read on the phone copy as on the desktop one', () => {
   assert.ok(captionSize(720, true) >= 36, 'phone: about 20 px on a 390-px-wide screen');
   assert.ok(captionSize(1600, false) >= 26);
+});
+
+// Round 4 (owner, 24 Oct 2026: "we kind of need to highlight each of the steps"): every hero clip says where it is from its first line, in a short tag;
+// a Set up tag counts the wizard's steps, so its lines no longer start with "Step n".
+test('every hero clip and part names where it is from its first caption, in a short tag', () => {
+  for (const [name, piece] of hero) {
+    const said = piece.steps.filter(step => step.say);
+    assert.ok(said[0]?.tag, `${name}: its first caption "${said[0]?.say}" has no tag`);
+    for (const step of piece.steps.filter(each => each.tag)) assert.ok(step.tag.length <= TAG_MAX, `${name}: tag "${step.tag}" is longer than ${TAG_MAX}`);
+  }
+  const setup = VIDEOS['hero-onboarding'].steps.filter(step => step.tag);
+  assert.deepEqual(setup.map(step => step.tag), ['Set up 1/5', 'Set up 2/5', 'Set up 3/5']);
+  for (const step of VIDEOS['hero-onboarding'].steps.filter(each => each.say)) assert.doesNotMatch(step.say, /^Step \d/, 'the tag counts the steps');
+});
+
+test('a tag stays with the captions after it until another one is named', () => {
+  const list = captionTimes({events: [
+    {type: 'hold', t: 0, s: 1, box: {}, say: 'one', tag: 'Jobs'},
+    {type: 'click', t: 1, say: 'two'},
+    {type: 'hold', t: 2, s: 1, box: {}, say: 'three', tag: 'Chrome'},
+  ]});
+  assert.deepEqual(list.map(each => each.tag), ['Jobs', 'Jobs', 'Chrome']);
+  assert.equal(captionAt(list, 1.5).tag, 'Jobs');
+  assert.equal(captionAt([{t: 0, say: 'no tag'}], 1).tag, undefined);
 });

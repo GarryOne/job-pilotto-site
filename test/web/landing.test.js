@@ -132,6 +132,20 @@ test('the stage script: plays in turn, steps jump, pause, phone posters, nothing
   assert.match(css, /\.hero\.split \{ grid-template-columns: minmax\(420px, 3\.8fr\) minmax\(0, 8fr\)/, 'the hero is one row: words left, the stage right');
 });
 
+// Owner, 24 Oct 2026 ("allow pause of the video", shot of a click on the picture): the picture itself pauses and plays, through the same switch as the
+// button, and a paused stage shows a play mark over it, so a click on the video never does nothing.
+test('a click on the hero picture pauses and plays it, and a paused stage shows a play mark', () => {
+  const js = read('hero-stage.js');
+  assert.match(js, /const screen = root\?\.querySelector\('\.stage-screen'\)/, 'the script finds the picture');
+  assert.match(js, /screen\.addEventListener\('click', \(\) => setPaused\(!paused\)\)/, 'a click on the picture toggles like the button');
+  assert.match(js, /pause\.addEventListener\('click', \(\) => setPaused\(!paused\)\)/, 'the button still toggles');
+  assert.match(js, /screen\.classList\.toggle\('is-paused', paused\)/, 'only the person\'s pause shows the mark, not a hidden tab or a scrolled-away stage');
+  const css = read('home.css');
+  assert.match(css, /\.stage-screen \{[^}]*cursor: pointer/, 'the picture looks clickable');
+  assert.match(css, /\.stage-screen\.is-paused::after \{/, 'a paused stage draws a play mark');
+  assert.match(css, /\.stage-screen::after \{[^}]*pointer-events: none/, 'the mark never takes the click');
+});
+
 test('the hero stage stays inside the page\'s content column (owner, 24 Oct 2026: "the video goes out of the site content wrapper")', () => {
   const css = read('home.css');
   const visual = (css.match(/\.hero\.split \.hero-visual \{[^}]*\}/) || [''])[0];

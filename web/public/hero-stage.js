@@ -1,12 +1,13 @@
 // The landing hero's stage (index.html #hero-stage; owner, 24 Oct 2026): four short clips of one made-up person and one job, played in turn on one stage.
 // A clip ends, the next cuts in once its first frame is decoded (owner, 24 Oct 2026: "smooth transitions without blank frames or overlapping screens":
 // the old clip stays on screen until then, never its end-frame poster, never two screens at once); its caption goes above the stage (a "later" clip leads it with a tag, never over the video) and its step's line fills as it plays. The steps jump to a clip, the pause button
-// holds it (as do a hidden tab and a stage scrolled out of view); the next clip is fetched while the current one plays. Phones (the 720 copies, 4:3) get
+// (or a click on the picture, which then shows a play mark) holds it (as do a hidden tab and a stage scrolled out of view); the next clip is fetched while the current one plays. Phones (the 720 copies, 4:3) get
 // their own posters. With reduced motion nothing plays by itself: the posters show, a step switches them, play starts a clip. Guarded by test/web/landing.test.js.
 const root = document.getElementById('hero-stage');
 const clips = root ? [...root.querySelectorAll('video.slide')] : [];
 const steps = root ? [...root.querySelectorAll('.stage-steps button:not(.stage-pause)')] : [];
 const pause = root?.querySelector('.stage-pause');
+const screen = root?.querySelector('.stage-screen');
 const cap = root?.querySelector('.stage-cap');
 const later = root?.querySelector('.stage-later');
 const PAUSE = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 3h3v10H4zm5 0h3v10H9z"/></svg>';
@@ -62,9 +63,11 @@ if (root && clips.length) {
     paused = value;
     pause.innerHTML = paused ? PLAY : PAUSE;
     pause.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+    screen.classList.toggle('is-paused', paused);   // the person's pause only: a hidden tab or a scrolled-away stage shows no mark
     if (playing()) clips[on].play().catch(() => {}); else clips[on].pause();
   }
   pause.addEventListener('click', () => setPaused(!paused));
+  screen.addEventListener('click', () => setPaused(!paused));   // a click on the picture pauses and plays it too (owner, 24 Oct 2026); the button stays the keyboard way
   document.addEventListener('visibilitychange', () => { hidden = document.hidden; setPaused(paused); });
   if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => { away = !entry.isIntersecting; setPaused(paused); }).observe(root);
 

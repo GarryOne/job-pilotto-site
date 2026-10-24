@@ -60,6 +60,7 @@ const momentsOf = (k, live) => live ? [{at: 0.12}, {at: 0.5}, {at: 0.96}] : (set
 async function shootStage(page, url, live = false) {
   await page.goto(url, {waitUntil: 'networkidle'});
   await page.locator('#hero-stage').scrollIntoViewIfNeeded();
+  await page.addStyleTag({content: '.stage-screen::after { display: none !important }'});   // the play mark of a paused stage (round 4): the preview pauses to shoot, the frame stays clear
   const phases = [];
   for (let k = 0; k < PHASES.length; k++) {
     const shots = [];
